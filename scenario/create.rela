@@ -1,0 +1,45 @@
+
+zeppelin = entity_create("zeppelin")
+entity_move(zeppelin, point_scale(up, world_elevation(origin)+30.0), south)
+entity_materialize(zeppelin)
+
+materials = {
+	"steel-sheet" = 300,
+	"steel-frame" = 200,
+	"copper-sheet" = 200,
+	"brick" = 200,
+	"circuit-board" = 200,
+	"gear-wheel" = 200,
+	"pipe" = 200,
+	"electric-motor" = 100,
+	"repair-kit" = 100,
+	"ammo1" = 50,
+}
+
+for item,count in materials
+	entity_insert(zeppelin, item, count)
+	entity_level(zeppelin, item, count, count)
+end
+
+entity_level(zeppelin, "log", 0, 0)
+entity_level(zeppelin, "stone", 0, 0)
+entity_direct(zeppelin)
+
+toolbar_spec("arm")
+toolbar_spec("assembler")
+toolbar_spec("chemplant1")
+toolbar_spec("boiler")
+toolbar_spec("offshore-pump")
+toolbar_spec("steam-engine")
+toolbar_spec("miner")
+toolbar_spec("crusher")
+toolbar_spec("furnace")
+toolbar_spec("container-provider")
+toolbar_spec("conveyor-1")
+toolbar_spec("tube-small-1")
+toolbar_spec("pipe-straight")
+toolbar_spec("turret")
+
+license_spec("miner")
+license_recipe("mine-iron-ore")
+

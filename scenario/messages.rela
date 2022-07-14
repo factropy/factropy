@@ -1,0 +1,45 @@
+
+function second(n)
+	return n*60
+end
+
+function minute(n)
+	return n*60*60
+end
+
+function hour(n)
+	return n*60*60*60
+end
+
+gap = second(5)
+stamp = second(5)
+messages = 1
+
+function intro(text)
+	add_message({
+		name = "intro-$messages",
+		text = text,
+		when = stamp,
+	})
+	global.messages = messages+1
+	global.stamp = stamp+gap
+end
+
+intro("Welcome to Proxima II.")
+intro("There's a war on. Your job is to supply the war effort.")
+intro("Gather resources, construct a base and launch shipments.")
+intro("May the galaxy come to fear your mad logistic skills!")
+
+chat = 0
+
+function advance(n)
+	global.chat = chat+1
+	global.stamp = minute(chat*10)
+end
+
+advance()
+intro("Before the war Sol:Gov had plans to colonise Proxima II.")
+intro("0.8 gravity, liquid water, moderate temperature, resource-rich...")
+intro("Well-suited to supporting human life and established technologies.")
+intro("Well-suited to producing bullets and bombs now.")
+

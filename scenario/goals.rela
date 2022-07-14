@@ -1,0 +1,412 @@
+
+add_goal({
+	name = "mining",
+	title = "Start Mining",
+	construction = { "miner" = 1 },
+	production = { "iron-ore" = 5 },
+	specs = [
+		"conveyor-1",
+		"conveyor-left-1",
+		"conveyor-right-1",
+		"unveyor-entry-1",
+		"unveyor-exit-1",
+	],
+	recipes = [
+		"mine-coal",
+		"mine-stone",
+		"mine-copper-ore",
+		"mine-tin-ore",
+		"mine-lead-ore",
+	],
+	hints = [
+		"Hover over stuff and press [SPACEBAR] to show information.",
+		"Move the camera with [W] [A] [S] [D] and pan with [RClick].",
+		"Move the zeppelin with [Ctrl + RClick].",
+		"The back end of a miner goes inside the hill.",
+	],
+})
+
+add_goal({
+	name = "belting",
+	title = "Collect Ore",
+	construction = { "conveyor-1" = 1 },
+	production = { "iron-ore" = 20 },
+	dependencies = ["mining"],
+	specs = [
+		"arm",
+		"arm-long",
+		"crusher",
+	],
+	recipes = [
+		"iron-crushing",
+	],
+	hints = [
+		"Miners buffer ore and output it directly onto belts.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "crushing",
+	title = "Start Crushing",
+	construction = { "crusher" = 1, "arm" = 1 },
+	production = { "iron-crushed" = 1, "stone-crushed" = 1 },
+	dependencies = ["belting"],
+	specs = [
+		"container-provider",
+	],
+	recipes = [
+		"copper-crushing",
+		"tin-crushing",
+		"lead-crushing",
+		"stone-crushing",
+		"silica-crushing",
+	],
+	hints = [
+		"Arms transfer items between belts and structures.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "storage",
+	title = "Store Products",
+	construction = { "container-provider" = 1,  },
+	production = { "iron-crushed" = 50, "stone-crushed" = 10 },
+	dependencies = ["crushing"],
+	specs = [
+		"furnace",
+	],
+	recipes = [
+		"steel-smelting",
+	],
+	hints = [
+		"Containers need to be configured to accept specific items.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "smelting",
+	title = "Start Smelting",
+	construction = { "furnace" = 1, "miner" = 2 },
+	production = { "steel-ingot" = 10, "coal" = 1 },
+	dependencies = ["storage"],
+	specs = [
+		"assembler",
+	],
+	recipes = [
+		"steel-sheet",
+		"copper-smelting",
+		"tin-smelting",
+		"lead-smelting",
+		"silicon-smelting",
+		"brick-smelting",
+		"incinerate-log",
+	],
+	hints = [
+		"Furnaces require coal for fuel.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "crafting",
+	title = "Start Crafting",
+	construction = { "assembler" = 1 },
+	production = { "steel-sheet" = 10 },
+	dependencies = ["smelting"],
+	specs = [
+		"offshore-pump",
+		"boiler",
+		"steam-engine",
+		"pipe-straight",
+		"pipe-elbow",
+		"pipe-tee",
+		"pipe-cross",
+		"pipe-underground",
+		"fluid-tank",
+		"pile",
+	],
+	recipes = [
+		"boiling",
+		"copper-sheet",
+		"copper-wire",
+		"solder",
+		"gear-wheel",
+		"pipe",
+		"steel-frame",
+		"circuit-board",
+	],
+	hints = [
+		"Containers make their contents available to zeppelin drones.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "electricity",
+	title = "Generate Electricity",
+	construction = { "boiler" = 1, "steam-engine" = 1, "offshore-pump" = 1, "pipe-straight" = 1 },
+	production = { "steam" = L(100) },
+	dependencies = ["crafting"],
+	specs = [
+		"falcon",
+		"chemplant1",
+		"tube-small-1",
+		"tube-small-alt-1",
+		"tube-medium-1",
+		"tube-medium-alt-1",
+		"tube-large-1",
+		"tube-large-alt-1",
+	],
+	recipes = [
+		"hydrazine",
+	],
+	hints = [
+		"Pipe configuration can be cycled [C] through straight / corner / tee / cross."
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "launching",
+	title = "Prepare for Launch",
+	construction = { "falcon" = 1 },
+	production = { "hydrazine" = 5000 },
+	dependencies = ["electricity"],
+	specs = [
+		"loader-1",
+		"unloader-1",
+		"balancer-1",
+	],
+	recipes = [
+		"electric-motor",
+	],
+	hints = [
+		"Zeppelin drones will offload excess logs to a container.",
+		"Hover over stuff and press [SPACEBAR] to show information.",
+	],
+})
+
+add_goal({
+	name = "samples",
+	title = "Supply Samples",
+	dependencies = ["launching"],
+	supplies = { "steel-ingot" = 10, "copper-ingot" = 10 },
+	specs = [
+		"turret",
+		"cart1",
+		"cart-engineer1",
+		"cart-stop",
+		"cart-waypoint",
+		"wind-turbine",
+	],
+	recipes = [
+		"ammo1",
+		"repair-kit",
+	],
+	hints = [
+		"Rockets launch when full or when manually triggered.",
+		"Any payload they carry is supplied to the war effort.",
+	],
+})
+
+add_goal({
+	name = "defence",
+	title = "Setup Defence",
+	construction = { "turret" = 1 },
+	production = { "ammo1" = 10 },
+	dependencies = ["samples"],
+	specs = [
+		"clarifier",
+		"incinerator",
+	],
+	recipes = [
+		"slurry-stone-crushed",
+		"slurry-clarification",
+	],
+	hints = [
+		"Enemy scout detected in-system! They know you are here."
+	],
+})
+
+add_goal({
+	name = "supply1",
+	title = "Supply: Ammunition",
+	dependencies = ["defence"],
+	chits = 1,
+	specs = [
+		"oil-refinery",
+		"oil-rig",
+		"pipe-underwater",
+		"pipe-valve",
+		"flare-stack",
+		"truck1",
+		"truck-engineer1",
+		"slab",
+	],
+	recipes = [
+		"ammo2",
+		"drill-oil",
+		"oil-refining",
+		"plastic-bar",
+		"solid-fuel",
+		"solid-fuel-naphtha",
+		"sulfur",
+		"sulfuric-acid",
+	],
+	supplies = {
+		"ammo1" = 1000,
+	},
+})
+
+add_goal({
+	name = "supply2",
+	title = "Supply: Repair Kits",
+	dependencies = ["supply1"],
+	chits = 1,
+	specs = [
+		"flywheel",
+		"container-requester",
+		"container-buffer",
+		"container-overflow",
+		"drone-depot1",
+	],
+	recipes = [
+		"mother-board",
+		"battery",
+		"filter",
+		"repair-kit2",
+	],
+	supplies = {
+		"repair-kit" = 1000,
+	},
+})
+
+add_goal({
+	name = "supply3",
+	title = "Supply: Sustainment",
+	dependencies = ["supply2"],
+	chits = 2,
+	specs = [
+		"electrolyser1",
+		"starship",
+		"blimp1",
+		"flight-pad-depot",
+		"flight-pad-load",
+		"flight-pad-unload",
+		"monorail",
+		"monorail-tall",
+		"monorail-stop",
+		"monocar",
+		"container-shipping",
+		"wifi-tower",
+		"router",
+	],
+	recipes = [
+		"electrolysis",
+		"hydrofluoric-acid",
+		"mine-aluminium-ore",
+		"aluminium-crushing",
+		"aluminium-electrolysis",
+		"aluminium-frame",
+		"oil-cracking",
+	],
+	interval = 1,
+	period = 3,
+	rates = [
+		{ item = "ammo1", count = 5000 },
+		{ item = "repair-kit", count = 5000 },
+	],
+})
+
+add_goal({
+	name = "supply4",
+	title = "Supply: Complexity",
+	dependencies = ["supply3"],
+	chits = 2,
+	specs = [
+		"centrifuge1",
+		"nuclear-reactor",
+		"conveyor-2",
+		"conveyor-left-2",
+		"conveyor-right-2",
+		"unveyor-entry-2",
+		"unveyor-exit-2",
+		"tube-small-2",
+		"tube-small-alt-2",
+		"tube-medium-2",
+		"tube-medium-alt-2",
+		"tube-large-2",
+		"tube-large-alt-2",
+		"loader-2",
+		"unloader-2",
+		"balancer-2",
+		"zeppelin-support",
+		"hill-explosive",
+	],
+	recipes = [
+		"mine-uranium-ore",
+		"uranium-ammo",
+		"repair-kit3",
+		"heatsink",
+		"uranium-crushing",
+		"uranium-enrichment",
+		"uranium-ammo",
+		"nuclear-fuel",
+		"reacting",
+		"explosive",
+	],
+	period = 3,
+	rates = [
+		{ item = "ammo2", count = 5000 },
+		{ item = "repair-kit2", count = 5000 },
+	],
+})
+
+add_goal({
+	name = "supply5",
+	title = "Supply: Expansion",
+	dependencies = ["supply4"],
+	chits = 3,
+	specs = [
+		"computer",
+		"battery-pack",
+		"air-filter",
+		"turret-laser",
+		"hill-explosive-atomic",
+	],
+	recipes = [
+		"plutonium-breeding",
+		"plutonium-separation",
+		"plutonium-fuel",
+		"explosive-atomic",
+	],
+	period = 3,
+	rates = [
+		{ item = "ammo3", count = 5000 },
+		{ item = "repair-kit3", count = 5000 },
+		{ item = "explosive", count = 5000 },
+	],
+})
+
+add_goal({
+	name = "supply6",
+	title = "Supply: Bulk",
+	dependencies = ["supply5"],
+	chits = 3,
+	specs = [
+		"teleporter-send",
+		"teleporter-recv",
+	],
+	recipes = [
+	],
+	period = 5,
+	rates = [
+		{ item = "ammo3", count = 10000 },
+		{ item = "repair-kit3", count = 10000 },
+		{ item = "explosive-atomic", count = 100 },
+	],
+})
+

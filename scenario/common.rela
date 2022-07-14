@@ -1,0 +1,173 @@
+
+up = point_scale([0,1,0], 1)
+down = point_scale([0,-1,0], 1)
+east = point_scale([1,0,0], 1)
+west = point_scale([-1,0,0], 1)
+south = point_scale([0,0,1], 1)
+north = point_scale([0,0,-1], 1)
+origin = point_scale([0,0,0], 1)
+
+identity = matrix_identity()
+
+shadow = true
+noshadow = false
+
+high = "high"
+medium = "medium"
+low = "low"
+verylow = "verylow"
+
+cache = {}
+
+colors = {
+	ironOre = 0xB25607FF,
+	copperOre = 0x8FccccFF,
+	coal = 0x333333FF,
+	stone = 0x999999FF,
+	uraniumOre = 0x32CD32FF,
+	tinOre = 0x238E68FF,
+	leadOre = 0x666677FF,
+	aluminiumOre = 0xFF8C00ff,
+	steel = 0xB0C4DEff,
+	steelDark = 0x90A4BEff,
+	steelBlue = 0x6082b6ff,
+	chevron = 0x444444ff,
+	plastic = 0x1E90FFff,
+	copper = 0xda8a67ff,
+	aluminium = 0xeeeeeeff,
+	crafter = 0x4682B4FF,
+	crafter2 = 0x008080FF,
+	pipe = 0xffa500ff,
+	provider = 0xB22222FF,
+	requester = 0x1E90FFFF,
+	overflow = 0xDD9700FF,
+	buffer = 0x008800FF,
+	bronze = 0xcc9922ff,
+	gold = 0xFFD700ff,
+	magic = 0xFF00FFFF,
+	charcoal = 0x3b4248ff,
+	industrialGreen = 0x004225ff,
+	industrialGreen2 = 0x395248ff,
+}
+
+gloss = {
+	none = 0,
+	shiny = 4.0,
+	metallic = 16.0,
+	metallicOre = 128.0,
+}
+
+filter = {
+	powdercoat = 1,
+}
+
+toolbar = {
+	items = "a",
+	storage = "b",
+	mining = "c",
+	crafting = "d",
+	fluids = "e",
+	defence = "f",
+}
+
+placement = {
+	land = "land",
+	hill = "hill",
+	water = "water",
+	footings = "footings",
+	monorail = "monorail",
+}
+
+energy = {
+	mining = kJ(200),
+	crushing = MJ(1.5),
+	smelting = kJ(300),
+	crafting = kJ(300),
+}
+
+tags = {
+	mining = ["mining"],
+	crushing = ["crushing"],
+	smelting = ["smelting"],
+	crafting = ["crafting"],
+	centrifuging = ["centrifuging"],
+	reacting = ["reacting"],
+	electrolysis = ["electrolysis"],
+	crafting_with_fluid = ["crafting-with-fluid"],
+	crushing_with_fluid = ["crushing-with-fluid"],
+	chemistry = ["chemistry"],
+}
+
+mining = {
+	copper = {
+		ore = "copper-ore",
+		title = "Copper",
+	},
+	iron = {
+		ore = "iron-ore",
+		title = "Iron",
+	},
+	tin = {
+		ore = "tin-ore",
+		title = "Tin",
+	},
+	lead = {
+		ore = "lead-ore",
+		title = "Lead",
+	},
+	coal = {
+		ore = "coal",
+		title = "Coal",
+	},
+	stone = {
+		ore = "stone",
+		title = "Stone",
+	},
+	uranium = {
+		ore = "uranium-ore",
+		title = "Uranium",
+	},
+	aluminium = {
+		ore = "aluminium-ore",
+		title = "Aluminium",
+	},
+}
+
+crushing = {
+	copper = "Copper",
+	iron = "Iron",
+	tin = "Tin",
+	lead = "Lead",
+}
+
+smelting = {
+	copper = {
+		title = "Copper",
+		energy = energy.smelting,
+	},
+	iron = {
+		title = "Steel",
+		energy = 0+(1.5*energy.smelting),
+		ingot = "steel",
+	},
+	tin = {
+		title = "Tin",
+		energy = energy.smelting,
+	},
+	lead = {
+		title = "Lead",
+		energy = 0+(0.75*energy.smelting),
+	},
+}
+
+function reverse(vec)
+	i = 0
+	j = #vec-1
+	while i < j
+		a = vec[i]
+		vec[i] = vec[j]
+		vec[j] = a
+		i = i+1
+		j = j-1
+	end
+end

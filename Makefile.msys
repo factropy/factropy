@@ -1,0 +1,49 @@
+# The main build system has moved to CMake but so far I've failed to get it
+# working reliably for MSYS on Windows. Something in the CMake MSYS Makefiles
+# breaks rendering (artifacts and shaders apparently without lights) where
+# this original build process does not. If someone with more patience with
+# Windows wants to go down the rabbit hole...
+
+CC=gcc
+CPP=g++
+OBJECTS=$(shell ls -1 src/*.cc | sed 's/cc$$/o/g')
+
+DEPS=glew/glew.o imgui/imgui.o src/sdeflinfl.o src/par_shapes.o
+DEPS_CFLAGS=$(shell sdl2-config --cflags) $(shell pkg-config --cflags freetype2)
+DEPS_LFLAGS=$(shell sdl2-config --libs) $(shell pkg-config --libs freetype2)
+
+# mingw64 posix threads, gcc 10.x (msys2)
+windows: CFLAGS=-O3 -flto -std=c++17 -Wall -DNDEBUG $(DEPS_CFLAGS)
+windows: LFLAGS=-lm -lpthread -lopengl32 -lglu32 -lgdi32 -lwinmm $(DEPS_LFLAGS)
+windows: $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy $(OBJECTS) $(DEPS) $(LFLAGS)
+
+main.o: src/main.cc src/*.h
+	$(CPP) $(CFLAGS) -c $< -o $@
+
+src/%.o: src/%.cc src/*.h
+	$(CPP) $(CFLAGS) -c $< -o $@
+
+imgui/imgui.o: CFLAGS=-O3 -std=c++11 -Wall -Wno-subobject-linkage -DNDEBUG -Iimgui $(DEPS_CFLAGS)
+imgui/imgui.o: imgui/build.cpp
+	$(CPP) $(CFLAGS) -c $< -o $@
+
+src/sdeflinfl.o: CFLAGS=-O3 -std=c11 -DNDEBUG
+src/sdeflinfl.o: src/sdeflinfl.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+src/par_shapes.o: CFLAGS=-O3 -std=c11 -DNDEBUG
+src/par_shapes.o: src/par_shapes.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+glew/glew.o: CFLAGS=-O3 -std=c11 -DNDEBUG
+glew/glew.o: glew/glew.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f factropy
+	rm -rf build
+	rm -f src/*.o
+	rm -f imgui/imgui.o
+	rm -f glew/glew.o
+	

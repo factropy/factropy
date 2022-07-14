@@ -1,0 +1,533 @@
+
+add_recipe({
+	name = "boiling",
+	title = "Water to Steam",
+	energy = MJ(30),
+	tags = ["boiling"],
+	input = { "water" = L(1000) },
+	output = { "steam" = L(1000) },
+})
+
+for item,data in mining
+	add_recipe({
+		name = "mine-$(data.ore)",
+		title = "$(data.title) Mining",
+		mine = data.ore,
+		energy = energy.mining,
+		tags = tags.mining,
+	})
+end
+
+for item,title in crushing
+	add_recipe({
+		name = "$item-crushing",
+		title = "$title Crushing",
+		input = { "$item-ore" = 5 },
+		output = { "$item-crushed" = 5, "stone-crushed" = 2 },
+		energy = energy.crushing,
+		tags = tags.crushing,
+	})
+end
+
+add_recipe({
+	name = "silica-crushing",
+	title = "Silica Extraction",
+	input = { "stone-crushed" = 5 },
+	output = { "silica-sand" = 3 },
+	energy = energy.crushing,
+	tags = tags.crushing,
+})
+
+add_recipe({
+	name = "stone-crushing",
+	title = "Stone Crushing",
+	input = { "stone" = 5 },
+	output = { "stone-crushed" = 5 },
+	energy = energy.crushing,
+	tags = tags.crushing,
+})
+
+add_recipe({
+	name = "slurry-stone-crushed",
+	title = "Stone Slurry",
+	energy = kJ(300),
+	tags = tags.chemistry,
+	input = { "stone-crushed" = 5, "water" = L(100) },
+	output = { "slurry" = L(100) },
+})
+
+add_recipe({
+	name = "slurry-clarification",
+	title = "Slurry Clarification",
+	energy = kJ(600),
+	tags = ["clarifying"],
+	input = { "slurry" = L(100) },
+})
+
+function()
+	for item,data in smelting
+		add_recipe({
+			name = "$(data.ingot or item)-smelting",
+			title = "$(data.title) Smelting",
+			input = { "$item-crushed" = 2 },
+			output = { "$(data.ingot or item)-ingot" = 1 },
+			energy = data.energy,
+			tags = tags.smelting,
+		})
+	end
+end()
+
+add_recipe({
+	name = "silicon-smelting",
+	title = "Silicon Smelting",
+	input = { "silica-sand" = 2 },
+	output = { "silicon-ingot" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+
+add_recipe({
+	name = "brick-smelting"
+	title = "Brick Smelting",
+	input = { "stone-crushed" = 2 },
+	output = { "brick" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+
+add_recipe({
+	name = "copper-sheet",
+	title = "Copper Sheeting",
+	input = { "copper-ingot" = 1 },
+	output = { "copper-sheet" = 2 },
+	tags = tags.crafting,
+	energy = energy.crafting,
+})
+
+add_recipe({
+	name = "steel-sheet",
+	title = "Steel Sheeting",
+	input = { "steel-ingot" = 1 },
+	output = { "steel-sheet" = 2 },
+	tags = tags.crafting,
+	energy = energy.crafting,
+})
+
+add_recipe({
+	name = "copper-wire"
+	title = "Copper Wire Extrusion",
+	input = { "copper-ingot" = 1 },
+	output = { "copper-wire" = 2 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "solder"
+	title = "Solder Extrusion",
+	input = { "tin-ingot" = 1, "lead-ingot" = 1 },
+	output = { "solder" = 3 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "gear-wheel"
+	title = "Gear Wheel Cutting",
+	input = { "steel-ingot" = 2, "silicon-ingot" = 1 },
+	output = { "gear-wheel" = 4 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "pipe"
+	title = "Pipe Rolling",
+	input = { "copper-ingot" = 1, "solder" = 1 },
+	output = { "pipe" = 1 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "steel-frame"
+	title = "Steel Framing",
+	input = { "steel-ingot" = 2, "tin-ingot" = 1 },
+	output = { "steel-frame" = 2 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "circuit-board"
+	title = "Circuit Board Printing",
+	input = {
+		"silicon-ingot" = 1,
+		"copper-wire" = 1,
+		"solder" = 1,
+	},
+	output = { "circuit-board" = 4 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "battery"
+	title = "Batteries",
+	input = {
+		"steel-sheet" = 1,
+		"copper-sheet" = 1,
+		"lead-ingot" = 1,
+		"sulfuric-acid" = L(20),
+	},
+	output = { "battery" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.chemistry,
+	fluid = "sulfuric-acid",
+})
+
+add_recipe({
+	name = "electric-motor"
+	title = "Electric Motors",
+	input = {
+		"steel-sheet" = 1,
+		"circuit-board" = 1,
+		"copper-wire" = 1,
+		"gear-wheel" = 1,
+	},
+	output = { "electric-motor" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "filter"
+	title = "Filters",
+	input = {
+		"copper-sheet" = 1,
+		"plastic-bar" = 1,
+		"coal" = 1,
+		"steam" = L(20),
+	},
+	output = { "filter" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.crafting_with_fluid,
+	fluid = "water",
+})
+
+add_recipe({
+	name = "heatsink"
+	title = "Heat Sink Machining",
+	input = {
+		"copper-sheet" = 1,
+		"aluminium-ingot" = 1,
+		"steam" = L(20),
+	},
+	output = { "heatsink" = 2 },
+	energy = energy.crafting*3,
+	tags = tags.crafting_with_fluid,
+	fluid = "water",
+})
+
+add_recipe({
+	name = "drill-oil",
+	title = "Oil Drilling",
+	energy = kJ(200),
+	tags = ["drilling"],
+	drill = "oil",
+})
+
+add_recipe({
+	name = "oil-refining",
+	title = "Oil Refining",
+	energy = MJ(2),
+	tags = ["refining"],
+	input = { "oil" = 100 },
+	output = { "fuel-oil" = 35, "naphtha" = L(45) },
+})
+
+add_recipe({
+	name = "oil-cracking",
+	title = "Fuel Oil Cracking",
+	energy = MJ(4),
+	tags = ["refining"],
+	input = { "fuel-oil" = L(100), "steam" = L(100) },
+	output = { "naphtha" = L(50) },
+})
+
+add_recipe({
+	name = "incinerate-log",
+	title = "Incinerate Logs",
+	energy = kJ(100),
+	tags = ["incineration"],
+	input = { "log" = 1 },
+})
+
+add_recipe({
+	name = "plastic-bar",
+	title = "Plastic Molding",
+	energy = kJ(300),
+	tags = tags.chemistry,
+	input = { "coal" = 1, "naphtha" = L(40) },
+	output = { "plastic-bar" = 2 },
+	fluid = "naphtha",
+})
+
+add_recipe({
+	name = "mother-board",
+	title = "Mother Board Layering",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = { "circuit-board" = 4, "plastic-bar" = 2, "solder" = 2, "copper-wire" = 2 },
+	output = { "mother-board" = 1 },
+})
+
+add_recipe({
+	name = "sulfur",
+	title = "Sulfur Extraction",
+	energy = kJ(900),
+	tags = tags.chemistry,
+	input = { "naphtha" = L(40), "water" = L(40) },
+	output = { "sulfur" = 4 },
+	fluid = "naphtha",
+})
+
+add_recipe({
+	name = "sulfuric-acid",
+	title = "Sulfuric Acid Hydration",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "steel-sheet" = 1, "sulfur" = 5, "water" = L(100) },
+	output = { "sulfuric-acid" = L(50) },
+	fluid = "sulfuric-acid",
+})
+
+add_recipe({
+	name = "hydrofluoric-acid",
+	title = "Hydrofluoric Acid Hydration",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "stone-crushed" = 5, "water" = L(100), "sulfuric-acid" = L(50) },
+	output = { "hydrofluoric-acid" = L(50) },
+	fluid = "hydrofluoric-acid",
+})
+
+add_recipe({
+	name = "solid-fuel",
+	title = "Solid Fuel (Fuel Oil)",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "fuel-oil" = L(20) },
+	output = { "solid-fuel" = 1 },
+	fluid = "fuel-oil",
+})
+
+add_recipe({
+	name = "solid-fuel-naphtha",
+	title = "Solid Fuel (Naphtha)",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "naphtha" = L(40) },
+	output = { "solid-fuel" = 1 },
+	fluid = "naphtha",
+})
+
+add_recipe({
+	name = "aluminium-crushing",
+	title = "Aluminium Crushing",
+	energy = kJ(1500),
+	tags = tags.crushing_with_fluid,
+	input = { "aluminium-ore" = 5, "water" = L(5) },
+	output = { "alumina-powder" = 5, "stone-crushed" = 2 },
+})
+
+add_recipe({
+	name = "aluminium-electrolysis",
+	title = "Aluminium Electrolysis",
+	energy = MJ(3),
+	tags = tags.electrolysis,
+	input = { "alumina-powder" = 5, "hydrofluoric-acid" = 5 },
+	output = { "aluminium-ingot" = 1 },
+})
+
+add_recipe({
+	name = "aluminium-frame",
+	title = "Aluminium Frame",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = { "aluminium-ingot" = 1 },
+	output = { "aluminium-frame" = 1 },
+})
+
+add_recipe({
+	name = "uranium-crushing",
+	title = "Uranium Crushing",
+	energy = kJ(1500),
+	tags = tags.crushing_with_fluid,
+	input = { "uranium-ore" = 5, "sulfuric-acid" = 5 },
+	output = { "uranium-crushed" = 3, "stone-crushed" = 2 },
+})
+
+add_recipe({
+	name = "uranium-enrichment",
+	title = "Uranium Enrichment",
+	energy = MJ(500),
+	tags = tags.centrifuging,
+	input = { "uranium-crushed" = 1000, "hydrofluoric-acid" = L(1000) },
+	output = { "uranium-238" = 99, "uranium-235" = 1 },
+})
+
+add_recipe({
+	name = "nuclear-fuel",
+	title = "Nuclear Fuel (Uranium)",
+	energy = kJ(1500),
+	tags = tags.crafting,
+	input = { "uranium-235" = 1, "uranium-238" = 19, "lead-ingot" = 1 },
+	output = { "nuclear-fuel" = 10 },
+})
+
+add_recipe({
+	name = "reacting",
+	title = "Nuclear Fission",
+	energy = MJ(300),
+	tags = tags.reacting,
+	input = { "water" = L(10000) },
+	output = { "steam" = L(10000) },
+})
+
+add_recipe({
+	name = "plutonium-breeding",
+	title = "Nuclear Breeding",
+	energy = MJ(300),
+	tags = tags.reacting,
+	input = { "water" = 10000 },
+	output = { "fissile-product" = 1, "steam" = 10000 },
+})
+
+add_recipe({
+	name = "plutonium-separation",
+	title = "Plutonium Separation",
+	energy = MJ(500),
+	tags = tags.centrifuging,
+	input = { "fissile-product" = 185, "naphtha" = 100 },
+	output = { "plutonium-239" = 1 },
+})
+
+add_recipe({
+	name = "plutonium-fuel",
+	title = "Nuclear Fuel (Plutonium)",
+	energy = kJ(1500),
+	tags = tags.crafting,
+	input = { "plutonium-239" = 1, "uranium-238" = 19, "lead-ingot" = 1 },
+	output = { "nuclear-fuel" = 10 },
+})
+
+add_recipe({
+	name = "electrolysis",
+	title = "Electrolysis",
+	energy = MJ(20),
+	tags = tags.electrolysis,
+	input = { "water" = L(1000) },
+	output = { "hydrogen" = L(600), "oxygen" = L(300) },
+})
+
+add_recipe({
+	name = "hydrazine",
+	title = "Hydrazine",
+	energy = MJ(1),
+	tags = tags.chemistry,
+	input = { "log" = 1, "water" = L(100) },
+	output = { "hydrazine" = 100 },
+	fluid = "hydrazine",
+})
+
+add_recipe({
+	name = "ammo1",
+	title = "Ammunition",
+	energy = kJ(900),
+	tags = tags.crafting,
+	input = { "steel-ingot" = 1, "copper-sheet" = 1 },
+	output = { "ammo1" = 1 },
+})
+
+add_recipe({
+	name = "ammo2",
+	title = "Ammunition (Polymer)",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = { "ammo1" = 2, "plastic-bar" = 1 },
+	output = { "ammo2" = 1 },
+})
+
+add_recipe({
+	name = "uranium-ammo",
+	title = "Ammunition (Uranium)",
+	energy = kJ(7500),
+	tags = tags.crafting,
+	input = { "uranium-238" = 1, "ammo2" = 15 },
+	output = { "ammo3" = 10 },
+})
+
+add_recipe({
+	name = "repair-kit",
+	title = "Repair Kit",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = {
+		"circuit-board" = 1,
+		"pipe" = 1,
+		"gear-wheel" = 1,
+		"steel-frame" = 1,
+		"brick" = 1,
+	},
+	output = { "repair-kit" = 1 },
+})
+
+add_recipe({
+	name = "repair-kit2",
+	title = "Repair Kit mk2",
+	energy = kJ(900),
+	tags = tags.crafting,
+	input = {
+		"repair-kit" = 2,
+		"electric-motor" = 1,
+		"mother-board" = 1,
+		"battery" = 1,
+		"filter" = 1,
+	},
+	output = { "repair-kit2" = 1 },
+})
+
+add_recipe({
+	name = "repair-kit3",
+	title = "Repair Kit mk3",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = {
+		"repair-kit2" = 2,
+		"aluminium-frame" = 1,
+		"heatsink" = 1,
+		"solid-fuel" = 1,
+	},
+	output = { "repair-kit3" = 1 },
+})
+
+add_recipe({
+	name = "explosive",
+	title = "Explosive",
+	energy = MJ(3),
+	tags = tags.chemistry,
+	input = { "sulfur" = 10, "solid-fuel" = 10, "steel-sheet" = 5, "water" = 100 },
+	output = { "explosive" = 1 },
+	fluid = "water",
+})
+
+add_recipe({
+	name = "explosive-atomic",
+	title = "Explosive (Atomic)",
+	energy = MJ(50),
+	tags = tags.crafting,
+	input = { "explosive" = 50, "plutonium-239" = 1 },
+	output = { "explosive-atomic" = 10 },
+})
+

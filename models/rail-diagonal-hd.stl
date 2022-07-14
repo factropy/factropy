@@ -1,0 +1,86 @@
+solid OpenSCAD_Model
+  facet normal 0 0 1
+    outer loop
+      vertex 1.41421 2.12132 0.1
+      vertex -1.41421 -2.12132 0.1
+      vertex 2.12132 1.41421 0.1
+    endloop
+  endfacet
+  facet normal 0 -0 1
+    outer loop
+      vertex -1.41421 -2.12132 0.1
+      vertex 1.41421 2.12132 0.1
+      vertex -2.12132 -1.41421 0.1
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex -1.41421 -2.12132 0
+      vertex 1.41421 2.12132 0
+      vertex 2.12132 1.41421 0
+    endloop
+  endfacet
+  facet normal 0 0 -1
+    outer loop
+      vertex 1.41421 2.12132 0
+      vertex -1.41421 -2.12132 0
+      vertex -2.12132 -1.41421 0
+    endloop
+  endfacet
+  facet normal 0.707107 -0.707107 0
+    outer loop
+      vertex -1.41421 -2.12132 0.1
+      vertex 2.12132 1.41421 0
+      vertex 2.12132 1.41421 0.1
+    endloop
+  endfacet
+  facet normal 0.707107 -0.707107 0
+    outer loop
+      vertex 2.12132 1.41421 0
+      vertex -1.41421 -2.12132 0.1
+      vertex -1.41421 -2.12132 0
+    endloop
+  endfacet
+  facet normal 0.707107 0.707107 0
+    outer loop
+      vertex 2.12132 1.41421 0.1
+      vertex 1.41421 2.12132 0
+      vertex 1.41421 2.12132 0.1
+    endloop
+  endfacet
+  facet normal 0.707107 0.707107 0
+    outer loop
+      vertex 1.41421 2.12132 0
+      vertex 2.12132 1.41421 0.1
+      vertex 2.12132 1.41421 0
+    endloop
+  endfacet
+  facet normal -0.707107 0.707107 0
+    outer loop
+      vertex -2.12132 -1.41421 0
+      vertex 1.41421 2.12132 0.1
+      vertex 1.41421 2.12132 0
+    endloop
+  endfacet
+  facet normal -0.707107 0.707107 0
+    outer loop
+      vertex 1.41421 2.12132 0.1
+      vertex -2.12132 -1.41421 0
+      vertex -2.12132 -1.41421 0.1
+    endloop
+  endfacet
+  facet normal -0.707107 -0.707107 0
+    outer loop
+      vertex -1.41421 -2.12132 0
+      vertex -2.12132 -1.41421 0.1
+      vertex -2.12132 -1.41421 0
+    endloop
+  endfacet
+  facet normal -0.707107 -0.707107 0
+    outer loop
+      vertex -2.12132 -1.41421 0.1
+      vertex -1.41421 -2.12132 0
+      vertex -1.41421 -2.12132 0.1
+    endloop
+  endfacet
+endsolid OpenSCAD_Model

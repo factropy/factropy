@@ -1,0 +1,634 @@
+
+add_item({
+	name = "log",
+	title = "Log",
+	fuel = [ "chemical", MJ(10) ],
+	show = true,
+	parts = [{
+		color = 0xCD853FFF,
+		scale = 0.5,
+		lods = [["models/wood.stl", high, shadow]],
+	}],
+})
+
+add_item({
+	name = "iron-ore",
+	title = "Iron Ore",
+	ore = "Iron",
+	mining = 1.0,
+	parts = [{
+		color = colors.ironOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [-0.1,0,0],
+		lods = [
+			["models/iron-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	raw = true,
+})
+
+add_item({
+	name = "copper-ore",
+	title = "Copper Ore",
+	ore = "Copper",
+	raw = true,
+	parts = [{
+		color = colors.copperOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [0.05,0,0],
+		lods = [
+			["models/copper-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 1.0,
+})
+
+add_item({
+	name = "coal",
+	title = "Coal",
+	ore = "Coal",
+	raw = true,
+	fuel = [ "chemical", MJ(20) ],
+	parts = [{
+		color = colors.coal,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [0.05,0,0],
+		lods = [
+			["models/coal.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.8,
+})
+
+add_item({
+	name = "stone",
+	title = "Stone",
+	ore = "Stone",
+	raw = true,
+	show = true,
+	parts = [{
+		color = colors.stone,
+		scale = 0.6,
+		lods = [
+			["models/coal.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.7,
+})
+
+add_item({
+	name = "uranium-ore",
+	title = "Uranium Ore",
+	ore = "Uranium",
+	raw = true,
+	parts = [{
+		color = colors.uraniumOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		lods = [
+			["models/stone.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.6,
+})
+
+add_item({
+	name = "tin-ore",
+	title = "Tin Ore",
+	ore = "Tin",
+	raw = true,
+	parts = [{
+		color = colors.tinOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [-0.1,0,0],
+		lods = [
+			["models/iron-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.8,
+})
+
+add_item({
+	name = "lead-ore",
+	title = "Lead Ore",
+	ore = "Lead",
+	raw = true,
+	parts = [{
+		color = colors.leadOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [0.05,0,0],
+		lods = [
+			["models/copper-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.8,
+})
+
+add_item({
+	name = "aluminium-ore",
+	title = "Aluminium Ore",
+	ore = "Aluminium",
+	raw = true,
+	parts = [{
+		color = colors.aluminiumOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		lods = [
+			["models/stone.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.7,
+})
+
+function crushedOre(name, title, color, gloss)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = color,
+				gloss = gloss,
+				translate = [0,0.35,0],
+				lods = [
+					["models/crushed-ore-hd.stl", high, noshadow],
+					["models/crushed-ore-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xCD853Fff,
+				translate = [0,0.25,0],
+				lods = [
+					["models/crushed-ore-box-hd.stl", high, shadow],
+					["models/crushed-ore-box-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		armV = 0.15,
+	})
+end
+
+crushedOre("iron-crushed", "Crushed Iron", colors.ironOre, gloss.metallicOre)
+crushedOre("copper-crushed", "Crushed Copper", colors.copperOre, gloss.metallicOre)
+crushedOre("coal-crushed", "Crushed Coal", colors.coal, gloss.none)
+crushedOre("stone-crushed", "Crushed Stone", 0x999999ff, gloss.none)
+crushedOre("silica-sand", "Silica Sand", 0xFFF8DCff, gloss.metallicOre)
+crushedOre("uranium-crushed", "Crushed Uranium", colors.uraniumOre, gloss.metallicOre)
+crushedOre("tin-crushed", "Crushed Tin", colors.tinOre, gloss.metallicOre)
+crushedOre("lead-crushed", "Crushed Lead", colors.leadOre, gloss.metallicOre)
+crushedOre("goal", "Gold", 0xFFD700ff, gloss.metallicOre)
+crushedOre("sulfur", "Sulfur", 0xffff00ff, gloss.metallicOre)
+crushedOre("alumina-powder", "Alumina Powder", colors.aluminium, gloss.metallicOre)
+crushedOre("uranium-238", "Uranium 238", 0x12AD12ff, gloss.metallicOre)
+crushedOre("uranium-235", "Uranium 235", 0x52ED52ff, gloss.metallicOre)
+crushedOre("fissile-product", "Fissile Product", 0xc0c0e0ff, gloss.metallicOre)
+crushedOre("plutonium-239", "Plutonium 239", 0xff6600ff, gloss.metallicOre)
+
+function ingot(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			gloss = gloss.metallic,
+			lods = [
+				["models/ingot-hd.stl", high, shadow],
+				["models/ingot-ld.stl", medium, noshadow],
+			]
+		}],
+		armV = 0.25,
+	})
+end
+
+ingot("copper-ingot", "Copper Ingot", colors.copper)
+ingot("steel-ingot", "Steel Ingot", colors.steel)
+ingot("tin-ingot", "Tin Ingot", 0x238E68ff)
+ingot("aluminium-ingot", "Aluminium Ingot", 0xDCDCDCff)
+ingot("gold-ingot", "Gold Ingot", 0xFFD700ff)
+ingot("silicon-ingot", "Silicon Ingot", 0xFFF8DCff)
+ingot("lead-ingot", "Lead Ingot", 0x666666ff)
+
+function sheet(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = color,
+				gloss = gloss.metallic,
+				lods = [
+					["models/sheet-hd.stl", high, shadow],
+					["models/sheet-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		mass = kg(0.5),
+		armV = 0.125,
+	})
+end
+
+sheet("copper-sheet", "Copper Sheet", colors.copper)
+sheet("steel-sheet", "Steel Sheet", colors.steel)
+
+function wire(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = color,
+				gloss = gloss.metallic,
+				translate = [0,0.25,0],
+				lods = [
+					["models/copper-wire-roll-hd.stl", high, shadow],
+					["models/copper-wire-roll-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444444ff,
+				translate = [0,0.5,0],
+				lods = [
+					["models/copper-wire-end-hd.stl", high, noshadow],
+					["models/copper-wire-end-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444444ff,
+				lods = [
+					["models/copper-wire-end-hd.stl", high, noshadow],
+					["models/copper-wire-end-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		mass = kg(0.5),
+		beltV = 0.01,
+		armV = 0.15,
+	})
+end
+
+wire("copper-wire", "Copper Wire", colors.copper)
+wire("solder", "Solder", 0x033f63ff)
+
+add_item({
+	name = "plastic-bar",
+	title = "Plastic Bar",
+	parts = [{
+		color = colors.plastic,
+		gloss = 16,
+		lods = [
+			["models/plastic-bar-hd.stl", high, shadow],
+			["models/plastic-bar-ld.stl", medium, shadow],
+		],
+	}],
+	armV = 0.2,
+	mass = kg(0.5),
+})
+
+function frame(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			gloss = gloss.metallic,
+			translate = [0,0.3,0],
+			lods = [
+				["models/frame-hd.stl", high, shadow],
+				["models/frame-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.1,
+		mass = kg(0.5),
+	})
+end
+
+frame("steel-frame", "Steel Frame", colors.steel)
+frame("aluminium-frame", "Aluminium Frame", colors.aluminium)
+
+add_item({
+	name = "brick",
+	title = "Brick",
+	parts = [{
+		color = 0xb69062ff,
+		lods = [
+			["models/brick-hd.stl", high, shadow],
+			["models/brick-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.25,
+})
+
+add_item({
+	name = "pipe",
+	title = "Pipe",
+	parts = [{
+		color = 0xffa500ff,
+		scale = 0.7,
+		translate = [0,0.32,0],
+		lods = [
+			["models/pipe-item-hd.stl", high, shadow],
+			["models/pipe-item-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.05,
+	droneV = -0.18,
+	tubeV = -0.05,
+	mass = kg(0.5),
+})
+
+add_item({
+	name = "gear-wheel",
+	title = "Gear Wheel",
+	parts = [{
+		color = 0x999999ff,
+		gloss = gloss.metallic,
+		scale = 0.8,
+		lods = [
+			["models/gear-hd.stl", high, shadow],
+			["models/gear-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.38,
+	beltV = 0.05,
+	tubeV = 0.05,
+	mass = kg(0.5),
+})
+
+function circuitBoard(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			lods = [
+				["models/circuit-board-hd.stl", high, noshadow],
+				["models/circuit-board-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.45,
+		droneV = 0.25,
+		tubeV = 0.1,
+		mass = kg(0.25),
+	})
+end
+
+circuitBoard("circuit-board", "Circuit Board", 0x228800ff)
+circuitBoard("mother-board", "Mother Board", 0xDC143Cff)
+
+function repairKit(name, title, color, repair)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			scale = 0.48,
+			translate = [0,0.24,0],
+			lods = [
+				["unitCube", high, shadow],
+				["unitCube", medium, noshadow],
+			],
+		}],
+		armV = 0.15,
+		mass = kg(0.5),
+		repair = repair,
+	})
+end
+
+repairKit("repair-kit", "Repair Kit mk1", 0x990000FF, 100)
+repairKit("repair-kit2", "Repair Kit mk2", 0x009900FF, 200)
+repairKit("repair-kit3", "Repair Kit mk3", 0x000099FF, 300)
+
+add_item({
+	name = "battery",
+	title = "Battery",
+	parts = [
+		{
+			color = 0xcc6600ff,
+			lods = [
+				["models/battery-body-hd.stl", high, shadow],
+				["models/battery-body-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x888888ff,
+			lods = [
+				["models/battery-cap-hd.stl", high, noshadow],
+				["models/battery-cap-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x660000ff,
+			translate = [0,0,-0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		},
+		{
+			color = 0x004400ff,
+			translate = [0,0,0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		},
+	],
+	armV = 0.15,
+})
+
+add_item({
+	name = "electric-motor",
+	title = "Electric Motor",
+	parts = [
+		{
+			color = 0xB22222ff,
+			lods = [
+				["models/electric-motor-body-hd.stl", high, shadow],
+				["models/electric-motor-body-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			lods = [
+				["models/electric-motor-foot-hd.stl", high, shadow],
+				["models/electric-motor-foot-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x888888ff,
+			lods = [
+				["models/electric-motor-shaft-hd.stl", high, noshadow],
+				["models/electric-motor-shaft-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.175,
+})
+
+add_item({
+	name = "filter",
+	title = "Filter",
+	parts = [
+		{
+			color = colors.plastic,
+			lods = [
+				["models/air-filter-frame-hd.stl", high, shadow],
+				["models/air-filter-frame-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			lods = [
+				["models/air-filter-mesh-hd.stl", high, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			lods = [
+				["models/air-filter-hd.stl", high, noshadow],
+				["models/air-filter-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.1,
+	mass = kg(0.5),
+})
+
+function ammo(name, title, color, damage)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			lods = [
+				["models/ammo-hd.stl", high, shadow],
+				["models/ammo-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.2,
+		ammoDamage = damage,
+		ammoRounds = 50,
+	})
+end
+
+ammo("ammo1", "Ammunition", 0x556B2Fff, 5)
+ammo("ammo2", "Ammunition (Polymer)", 0x758B4Fff, 10)
+ammo("ammo3", "Ammunition (Uranium)", 0x556B2Fff, 20)
+
+function solidFuel(name, title, color, energy, type)
+	add_item({
+		name = name,
+		title = title,
+		fuel = [ type, energy ],
+		parts = [{
+			color = color,
+			scale = 0.48,
+			translate = [0,0.24,0],
+			lods = [
+				["unitCube", high, shadow],
+				["unitCube", medium, noshadow],
+			],
+		}],
+		armV = 0.15,
+	})
+end
+
+solidFuel("solid-fuel", "Solid Fuel", 0x666666ff, MJ(40), "chemical")
+solidFuel("nuclear-fuel", "Nuclear Fuel", 0x66cc66ff, GJ(8), "nuclear")
+
+function explosive(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = 0x666666ff,
+				translate = [0,0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x666666ff,
+				translate = [0,-0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = color,
+				lods = [
+					["models/explosive-stick-hd.stl", high, shadow],
+					["models/explosive-stick-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x909090ff,
+				lods = [
+					["models/explosive-pin-hd.stl", high, noshadow],
+					["models/explosive-pin-ld.stl", medium, noshadow],
+				],
+			}
+		],
+		armV = 0.15,
+		beltV = 0.15,
+		tubeV = 0.1,
+	})
+end
+
+explosive("explosive", "Explosive", 0x660000ff)
+explosive("explosive-atomic", "Explosive (Atomic)", 0x006600ff)
+
+add_item({
+	name = "heatsink",
+	title = "Heat Sink",
+	parts = [
+		{
+			color = colors.aluminium,
+			gloss = gloss.metallic,
+			lods = [
+				["models/heatsink-fins-hd.stl", high, shadow],
+				["models/heatsink-fins-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.copper,
+			gloss = gloss.metallic,
+			lods = [
+				["models/heatsink-base-hd.stl", high, noshadow],
+				["models/heatsink-base-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.1,
+})
+
+
