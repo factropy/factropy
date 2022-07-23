@@ -26,7 +26,7 @@ struct PowerPole {
 	void manage();
 	void unmanage();
 
-	Sphere range();
+	Cylinder range();
 	Box coverage();
 
 	minivec<uint> siblings();

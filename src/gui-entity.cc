@@ -1642,7 +1642,7 @@ GuiFakeEntity* GuiFakeEntity::update() {
 			powerpole->wires.clear();
 			powerpole->point = pos() + Point::Up*(spec->collision.h/2);
 
-			Box range = pos().box().grow(spec->powerpoleRange);
+			auto range = Cylinder(powerpole->point, spec->powerpoleRange+0.001, 1000);
 			for (auto se: Entity::intersecting(range)) {
 				if (se->id == id) continue;
 				if (!se->spec->powerpole) continue;

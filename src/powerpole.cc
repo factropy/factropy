@@ -41,8 +41,8 @@ void PowerPole::unmanage() {
 	disconnect();
 }
 
-Sphere PowerPole::range() {
-	return Sphere(point(), en->spec->powerpoleRange).grow(0.1);
+Cylinder PowerPole::range() {
+	return Cylinder(point(), en->spec->powerpoleRange+0.001, 1000);
 }
 
 Box PowerPole::coverage() {

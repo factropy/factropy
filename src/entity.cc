@@ -875,6 +875,10 @@ std::vector<Entity*> Entity::intersecting(const Sphere& sphere) {
 	return intersecting(sphere, grid);
 }
 
+std::vector<Entity*> Entity::intersecting(const Cylinder& cylinder) {
+	return intersecting(cylinder, grid);
+}
+
 std::vector<Entity*> Entity::intersecting(Point pos, float radius) {
 	return intersecting(Sphere(pos, radius));
 }

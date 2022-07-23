@@ -176,6 +176,10 @@ bool Box::intersects(const Sphere& s) const {
 	return collision;
 }
 
+bool Box::intersects(const Cylinder& c) const {
+	return c.intersects(*this);
+}
+
 bool Box::intersects(const Ray& r) const {
 	return intersectsRay(r.position, r.direction);
 }

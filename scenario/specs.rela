@@ -4922,7 +4922,7 @@ add_spec({
 	rotateGhost = true,
 	rotateExtant = true,
 	powerpole = true,
-	powerpoleRange = 32,
+	powerpoleRange = 64,
 	powerpoleCoverage = 4,
 	collision = [0, 0, 0, 1, 12, 1],
 	iconD = 1.8,

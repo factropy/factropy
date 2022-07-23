@@ -21,6 +21,7 @@ struct Entity;
 #include "point.h"
 #include "box.h"
 #include "sphere.h"
+#include "cylinder.h"
 #include "cuboid.h"
 #include "curve.h"
 #include "rail.h"
@@ -213,6 +214,19 @@ struct Entity {
 		std::vector<Entity*> hits;
 		for (Entity* en: gm.search(sphere)) {
 			if (en->sphere().intersects(sphere)) {
+				hits.push_back(en);
+			}
+		}
+		return hits;
+	}
+
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder);
+
+	template <class G>
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
+		std::vector<Entity*> hits;
+		for (Entity* en: gm.search(cylinder.box())) {
+			if (en->box().intersects(cylinder)) {
 				hits.push_back(en);
 			}
 		}

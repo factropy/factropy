@@ -5,6 +5,7 @@
 struct Box;
 #include "point.h"
 #include "sphere.h"
+#include "cylinder.h"
 #include "volume.h"
 #include <initializer_list>
 
@@ -37,6 +38,7 @@ struct Box {
 	Box side(const Point& dir, real thick);
 	bool intersects(const Box& b) const;
 	bool intersects(const Sphere& s) const;
+	bool intersects(const Cylinder& c) const;
 	bool intersects(const Ray& r) const;
 	bool intersectsRay(const Point& pos, const Point& dir) const;
 	bool contains(const Point& p) const;
