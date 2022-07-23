@@ -4884,3 +4884,64 @@ function()
 		]
 	})
 end()
+
+add_spec({
+	name = "powerpole-small",
+	title = "Power Pole (Small)",
+	health = 150,
+	rotateGhost = true,
+	rotateExtant = true,
+	powerpole = true,
+	powerpoleRange = 16,
+	powerpoleCoverage = 8,
+	collision = [0, 0, 0, 1, 6, 1],
+	iconD = 1.8,
+	iconV = 0,
+	parts = [
+		{
+			color = colors.steel,
+			gloss = gloss.metallic,
+			translate = down*3.0,
+			lods = [
+				["models/powerpole-small-body-hd.stl", high, shadow],
+				["models/powerpole-small-body-ld.stl", medium, shadow],
+				["models/powerpole-small-body-vld.stl", verylow, noshadow],
+			],
+		},
+	],
+	materials = {
+		"steel-frame" = 3,
+		"copper-wire" = 3,
+	},
+})
+
+add_spec({
+	name = "powerpole-large",
+	title = "Power Pole (Large)",
+	health = 150,
+	rotateGhost = true,
+	rotateExtant = true,
+	powerpole = true,
+	powerpoleRange = 32,
+	powerpoleCoverage = 4,
+	collision = [0, 0, 0, 1, 12, 1],
+	iconD = 1.8,
+	iconV = 0,
+	parts = [
+		{
+			color = colors.steel,
+			gloss = gloss.metallic,
+			translate = down*6,
+			lods = [
+				["models/powerpole-large-body-hd.stl", high, shadow],
+				["models/powerpole-large-body-ld.stl", medium, shadow],
+				["models/powerpole-large-body-vld.stl", verylow, noshadow],
+			],
+		},
+	],
+	materials = {
+		"steel-frame" = 3,
+		"copper-wire" = 3,
+	},
+})
+

@@ -161,6 +161,17 @@ void Scene::circle(const Point& centroid, float radius, const Color& color, floa
 	}
 }
 
+void Scene::square(const Point& centroid, float half, const Color& color, float pen) {
+	Point a = centroid + Point::South*half + Point::West*half;
+	Point b = centroid + Point::West*half + Point::North*half;
+	Point c = centroid + Point::North*half + Point::East*half;
+	Point d = centroid + Point::East*half + Point::South*half;
+	line(a, b, color, pen);
+	line(b, c, color, pen);
+	line(c, d, color, pen);
+	line(d, a, color, pen);
+}
+
 void Scene::updateMouse() {
 	MouseState last = mouse;
 
@@ -495,6 +506,8 @@ void Scene::updateEntities() {
 	for (auto& [_,spec]: Spec::all) spec->count.render = 0;
 
 	if (!visibleCells.size()) updateVisibleCells();
+
+	GuiEntity::powerCables.clear();
 
 	selectedFuture.clear();
 	hoveringFuture = 0;

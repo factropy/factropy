@@ -67,6 +67,7 @@ void Entity::reset() {
 	Monorail::reset();
 	Monocar::reset();
 	Source::reset();
+	PowerPole::reset();
 }
 
 std::size_t Entity::memory() {
@@ -331,6 +332,10 @@ Entity& Entity::create(uint id, Spec *spec) {
 		Source::create(id);
 	}
 
+	if (spec->powerpole) {
+		PowerPole::create(id);
+	}
+
 	if (spec->generateElectricity) {
 		electricityGenerators.insert(&en);
 		en.setGenerating(true);
@@ -511,6 +516,10 @@ void Entity::destroy() {
 		source().destroy();
 	}
 
+	if (spec->powerpole) {
+		powerpole().destroy();
+	}
+
 	if (spec->generateElectricity) {
 		electricityGenerators.erase(this);
 	}
@@ -641,6 +650,9 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 	}
 
 	if (en.spec->source) {
+	}
+
+	if (en.spec->powerpole) {
 	}
 }
 
@@ -779,6 +791,9 @@ void Entity::setup(Entity::Settings* settings) {
 	}
 
 	if (spec->source) {
+	}
+
+	if (spec->powerpole) {
 	}
 }
 
@@ -1306,6 +1321,9 @@ Entity& Entity::manage() {
 		if (spec->networker) {
 			networker().manage();
 		}
+		if (spec->powerpole) {
+			powerpole().manage();
+		}
 	}
 	return *this;
 }
@@ -1327,6 +1345,9 @@ Entity& Entity::unmanage() {
 		}
 		if (spec->networker) {
 			networker().unmanage();
+		}
+		if (spec->powerpole) {
+			powerpole().unmanage();
 		}
 	}
 	return *this;
@@ -1914,5 +1935,9 @@ Tube& Entity::tube() const {
 
 Source& Entity::source() const {
 	return Source::get(id);
+}
+
+PowerPole& Entity::powerpole() const {
+	return PowerPole::get(id);
 }
 

@@ -206,6 +206,7 @@ struct Scene {
 	void cube(const Box& box, const Color& color);
 	void sphere(const Sphere& sphere, const Color& color);
 	void circle(const Point& centroid, float radius, const Color& color, float pen = 0.0f, int step = 5);
+	void square(const Point& centroid, float half, const Color& color, float pen = 0.0f);
 	void line(const Point& a, const Point& b, const Color& color, float penW = 0.0f, float penH = 0.0f);
 	void cuboid(const Cuboid& cuboid, const Color& color, float pen = 0.0f);
 	bool keyDown(int key);

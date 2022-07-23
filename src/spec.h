@@ -210,6 +210,10 @@ struct Spec {
 	Energy energyGenerate;
 	bool generatorState;
 
+	bool powerpole;
+	float powerpoleRange;
+	float powerpoleCoverage;
+
 	bool effector;
 	float effectorElectricity;
 	float effectorFuel;

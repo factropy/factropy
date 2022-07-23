@@ -65,6 +65,7 @@ struct Entity;
 #include "monorail.h"
 #include "monocar.h"
 #include "source.h"
+#include "powerpole.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -393,4 +394,5 @@ struct Entity {
 	Monocar& monocar() const;
 	Tube& tube() const;
 	Source& source() const;
+	PowerPole& powerpole() const;
 };

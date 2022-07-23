@@ -822,6 +822,23 @@ public:
 			spec->generateElectricity = to_bool(generateElectricity);
 		}
 
+		auto powerpole = field("powerpole");
+		if (is_bool(powerpole)) {
+			spec->powerpole = to_bool(powerpole);
+		}
+
+		if (spec->powerpole) {
+			auto powerpoleRange = field("powerpoleRange");
+			if (is_number(powerpoleRange)) {
+				spec->powerpoleRange = to_number(powerpoleRange);
+			}
+
+			auto powerpoleCoverage = field("powerpoleCoverage");
+			if (is_number(powerpoleCoverage)) {
+				spec->powerpoleCoverage = to_number(powerpoleCoverage);
+			}
+		}
+
 		auto status = field("status");
 		if (is_bool(status)) {
 			spec->status = to_bool(status);
