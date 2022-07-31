@@ -53,6 +53,7 @@ namespace Sim {
 	TimeSeries statsMonorail;
 	TimeSeries statsMonocar;
 	TimeSeries statsSource;
+	TimeSeries statsPowerPole;
 
 	OpenSimplex* opensimplex;
 	std::mutex mutex;
@@ -159,6 +160,7 @@ namespace Sim {
 		statsMonorail.clear();
 		statsMonocar.clear();
 		statsSource.clear();
+		statsPowerPole.clear();
 
 		for (auto& item: Item::all) {
 			item.production.clear();
@@ -245,6 +247,7 @@ namespace Sim {
 		statsEntityPre.track(tick, Entity::preTick);
 		statsGhost.track(tick, Ghost::tick);
 		statsNetworker.track(tick, Networker::tick);
+		statsPowerPole.track(tick, PowerPole::tick);
 		statsPile.track(tick, Pile::tick);
 		statsExplosive.track(tick, Explosive::tick);
 

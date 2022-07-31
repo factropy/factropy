@@ -2,7 +2,7 @@
 add_goal({
 	name = "mining",
 	title = "Start Mining",
-	construction = { "miner" = 1 },
+	construction = { "miner" = 1, "powerpole-small" = 2 },
 	production = { "iron-ore" = 5 },
 	specs = [
 		"conveyor-1",
@@ -10,6 +10,7 @@ add_goal({
 		"conveyor-right-1",
 		"unveyor-entry-1",
 		"unveyor-exit-1",
+		"powerpole-small",
 	],
 	recipes = [
 		"mine-coal",
@@ -159,6 +160,7 @@ add_goal({
 		"tube-medium-alt-1",
 		"tube-large-1",
 		"tube-large-alt-1",
+		"powerpole-large",
 	],
 	recipes = [
 		"hydrazine",

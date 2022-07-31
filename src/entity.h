@@ -21,6 +21,7 @@ struct Entity;
 #include "point.h"
 #include "box.h"
 #include "sphere.h"
+#include "cylinder.h"
 #include "cuboid.h"
 #include "curve.h"
 #include "rail.h"
@@ -65,6 +66,7 @@ struct Entity;
 #include "monorail.h"
 #include "monocar.h"
 #include "source.h"
+#include "powerpole.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -91,6 +93,7 @@ struct Entity {
 	static const uint32_t MARKED2 = 1<<6;
 	static const uint32_t BLOCKED = 1<<7;
 	static const uint32_t RULED = 1<<8;
+	static const uint32_t PERMANENT = 1<<9;
 
 	// Spatial indexes of entity axis-aligned bounding boxes
 	static const uint32_t GRID = 16;
@@ -218,6 +221,19 @@ struct Entity {
 		return hits;
 	}
 
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder);
+
+	template <class G>
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
+		std::vector<Entity*> hits;
+		for (Entity* en: gm.search(cylinder.box())) {
+			if (en->box().intersects(cylinder)) {
+				hits.push_back(en);
+			}
+		}
+		return hits;
+	}
+
 	static std::vector<Entity*> intersecting(Point pos, float radius);
 	static std::vector<Entity*> enemiesInRange(Point pos, float radius);
 	static Entity* at(Point p); // intersecting[0]
@@ -244,6 +260,8 @@ struct Entity {
 	Entity& setBlocked(bool state);
 	bool isRuled() const;
 	Entity& setRuled(bool state);
+	bool isPermanent() const;
+	Entity& setPermanent(bool state);
 	bool isGenerating() const;
 	Entity& setGenerating(bool state);
 	bool isMarked1() const;
@@ -324,6 +342,8 @@ struct Entity {
 	float consumeRate(Energy e);
 	static void bulkConsumeElectricity(Spec* spec, Energy e, int count);
 	void generate();
+	bool electrical();
+	bool electrified();
 
 	// Apply damage. May result in ::unmanage() and ::remove()
 	void damage(Health hits);
@@ -393,4 +413,5 @@ struct Entity {
 	Monocar& monocar() const;
 	Tube& tube() const;
 	Source& source() const;
+	PowerPole& powerpole() const;
 };

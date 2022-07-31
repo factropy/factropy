@@ -67,6 +67,7 @@ void Entity::reset() {
 	Monorail::reset();
 	Monocar::reset();
 	Source::reset();
+	PowerPole::reset();
 }
 
 std::size_t Entity::memory() {
@@ -331,6 +332,10 @@ Entity& Entity::create(uint id, Spec *spec) {
 		Source::create(id);
 	}
 
+	if (spec->powerpole) {
+		PowerPole::create(id);
+	}
+
 	if (spec->generateElectricity) {
 		electricityGenerators.insert(&en);
 		en.setGenerating(true);
@@ -511,6 +516,10 @@ void Entity::destroy() {
 		source().destroy();
 	}
 
+	if (spec->powerpole) {
+		powerpole().destroy();
+	}
+
 	if (spec->generateElectricity) {
 		electricityGenerators.erase(this);
 	}
@@ -641,6 +650,9 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 	}
 
 	if (en.spec->source) {
+	}
+
+	if (en.spec->powerpole) {
 	}
 }
 
@@ -780,6 +792,9 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->source) {
 	}
+
+	if (spec->powerpole) {
+	}
 }
 
 bool Entity::exists(uint id) {
@@ -858,6 +873,10 @@ std::vector<Entity*> Entity::intersecting(const Box& box) {
 
 std::vector<Entity*> Entity::intersecting(const Sphere& sphere) {
 	return intersecting(sphere, grid);
+}
+
+std::vector<Entity*> Entity::intersecting(const Cylinder& cylinder) {
+	return intersecting(cylinder, grid);
 }
 
 std::vector<Entity*> Entity::intersecting(Point pos, float radius) {
@@ -1030,6 +1049,15 @@ bool Entity::isRuled() const {
 
 Entity& Entity::setRuled(bool state) {
 	flags = state ? (flags | RULED) : (flags & ~RULED);
+	return *this;
+}
+
+bool Entity::isPermanent() const {
+	return (flags & PERMANENT) != 0;
+}
+
+Entity& Entity::setPermanent(bool state) {
+	flags = state ? (flags | PERMANENT) : (flags & ~PERMANENT);
 	return *this;
 }
 
@@ -1306,6 +1334,9 @@ Entity& Entity::manage() {
 		if (spec->networker) {
 			networker().manage();
 		}
+		if (spec->powerpole) {
+			powerpole().manage();
+		}
 	}
 	return *this;
 }
@@ -1327,6 +1358,9 @@ Entity& Entity::unmanage() {
 		}
 		if (spec->networker) {
 			networker().unmanage();
+		}
+		if (spec->powerpole) {
+			powerpole().unmanage();
 		}
 	}
 	return *this;
@@ -1593,7 +1627,7 @@ Energy Entity::consume(Energy e) {
 	Energy c = 0;
 	if (!isEnabled()) return c;
 
-	if (spec->consumeElectricity) {
+	if (spec->consumeElectricity && electrified()) {
 		electricityDemand += e;
 		c = e * electricitySatisfaction;
 	}
@@ -1633,7 +1667,7 @@ void Entity::bulkConsumeElectricity(Spec* spec, Energy e, int count) {
 
 void Entity::generate() {
 	ensure(mutating);
-	if (!isEnabled() || !isGenerating()) return;
+	if (!isEnabled() || !isGenerating() || !electrified()) return;
 
 	// At the start of the game when a single generator exists, or when the electricity network
 	// fuel supply crashes and generators need to restart, load must always be slightly > 0.
@@ -1704,6 +1738,14 @@ void Entity::generate() {
 		electricityCapacity += spec->energyGenerate;
 		return;
 	}
+}
+
+bool Entity::electrical() {
+	return (spec->consumeElectricity || spec->generateElectricity) && !spec->conveyorEnergyDrain;
+}
+
+bool Entity::electrified() {
+	return electrical() && PowerPole::powered(box());
 }
 
 void Entity::damage(Health hits) {
@@ -1914,5 +1956,9 @@ Tube& Entity::tube() const {
 
 Source& Entity::source() const {
 	return Source::get(id);
+}
+
+PowerPole& Entity::powerpole() const {
+	return PowerPole::get(id);
 }
 

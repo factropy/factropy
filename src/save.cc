@@ -234,6 +234,7 @@ namespace Sim {
 				Monocar::saveAll(name);
 				Teleporter::saveAll(name);
 				Launcher::saveAll(name);
+				PowerPole::saveAll(name);
 
 				Goal::saveAll(name);
 				Message::saveAll(name);
@@ -386,6 +387,7 @@ namespace Sim {
 		Monocar::loadAll(name);
 		Teleporter::loadAll(name);
 		Launcher::loadAll(name);
+		PowerPole::loadAll(name);
 
 		Goal::loadAll(name);
 		Message::loadAll(name);
@@ -3012,6 +3014,49 @@ void Launcher::loadAll(const char* name) {
 
 		if (state.contains("condition")) {
 			launcher.condition = Signal::Condition::unserialize(state["condition"]);
+		}
+	}
+
+	in.close();
+}
+
+void PowerPole::saveAll(const char* name) {
+	auto path = std::string(name);
+	auto out = std::ofstream(path + "/powerpoles.json");
+
+	for (auto& pole: all) {
+		json state;
+		state["id"] = pole.id;
+		state["root"] = pole.root;
+		state["managed"] = pole.managed;
+
+		int i = 0;
+		for (auto sid: pole.links) {
+			state["links"][i++] = sid;
+		}
+
+		out << state << "\n";
+	}
+
+	out.close();
+}
+
+void PowerPole::loadAll(const char* name) {
+	auto path = std::string(name);
+	auto in = std::ifstream(path + "/powerpoles.json");
+
+	for (std::string line; std::getline(in, line);) {
+		auto state = json::parse(line);
+		PowerPole& pole = get(state["id"]);
+		pole.root = state["root"];
+		pole.managed = state["managed"];
+
+		for (auto sid: state["links"]) {
+			pole.links.push_back(sid);
+		}
+
+		if (pole.managed) {
+			PowerPole::gridCoverage.insert(pole.coverage(), &pole);
 		}
 	}
 

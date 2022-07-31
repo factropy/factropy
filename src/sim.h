@@ -52,6 +52,7 @@ namespace Sim {
 	extern TimeSeries statsMonorail;
 	extern TimeSeries statsMonocar;
 	extern TimeSeries statsSource;
+	extern TimeSeries statsPowerPole;
 
 	extern OpenSimplex* opensimplex;
 	extern uint64_t tick;

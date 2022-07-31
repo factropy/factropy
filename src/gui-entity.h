@@ -85,6 +85,13 @@ struct GuiEntity {
 
 	monorailState* monorail = nullptr;
 
+	struct powerpoleState {
+		minivec<Point> wires;
+		Point point;
+	};
+
+	powerpoleState* powerpole = nullptr;
+
 	static void prepareCaches();
 
 	GuiEntity();
@@ -115,6 +122,7 @@ struct GuiEntity {
 	void loadPipe();
 	void loadComputer();
 	void loadRouter();
+	void loadPowerPole();
 	Box box() const;
 	Box selectionBox() const;
 	Box southBox() const;
@@ -131,6 +139,7 @@ struct GuiEntity {
 
 	void instance();
 	void instanceItems();
+	void instanceCables();
 	void overlayHovering(bool full = true);
 	void overlayDirecting();
 	void overlayRouting();

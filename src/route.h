@@ -82,6 +82,20 @@ struct Route {
 		node->set = 2;
 	}
 
+	uint length() {
+		return result.size();
+	}
+
+	float cost() {
+		float sum = 0;
+		CELL* last = nullptr;
+		for (auto& cell: result) {
+			if (last) sum += calcCost(&cell, last);
+			last = &cell;
+		}
+		return sum;
+	}
+
 	void update() {
 		Node* current = candidate;
 		candidate = nullptr;
@@ -179,6 +193,11 @@ struct Route {
 				}
 			}
 		}
+	}
+
+	bool run() {
+		while (!done) update();
+		return success;
 	}
 };
 

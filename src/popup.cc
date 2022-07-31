@@ -598,6 +598,7 @@ void StatsPopup2::draw() {
 				{ .title = "Monorail", .ts = &Sim::statsMonorail},
 				{ .title = "Monocar", .ts = &Sim::statsMonocar},
 				{ .title = "Source", .ts = &Sim::statsSource},
+				{ .title = "PowerPole", .ts = &Sim::statsPowerPole},
 			};
 
 			std::sort(plots.begin(), plots.end(), [](const auto& a, const auto& b) {

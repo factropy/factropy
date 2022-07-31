@@ -5,7 +5,7 @@ add_item({
 	fuel = [ "chemical", MJ(10) ],
 	show = true,
 	parts = [{
-		color = 0xCD853FFF,
+		color = colors.wood,
 		scale = 0.5,
 		lods = [["models/wood.stl", high, shadow]],
 	}],
