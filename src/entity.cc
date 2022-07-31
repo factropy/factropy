@@ -1052,6 +1052,15 @@ Entity& Entity::setRuled(bool state) {
 	return *this;
 }
 
+bool Entity::isPermanent() const {
+	return (flags & PERMANENT) != 0;
+}
+
+Entity& Entity::setPermanent(bool state) {
+	flags = state ? (flags | PERMANENT) : (flags & ~PERMANENT);
+	return *this;
+}
+
 bool Entity::isMarked1() const {
 	return (flags & MARKED1) != 0;
 }
@@ -1618,7 +1627,7 @@ Energy Entity::consume(Energy e) {
 	Energy c = 0;
 	if (!isEnabled()) return c;
 
-	if (spec->consumeElectricity) {
+	if (spec->consumeElectricity && electrified()) {
 		electricityDemand += e;
 		c = e * electricitySatisfaction;
 	}
@@ -1658,7 +1667,7 @@ void Entity::bulkConsumeElectricity(Spec* spec, Energy e, int count) {
 
 void Entity::generate() {
 	ensure(mutating);
-	if (!isEnabled() || !isGenerating()) return;
+	if (!isEnabled() || !isGenerating() || !electrified()) return;
 
 	// At the start of the game when a single generator exists, or when the electricity network
 	// fuel supply crashes and generators need to restart, load must always be slightly > 0.
@@ -1729,6 +1738,14 @@ void Entity::generate() {
 		electricityCapacity += spec->energyGenerate;
 		return;
 	}
+}
+
+bool Entity::electrical() {
+	return spec->consumeElectricity || spec->generateElectricity;
+}
+
+bool Entity::electrified() {
+	return electrical() && PowerPole::powered(box());
 }
 
 void Entity::damage(Health hits) {

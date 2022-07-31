@@ -211,6 +211,7 @@ struct Spec {
 	bool generatorState;
 
 	bool powerpole;
+	bool powerpoleRoot;
 	float powerpoleRange;
 	float powerpoleCoverage;
 

@@ -738,6 +738,7 @@ void GUI::update() {
 					if (te->spec->forceDeleteStore && !force && !en.store().isEmpty()) continue;
 					if (scene.directing && scene.directing->id == id) continue;
 					if (!te->spec->deconstructable) continue;
+					if (en.isPermanent()) continue;
 					en.deconstruct();
 				}
 			});
@@ -757,6 +758,7 @@ void GUI::update() {
 					if (te->spec->forceDeleteStore && !force && !en.store().isEmpty()) break;
 					if (scene.directing && scene.directing->id == id) break;
 					if (!te->spec->deconstructable) break;;
+					if (en.isPermanent()) break;
 					en.deconstruct();
 					break;
 				}

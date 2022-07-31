@@ -1533,6 +1533,28 @@ containerSmall({
 })
 
 containerSmall({
+	name = "container-supply",
+	title = "Container (Supply)",
+	color = 0x0000aaff,
+	build = false,
+	clone = false,
+	plan = false,
+	enable = true,
+	tipStorage = true,
+	consumeMagic = true,
+	generateElectricity = true,
+	energyGenerate = MW(1),
+	logistic = true,
+	storeSetLower = true,
+	storeSetUpper = true,
+	forceDeleteStore = true,
+	powerpole = true,
+	powerpoleRoot = true,
+	powerpoleRange = 5,
+	powerpoleCoverange = 2,
+})
+
+containerSmall({
 	name = "container-shipping",
 	title = "Container (Shipping)",
 	color = 0x8d6e54ff,
@@ -4889,17 +4911,23 @@ add_spec({
 	name = "powerpole-small",
 	title = "Power Pole (Small)",
 	health = 150,
+	rotations = [south],
 	rotateGhost = true,
 	rotateExtant = true,
+	status = true,
+	beacon = [0,3,0],
 	powerpole = true,
 	powerpoleRange = 16,
 	powerpoleCoverage = 8,
 	collision = [0, 0, 0, 1, 6, 1],
-	iconD = 1.8,
+	place = [placement.land, placement.hill],
+	placeOnHill = true,
+	placeOnHillPlatform = 1,
+	iconD = 2.5,
 	iconV = 0,
 	parts = [
 		{
-			color = colors.steel,
+			color = colors.wood,
 			gloss = gloss.metallic,
 			translate = down*3.0,
 			lods = [
@@ -4908,9 +4936,27 @@ add_spec({
 				["models/powerpole-small-body-vld.stl", verylow, noshadow],
 			],
 		},
+		{
+			color = colors.industrialGreen,
+			gloss = gloss.metallic,
+			translate = down*3.0,
+			lods = [
+				["models/powerpole-small-base-hd.stl", high, shadow],
+				["models/powerpole-small-base-ld.stl", medium, shadow],
+			],
+		},
+		{
+			color = colors.industrialGreen,
+			gloss = gloss.metallic,
+			translate = down*3.0,
+			lods = [
+				["models/powerpole-small-head-hd.stl", high, shadow],
+				["models/powerpole-small-head-ld.stl", medium, shadow],
+			],
+		},
 	],
 	materials = {
-		"steel-frame" = 3,
+		"steel-frame" = 1,
 		"copper-wire" = 3,
 	},
 })
@@ -4919,13 +4965,19 @@ add_spec({
 	name = "powerpole-large",
 	title = "Power Pole (Large)",
 	health = 150,
+	rotations = [south],
 	rotateGhost = true,
 	rotateExtant = true,
+	status = true,
+	beacon = [0,6,0],
 	powerpole = true,
-	powerpoleRange = 64,
+	powerpoleRange = 128,
 	powerpoleCoverage = 4,
-	collision = [0, 0, 0, 1, 12, 1],
-	iconD = 1.8,
+	collision = [0, 0, 0, 3, 12, 3],
+	place = [placement.land, placement.hill],
+	placeOnHill = true,
+	placeOnHillPlatform = 3,
+	iconD = 8,
 	iconV = 0,
 	parts = [
 		{
@@ -4940,8 +4992,8 @@ add_spec({
 		},
 	],
 	materials = {
-		"steel-frame" = 3,
-		"copper-wire" = 3,
+		"steel-frame" = 10,
+		"copper-wire" = 10,
 	},
 })
 

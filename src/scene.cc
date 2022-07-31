@@ -507,8 +507,6 @@ void Scene::updateEntities() {
 
 	if (!visibleCells.size()) updateVisibleCells();
 
-	GuiEntity::powerCables.clear();
-
 	selectedFuture.clear();
 	hoveringFuture = 0;
 
@@ -516,6 +514,7 @@ void Scene::updateEntities() {
 	trigger doneHovering;
 	trigger doneInstancing;
 	trigger doneInstancingItems;
+	trigger doneInstancingCables;
 	trigger doneGhosting;
 
 	typedef minivec<Entity*> EBatch;
@@ -525,6 +524,7 @@ void Scene::updateEntities() {
 	channel<GBatch*,-1> forHovering;
 	channel<GBatch*,-1> forInstancing;
 	channel<GBatch*,-1> forInstancingItems;
+	channel<GBatch*,-1> forInstancingCables;
 	channel<GBatch*,-1> forGhosting;
 
 	channel<EBatch*,-1> oldEBatch;
@@ -548,6 +548,7 @@ void Scene::updateEntities() {
 					forHovering.send(out);
 					forInstancing.send(out);
 					forInstancingItems.send(out);
+					forInstancingCables.send(out);
 					oldGBatch.send(out);
 					out = new GBatch;
 					out->reserve(1000);
@@ -666,6 +667,18 @@ void Scene::updateEntities() {
 		});
 	}
 
+	// GuiEntity cable rendering, not Sim::locked, fed by instances
+	crew.job([&]() {
+		Mesh::batchInstances();
+
+		for (auto in: forInstancingCables) {
+			for (auto ge: *in) ge->instanceCables();
+		}
+
+		Mesh::flushInstances();
+		doneInstancingCables.now();
+	});
+
 	// GuiEntity ghost rendering, not Sim::locked, fed by instancers
 	// Runs last so that translucent ghosts can be sorted and rendered after extant entities
 	crew.job([&]() {
@@ -762,6 +775,7 @@ void Scene::updateEntities() {
 			forHovering.send(geBatch);
 			forInstancing.send(geBatch);
 			forInstancingItems.send(geBatch);
+			forInstancingCables.send(geBatch);
 
 			EBatch* enBatch = new EBatch;
 
@@ -810,10 +824,12 @@ void Scene::updateEntities() {
 	forHovering.close();
 	forInstancing.close();
 	forInstancingItems.close();
+	forInstancingCables.close();
 
 	doneHovering.wait();
 	doneInstancing.wait(Config::engine.sceneInstancingThreads);
 	doneInstancingItems.wait(Config::engine.sceneInstancingItemsThreads);
+	doneInstancingCables.wait();
 
 	forGhosting.close();
 	doneGhosting.wait();
@@ -943,6 +959,7 @@ void Scene::updatePlacing() {
 
 	for (auto te: placing->entities) {
 		te->instance();
+		te->instanceCables();
 
 		cuboid(
 			te->selectionCuboid(),
@@ -1296,6 +1313,13 @@ void Scene::update(uint w, uint h, float f) {
 						ImGui::Alert("Fuel");
 					}
 				});
+			}
+
+			if (hovering->spec->powerpole) {
+				ImGui::Spacing();
+				if (hovering->status == GuiEntity::Status::Alert) ImGui::Alert("Disconnected");
+				else if (hovering->status == GuiEntity::Status::Warning) ImGui::Warning("Electricity");
+				else ImGui::Notice("Connected");
 			}
 
 			if (hovering->spec->crafter) {

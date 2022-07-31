@@ -93,6 +93,7 @@ struct Entity {
 	static const uint32_t MARKED2 = 1<<6;
 	static const uint32_t BLOCKED = 1<<7;
 	static const uint32_t RULED = 1<<8;
+	static const uint32_t PERMANENT = 1<<9;
 
 	// Spatial indexes of entity axis-aligned bounding boxes
 	static const uint32_t GRID = 16;
@@ -259,6 +260,8 @@ struct Entity {
 	Entity& setBlocked(bool state);
 	bool isRuled() const;
 	Entity& setRuled(bool state);
+	bool isPermanent() const;
+	Entity& setPermanent(bool state);
 	bool isGenerating() const;
 	Entity& setGenerating(bool state);
 	bool isMarked1() const;
@@ -339,6 +342,8 @@ struct Entity {
 	float consumeRate(Energy e);
 	static void bulkConsumeElectricity(Spec* spec, Energy e, int count);
 	void generate();
+	bool electrical();
+	bool electrified();
 
 	// Apply damage. May result in ::unmanage() and ::remove()
 	void damage(Health hits);

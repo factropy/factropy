@@ -398,6 +398,10 @@ void GuiEntity::loadPowerPole() {
 		powerpole->wires.clear();
 		powerpole->point = pole.point();
 
+		if (spec->status) {
+			status = !ghost && pole.root != 0 ? Status::Ok: Status::Alert;
+		}
+
 		for (auto& sid: pole.links) {
 			auto& sibling = PowerPole::get(sid);
 			powerpole->wires.push_back(sibling.point());
@@ -682,30 +686,6 @@ void GuiEntity::instance() {
 			}
 		}
 	}
-
-	if (spec->powerpole && powerpole) {
-		powerCabling.lock();
-		for (auto& end: powerpole->wires) {
-			auto cable = powerCable(powerpole->point, end);
-			if (powerCables.count(cable)) continue;
-			Point posA = powerpole->point;
-			Point posB = end;
-			Point dirAB = (posB-posA).normalize();
-			float distance = posA.distance(posB);
-			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
-			Point dirA = (middle-posA).normalize();
-			Point dirB = (posB-middle).normalize();
-			auto curve = Rail(posA, dirA, posB, dirB);
-			auto last = posA;
-			for (auto next: curve.steps(1.0f)) {
-				scene.line(last, next, 0x666666ff, scene.pen());
-				last = next;
-			}
-			scene.line(last, posB, 0x666666ff, scene.pen());
-			powerCables.insert(cable);
-		}
-		powerCabling.unlock();
-	}
 }
 
 void GuiEntity::instanceItems() {
@@ -850,6 +830,30 @@ void GuiEntity::instanceItems() {
 			for (Part* part: item->parts) {
 				part->instance(scene.shader.part.id(), distance, m, part->color, Config::mode.itemShadows);
 			}
+		}
+	}
+}
+
+void GuiEntity::instanceCables() {
+	if (spec->powerpole && powerpole) {
+		for (auto& end: powerpole->wires) {
+			// The electricity grid is a doubly-linked loom, so render each wire only once
+			// Ghosts that are fake entities being placed have no real wires, so force those
+			if (!ghost && powerpole->point < end) continue;
+			Point posA = powerpole->point;
+			Point posB = end;
+			Point dirAB = (posB-posA).normalize();
+			float distance = posA.distance(posB);
+			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
+			Point dirA = (middle-posA).normalize();
+			Point dirB = (posB-middle).normalize();
+			auto curve = Rail(posA, dirA, posB, dirB);
+			auto last = posA;
+			for (auto next: curve.steps(1.0f)) {
+				scene.line(last, next, 0x666666ff, scene.pen());
+				last = next;
+			}
+			scene.line(last, posB, 0x666666ff, scene.pen());
 		}
 	}
 }
@@ -1252,9 +1256,19 @@ void GuiEntity::overlayHovering(bool full) {
 	}
 
 	if (spec->powerpole) {
-		Point p = pos().floor(0.1);
-		scene.square(p, spec->powerpoleCoverage, 0x6666ffff, scene.pen());
-		scene.circle(p, spec->powerpoleRange, 0xffff00ff, scene.pen());
+		Point p = ground() + (Point::Up * 0.05);
+		scene.square(p, spec->powerpoleCoverage, 0xffffffff, scene.pen());
+		scene.circle(p, spec->powerpoleRange, 0x666666ff, scene.pen());
+
+		Sim::locked([&]() {
+			auto en = Entity::find(id);
+			if (!en) return;
+
+			for (auto es: Entity::intersecting(en->powerpole().coverage())) {
+				if (en->id == es->id) continue;
+				if (es->electrical()) scene.cuboid(es->cuboid(), 0xffffffff, scene.pen());
+			}
+		});
 	}
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-// PowerPole components create an electricity grid
+// PowerPole components create the electricity grid
 
 struct PowerPole;
 
@@ -18,6 +18,14 @@ struct PowerPole {
 	static PowerPole& create(uint id);
 	static PowerPole& get(uint id);
 
+	static inline gridmap<64,PowerPole*> gridCoverage;
+	static bool covered(Box box);
+	static bool powered(Box box);
+
+	static inline miniset<PowerPole*> roots;
+	static inline activeset<PowerPole*,60> queue;
+
+	uint root = 0;
 	miniset<uint> links;
 
 	void destroy();

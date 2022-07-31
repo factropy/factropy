@@ -92,31 +92,6 @@ struct GuiEntity {
 
 	powerpoleState* powerpole = nullptr;
 
-	struct powerCable {
-		Point a = Point::Zero;
-		Point b = Point::Zero;
-
-		powerCable(Point aa, Point bb) {
-			a = aa;
-			b = bb;
-			if (bb < aa) {
-				b = aa;
-				a = bb;
-			}
-		}
-
-		bool operator==(const powerCable& o) const {
-			return a == o.a && b == o.b;
-		}
-
-		bool operator<(const powerCable& o) const {
-			return a < o.a || (a == o.a && b < o.b);
-		}
-	};
-
-	std::mutex powerCabling;
-	static inline std::set<powerCable> powerCables;
-
 	static void prepareCaches();
 
 	GuiEntity();
@@ -164,6 +139,7 @@ struct GuiEntity {
 
 	void instance();
 	void instanceItems();
+	void instanceCables();
 	void overlayHovering(bool full = true);
 	void overlayDirecting();
 	void overlayRouting();

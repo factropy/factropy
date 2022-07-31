@@ -65,6 +65,7 @@ public:
 		func world_elevation    = { .name = "world_elevation",    .cb = &RelaMod::world_elevation    };
 		func entity_create      = { .name = "entity_create",      .cb = &RelaMod::entity_create      };
 		func entity_move        = { .name = "entity_move",        .cb = &RelaMod::entity_move        };
+		func entity_autoplace   = { .name = "entity_autoplace",   .cb = &RelaMod::entity_autoplace   };
 		func entity_materialize = { .name = "entity_materialize", .cb = &RelaMod::entity_materialize };
 		func entity_insert      = { .name = "entity_insert",      .cb = &RelaMod::entity_insert      };
 		func entity_level       = { .name = "entity_level",       .cb = &RelaMod::entity_level       };
@@ -828,6 +829,11 @@ public:
 		}
 
 		if (spec->powerpole) {
+			auto powerpoleRoot = field("powerpoleRoot");
+			if (is_bool(powerpoleRoot)) {
+				spec->powerpoleRoot = to_bool(powerpoleRoot);
+			}
+
 			auto powerpoleRange = field("powerpoleRange");
 			if (is_number(powerpoleRange)) {
 				spec->powerpoleRange = to_number(powerpoleRange);
@@ -1885,6 +1891,23 @@ public:
 		auto pos = to_point(stack_pop());
 		uint id = (uint)to_integer(stack_pop());
 		Entity::get(id).move(pos, dir);
+	}
+
+	void entity_autoplace() {
+		auto dir = to_point(stack_pop());
+		auto pos = to_point(stack_pop());
+		uint id = (uint)to_integer(stack_pop());
+		auto& en = Entity::get(id);
+		while (!Entity::fits(en.spec, pos, en.dir())) {
+			pos += dir;
+			pos = pos.floor(0);
+		}
+		en.move(pos + Point::Up*(en.spec->collision.h/2), en.dir());
+		for (auto ej: Entity::intersecting(pos, en.spec->collision.w*2)) {
+			if (ej->spec->junk) ej->remove();
+		}
+		en.setPermanent(true);
+		stack_push(make_point(pos));
 	}
 
 	void entity_materialize() {
@@ -3696,7 +3719,6 @@ void ScenarioBase::specifications() {
 	spec->selection = spec->collision;
 	spec->iconD = 10;
 	spec->iconV = 9;
-
 	spec->pipe = true;
 	spec->pipeCapacity = Liquid::l(5000);
 	spec->pipeHints = true;
@@ -3889,12 +3911,10 @@ void ScenarioBase::specifications() {
 		spec->consumeMagic = true;
 		spec->store = true;
 		spec->tipStorage = true;
-		spec->capacity = Mass::kg(2500);
+		spec->capacity = Mass::kg(5000);
 		spec->logistic = true;
 		spec->storeSetLower = true;
 		spec->storeSetUpper = true;
-		spec->generateElectricity = true;
-		spec->energyGenerate = Energy::MW(3);
 		spec->rotateGhost = true;
 		spec->plan = false;
 		spec->clone = false;
