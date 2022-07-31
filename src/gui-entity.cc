@@ -835,6 +835,16 @@ void GuiEntity::instanceItems() {
 }
 
 void GuiEntity::instanceCables() {
+
+	auto line = [&](const Point& a, const Point& b) {
+		auto c = b-a;
+		auto pen = scene.pen()/2.0;
+		auto scale = Mat4::scale(pen,pen,c.length());
+		auto rotate = c.rotation();
+		auto translate = (a + (c * 0.5) + scene.offset).translation();
+		scene.unit.mesh.line->instance(scene.shader.part.id(), scale * rotate * translate, Color(0x444444ff));
+	};
+
 	if (spec->powerpole && powerpole) {
 		for (auto& end: powerpole->wires) {
 			// The electricity grid is a doubly-linked loom, so render each wire only once
@@ -850,10 +860,10 @@ void GuiEntity::instanceCables() {
 			auto curve = Rail(posA, dirA, posB, dirB);
 			auto last = posA;
 			for (auto next: curve.steps(1.0f)) {
-				scene.line(last, next, 0x666666ff, scene.pen());
+				line(last, next);
 				last = next;
 			}
-			scene.line(last, posB, 0x666666ff, scene.pen());
+			line(last, posB);
 		}
 	}
 }
@@ -1258,7 +1268,7 @@ void GuiEntity::overlayHovering(bool full) {
 	if (spec->powerpole) {
 		Point p = ground() + (Point::Up * 0.05);
 		scene.square(p, spec->powerpoleCoverage, 0xffffffff, scene.pen());
-		scene.circle(p, spec->powerpoleRange, 0x666666ff, scene.pen());
+		scene.circle(p, spec->powerpoleRange, Config::window.grid, scene.pen());
 
 		Sim::locked([&]() {
 			auto en = Entity::find(id);

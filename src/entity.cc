@@ -1741,7 +1741,7 @@ void Entity::generate() {
 }
 
 bool Entity::electrical() {
-	return spec->consumeElectricity || spec->generateElectricity;
+	return (spec->consumeElectricity || spec->generateElectricity) && !spec->conveyorEnergyDrain;
 }
 
 bool Entity::electrified() {

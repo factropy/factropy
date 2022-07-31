@@ -764,6 +764,19 @@ void Scene::updateEntities() {
 				}
 			}
 
+			// power cables may be in view when their poles are out of sight
+			// this should check the longest range from specs
+			// this should be a bit more selective based on the frustum
+			for (auto pole: PowerPole::gridCoverage.dump(region)) {
+				auto et = pole->en;
+				if (et->isMarked1()) continue;
+				et->setMarked1(true);
+				marked.push_back(et);
+				if (frustum.intersects(et->sphere().grow(100))) {
+					geBatch->push_back(&entityPools[future][0].emplace(et));
+				}
+			}
+
 			// waypoint lines may be in view when their waypoints are out of sight
 			for (auto et: Entity::intersecting(region, Entity::gridCartWaypoints)) {
 				if (et->isMarked1()) continue;
