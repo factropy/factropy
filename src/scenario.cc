@@ -818,6 +818,13 @@ public:
 			spec->energyGenerate = to_integer(energyGenerate);
 		}
 
+		if (spec->energyGenerate) {
+			auto generatorState = field("generatorState");
+			if (is_bool(generatorState)) {
+				spec->generatorState = to_bool(generatorState);
+			}
+		}
+
 		auto generateElectricity = field("generateElectricity");
 		if (is_bool(generateElectricity)) {
 			spec->generateElectricity = to_bool(generateElectricity);
@@ -842,6 +849,11 @@ public:
 			auto powerpoleCoverage = field("powerpoleCoverage");
 			if (is_number(powerpoleCoverage)) {
 				spec->powerpoleCoverage = to_number(powerpoleCoverage);
+			}
+
+			auto powerpolePoint = field("powerpolePoint");
+			if (is_vector(powerpolePoint)) {
+				spec->powerpolePoint = to_point(powerpolePoint);
 			}
 		}
 

@@ -125,7 +125,7 @@ minivec<uint> PowerPole::siblings() {
 }
 
 Point PowerPole::point() {
-	return en->pos() + Point::Up*(en->spec->collision.h/2.0);
+	return en->pos() + en->spec->powerpolePoint;
 }
 
 void PowerPole::connect() {

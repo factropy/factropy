@@ -1736,6 +1736,14 @@ void Entity::generate() {
 		electricitySupply += supplied;
 		electricityCapacityReady += spec->energyGenerate;
 		electricityCapacity += spec->energyGenerate;
+
+		// The state for generators is currently stopped, slow or fast. The steam-engine entity
+		// uses state to spin its flywheel albeit jerkily. This should be done in a smoother
+		// fashion someday
+		if (spec->generatorState && supplied) {
+			state += supplied > (spec->energyGenerate * 0.5f) ? 2: 1;
+			if (state >= spec->states.size()) state -= spec->states.size();
+		}
 		return;
 	}
 }

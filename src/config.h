@@ -43,7 +43,7 @@ namespace Config {
 		float fogDensity = 0.004f;
 		Color fogColor = {0.4,0.74,1.0,1.0};
 		Color ambient = 0x666666ff;
-		Color ground = 0x8ca66eff;
+		Color ground = 0xc2b280ff;
 		Color groundSand = 0xc2b280ff;
 		Color groundGrass = 0x8ca66eff;
 		Color grid = 0x888888ff;

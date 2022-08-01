@@ -112,8 +112,10 @@ Spec::Spec(std::string name) {
 	generatorState = false;
 
 	powerpole = false;
+	powerpoleRoot = false;
 	powerpoleRange = 0;
 	powerpoleCoverage = 0;
+	powerpolePoint = Point::Zero;
 
 	vehicle = false;
 	vehicleStop = false;

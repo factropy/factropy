@@ -214,6 +214,7 @@ struct Spec {
 	bool powerpoleRoot;
 	float powerpoleRange;
 	float powerpoleCoverage;
+	Point powerpolePoint;
 
 	bool effector;
 	float effectorElectricity;
