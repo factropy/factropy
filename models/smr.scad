@@ -2,20 +2,38 @@ use <lib.scad>
 
 hd = 24;
 
-module smrFinsHD($fn=hd) {
-	difference() {
-		for (i = [0:45:360]) rotate([0,0,i+22.5]) hull() {
-			translate([5,0,2.5]) rotate([90,0,0]) cyl(1,1,0.1);
-			translate([5,0,7.5]) rotate([90,0,0]) cyl(1,1,0.1);
-			translate([0,0,5]) box([1,0.1,7]);
+module smrCapHD($fn=hd) {
+	translate([0,0,7.8]) intersection() {
+		union() {
+			hull() {
+				cyl(3,3,0.5);
+				translate([0,0,0.5]) cyl(2.6,2.6,0.5);
+			}
+			hull() {
+				translate([0,0,3]) cyl(1,1,0.1);
+				cyl(2.25,2.25,3.25);
+			}
 		}
-		translate([0,0,3]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
-		translate([0,0,5]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
-		translate([0,0,7]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
-		translate([0,0,5]) cyl(3,3,8);
-		translate([0,0,8.5]) hull() {
-			translate([0,0,2.5]) cyl(5,5,1);
-			translate([0,0,-2.5]) cyl(1,1,1);
+		translate([0,0,1.1]) box([10,10,2.2]);
+	}
+}
+
+module smrFinsHD($fn=hd) {
+	union() {
+		difference() {
+			for (i = [0:45:360]) rotate([0,0,i+22.5]) hull() {
+				translate([5,0,2]) rotate([90,0,0]) cyl(1,1,0.1);
+				translate([5,0,6.5]) rotate([90,0,0]) cyl(1,1,0.1);
+				translate([0,0,4.25]) box([1,0.1,6.5]);
+			}
+			translate([0,0,2.5]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
+			translate([0,0,4.25]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
+			translate([0,0,6]) difference() { cyl(10,10,0.1); cyl(4,4,0.2); }
+			translate([0,0,4]) cyl(3,3,8);
+			translate([0,0,7.5]) hull() {
+				translate([0,0,2.5]) cyl(5,5,1);
+				translate([0,0,-2.5]) cyl(1,1,1);
+			}
 		}
 	}
 }
@@ -41,29 +59,17 @@ module smrBodyHD($fn=hd) {
 			}
 		}
 		translate([0,0,4.15]) cyl(2,2,6.8);
+
+		intersection() {
+			translate([0,0,7]) for (i = [0:45:360])
+				rotate([0,0,i+22.5]) rotate([90,0,0]) scale([1,1.5,1]) cyl(3,3,0.2);
+			translate([0,0,8.95]) box([10,10,2]);
+		}
 	}
 }
 
 module smrBaseHD($fn=hd) {
 	translate([0,0,0.35]) cyl(4,4,0.7);
-}
-
-module smrCapHD($fn=hd) {
-	translate([0,0,7.8]) intersection() {
-		union() {
-			translate([0,0,-1]) for (i = [0:45:360])
-				rotate([0,0,i+22.5]) rotate([90,0,0]) cyl(3,3,0.2);
-			hull() {
-				cyl(3,3,0.5);
-				translate([0,0,0.5]) cyl(2.6,2.6,0.5);
-			}
-			hull() {
-				translate([0,0,3]) cyl(1,1,0.1);
-				cyl(2,2,4);
-			}
-		}
-		translate([0,0,1.1]) box([10,10,2.2]);
-	}
 }
 
 module smrSpinnerHD($fn=hd) {
@@ -77,7 +83,7 @@ module smrSpinnerHD($fn=hd) {
 
 module smrPipesHD($fn=hd/2) {
 	x = 3.5;
-	z = 8;
+	z = 7.5;
 	points = [
 		[x,0,-1],
 		[x,0,(z-0.2)],
@@ -95,8 +101,8 @@ module smrPipesHD($fn=hd/2) {
 }
 
 //smrCapHD();
-//smrBodyHD();
+smrBodyHD();
 //smrBaseHD();
 //smrFinsHD();
-smrSpinnerHD();
+//smrSpinnerHD();
 //smrPipesHD();

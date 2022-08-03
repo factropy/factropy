@@ -3730,6 +3730,8 @@ void ScenarioBase::specifications() {
 	meshes["falconLaunchpadLD"] = new Mesh("models/falcon-launchpad-ld.stl");
 	meshes["falconBody"] = new Mesh("models/falcon-body-hd.stl");
 	meshes["falconBodyLD"] = new Mesh("models/falcon-body-ld.stl");
+	meshes["falconFins"] = new Mesh("models/falcon-fins-hd.stl");
+	meshes["falconFinsLD"] = new Mesh("models/falcon-fins-ld.stl");
 	meshes["falconNose"] = new Mesh("models/falcon-nose-hd.stl");
 	meshes["falconNoseLD"] = new Mesh("models/falcon-nose-ld.stl");
 	meshes["falconLeg"] = new Mesh("models/falcon-leg-hd.stl");
@@ -3776,6 +3778,11 @@ void ScenarioBase::specifications() {
 		{ Item::byName("pipe")->id, 10 },
 	};
 
+	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
+		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
+		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
+		->transform(Mat4::translate(0,5,0));
+
 	auto falconLeg = (new Part(0x222222ff))->gloss(starshipGloss)
 		->lod(mesh("falconLeg"), Part::MD, Part::SHADOW)
 		->lod(mesh("falconLegLD"), Part::VLD, Part::NOSHADOW);
@@ -3803,6 +3810,7 @@ void ScenarioBase::specifications() {
 		(new Part(0x333333ff))->gloss(starshipGloss)
 			->lod(mesh("falconBase"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBaseLD"), Part::VLD, Part::NOSHADOW),
+		falconFins,
 		falconLeg,
 		falconLeg,
 		falconLeg,
@@ -3839,6 +3847,7 @@ void ScenarioBase::specifications() {
 				center,
 				center * rocket * up * spin,
 				Mat4::translate(0,5,0) * center * rocket * up * spin,
+				center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(  0.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians( 90.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(180.0f)) * center * rocket * up * spin,
@@ -3849,6 +3858,7 @@ void ScenarioBase::specifications() {
 			});
 
 			spec->statesShow.push_back({
+				true,
 				true,
 				true,
 				true,

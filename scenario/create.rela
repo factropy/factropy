@@ -6,7 +6,7 @@ smr = entity_create("smr")
 supply = entity_create("container-supply")
 zeppelin = entity_create("zeppelin")
 
-entity_place(falcon, home, east)
+entity_place(falcon, home, south)
 entity_place(smr, point_add(home, point_scale(south, 12.0)), south)
 entity_place(supply, point_add(point_add(home, point_scale(north, 9.0)), point_scale(east, 2.0)), west)
 

@@ -143,6 +143,7 @@ void GUI::update() {
 					if (se->spec->junk) continue;
 					if (!se->spec->plan) continue;
 					if (se->spec->pile && others) continue;
+					if (!se->spec->licensed) continue;
 
 					if (Entity::exists(se->id)) {
 						group.push_back(se);
@@ -182,7 +183,7 @@ void GUI::update() {
 			scene.selecting = false;
 		}
 		else
-		if (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone) {
+		if (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone && scene.hovering->spec->licensed) {
 			cloneSingle(true);
 		}
 	};
@@ -255,7 +256,7 @@ void GUI::update() {
 			scene.routingHistory.clear();
 		}
 
-		if (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone) {
+		if (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone && scene.hovering->spec->licensed) {
 			cloneSingle(false);
 		}
 	};
