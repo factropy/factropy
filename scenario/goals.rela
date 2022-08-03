@@ -2,7 +2,7 @@
 add_goal({
 	name = "mining",
 	title = "Start Mining",
-	construction = { "miner" = 1, "powerpole-small" = 2 },
+	construction = { "miner" = 1 },
 	production = { "iron-ore" = 5 },
 	specs = [
 		"conveyor-1",

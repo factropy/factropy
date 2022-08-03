@@ -63,9 +63,11 @@ public:
 		func matrix_multiply    = { .name = "matrix_multiply",    .cb = &RelaMod::matrix_multiply    };
 		func matrix_invert      = { .name = "matrix_invert",      .cb = &RelaMod::matrix_invert      };
 		func world_elevation    = { .name = "world_elevation",    .cb = &RelaMod::world_elevation    };
+		func world_flat_area    = { .name = "world_flat_area",    .cb = &RelaMod::world_flat_area    };
 		func entity_create      = { .name = "entity_create",      .cb = &RelaMod::entity_create      };
 		func entity_move        = { .name = "entity_move",        .cb = &RelaMod::entity_move        };
-		func entity_autoplace   = { .name = "entity_autoplace",   .cb = &RelaMod::entity_autoplace   };
+		func entity_place       = { .name = "entity_place",       .cb = &RelaMod::entity_place       };
+		func entity_permanent   = { .name = "entity_permanent",   .cb = &RelaMod::entity_permanent   };
 		func entity_materialize = { .name = "entity_materialize", .cb = &RelaMod::entity_materialize };
 		func entity_insert      = { .name = "entity_insert",      .cb = &RelaMod::entity_insert      };
 		func entity_level       = { .name = "entity_level",       .cb = &RelaMod::entity_level       };
@@ -73,6 +75,7 @@ public:
 		func toolbar_spec       = { .name = "toolbar_spec",       .cb = &RelaMod::toolbar_spec       };
 		func license_spec       = { .name = "license_spec",       .cb = &RelaMod::license_spec       };
 		func license_recipe     = { .name = "license_recipe",     .cb = &RelaMod::license_recipe     };
+		func camera_view        = { .name = "camera_view",        .cb = &RelaMod::camera_view        };
 		func sentinelB;
 	} funcs;
 
@@ -765,6 +768,13 @@ public:
 		auto consumeElectricity = field("consumeElectricity");
 		if (is_bool(consumeElectricity)) {
 			spec->consumeElectricity = to_bool(consumeElectricity);
+		}
+
+		if (spec->consumeElectricity) {
+			auto consumeElectricityAnywhere = field("consumeElectricityAnywhere");
+			if (is_bool(consumeElectricityAnywhere)) {
+				spec->consumeElectricityAnywhere = to_bool(consumeElectricityAnywhere);
+			}
 		}
 
 		auto consumeFuel = field("consumeFuel");
@@ -1892,6 +1902,20 @@ public:
 		stack_push(make_number(world.elevation(pos)));
 	}
 
+	void world_flat_area() {
+		auto radius = to_number(stack_pop());
+		auto pos = to_point(stack_pop());
+		pos = pos.floor(0);
+		while (!world.isLand(pos.box().grow(radius))) {
+			pos += Point::South;
+			pos = pos.floor(0);
+		}
+		for (auto ej: Entity::intersecting(pos, radius+1)) {
+			if (ej->spec->junk) ej->remove();
+		}
+		stack_push(make_point(pos));
+	}
+
 	void entity_create() {
 		auto name = to_string(stack_pop());
 		auto& en = Entity::create(Entity::next(), Spec::byName(name));
@@ -1905,21 +1929,18 @@ public:
 		Entity::get(id).move(pos, dir);
 	}
 
-	void entity_autoplace() {
+	void entity_place() {
 		auto dir = to_point(stack_pop());
 		auto pos = to_point(stack_pop());
 		uint id = (uint)to_integer(stack_pop());
+		auto &en = Entity::get(id);
+		en.place(pos, dir);
+	}
+
+	void entity_permanent() {
+		uint id = (uint)to_integer(stack_pop());
 		auto& en = Entity::get(id);
-		while (!Entity::fits(en.spec, pos, en.dir())) {
-			pos += dir;
-			pos = pos.floor(0);
-		}
-		en.move(pos + Point::Up*(en.spec->collision.h/2), en.dir());
-		for (auto ej: Entity::intersecting(pos, en.spec->collision.w*2)) {
-			if (ej->spec->junk) ej->remove();
-		}
 		en.setPermanent(true);
-		stack_push(make_point(pos));
 	}
 
 	void entity_materialize() {
@@ -1976,6 +1997,11 @@ public:
 	void license_recipe() {
 		auto name = to_string(stack_pop());
 		Recipe::byName(name)->licensed = true;
+	}
+
+	void camera_view() {
+		auto pos = to_point(stack_pop());
+		scene.view(pos.floor(0));
 	}
 };
 

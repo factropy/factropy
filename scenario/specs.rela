@@ -189,6 +189,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 2,
 			conveyorSlotsRight = 2,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = W(120*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -299,6 +300,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 3,
 			conveyorSlotsRight = 1,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = W(120*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -408,6 +410,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 1,
 			conveyorSlotsRight = 3,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = W(120*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -514,6 +517,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 2,
 			conveyorSlotsRight = 2,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = W(200*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -627,6 +631,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 2,
 			conveyorSlotsRight = 2,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = W(200*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -999,6 +1004,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsLeft = 2,
 			conveyorSlotsRight = 2,
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			conveyorEnergyDrain = kW(5*tier),
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
@@ -1234,6 +1240,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			tubeSpeed = lib.ceil(1000.0/(0.5*steps)), // mm/s
 			tubeSpan = 30*tier*1000, // mm
 			consumeElectricity = true,
+			consumeElectricityAnywhere = true,
 			energyConsume = kW(30*tier),
 			health = 150,
 			place = [placement.land, placement.hill],
@@ -1536,22 +1543,17 @@ containerSmall({
 	name = "container-supply",
 	title = "Container (Supply)",
 	color = 0x0000aaff,
+	health = 0,
 	build = false,
 	clone = false,
 	plan = false,
 	enable = true,
 	tipStorage = true,
-	consumeMagic = true,
-	generateElectricity = true,
-	energyGenerate = MW(1),
 	logistic = true,
+	construction = true,
 	storeSetLower = true,
 	storeSetUpper = true,
 	forceDeleteStore = true,
-	powerpole = true,
-	powerpoleRoot = true,
-	powerpoleRange = 5,
-	powerpoleCoverange = 2,
 })
 
 containerSmall({
@@ -4919,6 +4921,7 @@ add_spec({
 	powerpole = true,
 	powerpoleRange = 16,
 	powerpoleCoverage = 8,
+	powerpolePoint = [0,3,0],
 	collision = [0, 0, 0, 1, 6, 1],
 	place = [placement.land, placement.hill],
 	placeOnHill = true,
@@ -4973,6 +4976,7 @@ add_spec({
 	powerpole = true,
 	powerpoleRange = 128,
 	powerpoleCoverage = 4,
+	powerpolePoint = [0,6,0],
 	collision = [0, 0, 0, 3, 12, 3],
 	place = [placement.land, placement.hill],
 	placeOnHill = true,
@@ -4997,3 +5001,120 @@ add_spec({
 	},
 })
 
+function()
+
+	states = []
+	for i in 45
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_rotate(up, i*2)
+			identity,
+			identity,
+			identity,
+		]
+	end
+
+	add_spec({
+		name = "smr",
+		title = "SMR",
+		health = 0,
+		build = false,
+		clone = false,
+		plan = false,
+		rotations = [south],
+		rotateGhost = true,
+		rotateExtant = true,
+		collision = [0, 0, 0, 12, 10, 12],
+		iconD = 8,
+		iconV = 0,
+		consumeMagic = true,
+		generateElectricity = true,
+		energyGenerate = MW(3),
+		generatorState = true,
+		powerpole = true,
+		powerpoleRoot = true,
+		powerpoleRange = 16,
+		powerpoleCoverage = 4, // less than collision
+		powerpolePoint = [0,7.5,0],
+		status = true,
+		beacon = [0,7.5,0],
+		states = states,
+		parts = [
+			{
+				color = colors.steelBlue,
+				gloss = gloss.metallic,
+				translate = down*5,
+				lods = [
+					["models/smr-body-hd.stl", medium, shadow],
+					["models/smr-body-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.industrialGreen,
+				gloss = gloss.metallic,
+				translate = down*5,
+				lods = [
+					["models/smr-cap-hd.stl", medium, shadow],
+					["models/smr-cap-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.industrialGreen,
+				gloss = gloss.metallic,
+				translate = down*5,
+				lods = [
+					["models/smr-base-hd.stl", medium, shadow],
+					["models/smr-base-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.aluminium,
+				gloss = gloss.metallic,
+				translate = down*5,
+				lods = [
+					["models/smr-fins-hd.stl", medium, shadow],
+					["models/smr-fins-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.uraniumOre,
+				glow = true,
+				translate = down*5,
+				lods = [
+					["models/smr-spinner-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = colors.pipe,
+				gloss = gloss.metallic,
+				translate = down*5,
+				lods = [
+					["models/smr-pipes-hd.stl", medium, shadow],
+					["models/smr-pipes-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.industrialGreen,
+				gloss = gloss.metallic,
+				translate = up*1.5,
+				lods = [
+					["models/powerpole-small-head-hd.stl", high, shadow],
+					["models/powerpole-small-head-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.wood,
+				gloss = gloss.metallic,
+				translate = up*1.5,
+				lods = [
+					["models/powerpole-small-body-hd.stl", high, shadow],
+					["models/powerpole-small-body-ld.stl", medium, shadow],
+					["models/powerpole-small-body-vld.stl", verylow, noshadow],
+				],
+			},
+		],
+	})
+end()

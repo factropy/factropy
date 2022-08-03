@@ -1587,6 +1587,10 @@ Entity& Entity::move(float x, float y, float z) {
 	return move(Point(x, y, z));
 }
 
+Entity& Entity::place(Point p, Point d) {
+	return move(Point(p.x, p.y + (spec->underground ? spec->collision.h/2.0f: -spec->collision.h/2.0f), p.z), d);
+}
+
 Entity& Entity::bump(Point p, Point d) {
 	ensure(mutating);
 
@@ -1749,11 +1753,11 @@ void Entity::generate() {
 }
 
 bool Entity::electrical() {
-	return (spec->consumeElectricity || spec->generateElectricity) && !spec->conveyorEnergyDrain;
+	return spec->consumeElectricity || spec->generateElectricity;
 }
 
 bool Entity::electrified() {
-	return electrical() && PowerPole::powered(box());
+	return electrical() && (spec->consumeElectricityAnywhere || PowerPole::powered(box()));
 }
 
 void Entity::damage(Health hits) {

@@ -1,20 +1,48 @@
 
+home = world_flat_area(origin, 30)
+
 falcon = entity_create("falcon")
-falcon_pos = entity_autoplace(falcon, origin, south)
-
+smr = entity_create("smr")
 supply = entity_create("container-supply")
-supply_pos = entity_autoplace(supply, falcon_pos, south)
-
-pole = entity_create("powerpole-small")
-pole_pos = entity_autoplace(pole, point_add(supply_pos, point_scale(east, 5)), east)
-
 zeppelin = entity_create("zeppelin")
-entity_move(zeppelin, point_add(point_add(supply_pos, point_scale(up, 50.0)), point_scale(east, 20)), south)
+
+entity_place(falcon, home, east)
+entity_place(smr, point_add(home, point_scale(south, 12.0)), south)
+entity_place(supply, point_add(point_add(home, point_scale(north, 9.0)), point_scale(east, 2.0)), west)
+
+entity_move(zeppelin, point_add(point_add(home, point_scale(up, 50.0)), point_scale(west, 30)), south)
 
 entity_materialize(falcon)
+entity_materialize(smr)
 entity_materialize(supply)
-entity_materialize(pole)
 entity_materialize(zeppelin)
+
+entity_permanent(falcon)
+entity_permanent(smr)
+entity_permanent(supply)
+entity_permanent(zeppelin)
+
+function()
+	function pole(bump)
+		id = entity_create("powerpole-small")
+		pos = point_add(home, bump)
+		entity_place(id, pos, south)
+		entity_materialize(id)
+	end
+	pole([6,0,6])
+	pole([6,0,-10])
+end()
+
+function()
+	for x in 3
+		for z in 3
+			id = entity_create("slab")
+			pos = point_add(home, [(x-1)*12,0,(z-1)*12])
+			entity_place(id, pos, south)
+			entity_materialize(id)
+		end
+	end
+end()
 
 materials = {
 	"steel-sheet" = 600,
@@ -27,12 +55,11 @@ materials = {
 	"pipe" = 400,
 	"electric-motor" = 200,
 	"repair-kit" = 100,
-	"ammo1" = 100,
 }
 
 for item,count in materials
 	entity_insert(supply, item, count)
-	entity_level(supply, item, 0, count)
+	entity_level(supply, item, count/2, count)
 	entity_level(zeppelin, item, count/2, count/2)
 end
 
@@ -57,9 +84,11 @@ toolbar_spec("conveyor-1")
 toolbar_spec("tube-small-1")
 toolbar_spec("pipe-straight")
 toolbar_spec("turret")
+toolbar_spec("powerpole-small")
 
 license_spec("miner")
 license_recipe("mine-iron-ore")
 
 license_spec("powerpole-small")
 
+camera_view(home)

@@ -308,6 +308,7 @@ struct Entity {
 	Entity& move(Point p, Point d);
 	Entity& move(float x, float y, float z);
 	Entity& bump(Point p, Point d);
+	Entity& place(Point p, Point d);
 
 	// Player-controlled N/E/S/W entity rotation
 	Entity& rotate();
