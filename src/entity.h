@@ -67,6 +67,7 @@ struct Entity;
 #include "monocar.h"
 #include "source.h"
 #include "powerpole.h"
+#include "electricity.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -131,25 +132,7 @@ struct Entity {
 	static inline std::atomic<bool> mutating = {true};
 
 	// Current RTS style magic-electricity-network-everywhere
-	static inline float electricityLoad = 0.0f;
-	static inline float electricitySatisfaction = 0.0f;
-	// Joules demanded last tick
-	static inline Energy electricityDemand = 0;
-	// Joules supplied last tick
-	static inline Energy electricitySupply = 0;
-	// Wattage theoretical limit this tick from all primary generators
-	static inline Energy electricityCapacity = 0;
-	// Wattage theoretical limit this tick from all secondary buffers
-	static inline Energy electricityCapacityBuffered = 0;
-	// Wattage actual limit this tick from fueled primary generators
-	static inline Energy electricityCapacityReady = 0;
-	// Wattage actual limit this tick from charged secondary buffers
-	static inline Energy electricityCapacityBufferedReady = 0;
-	// Joules stored this tick in secondary buffers
-	static inline Energy electricityBufferedLevel = 0;
-	// Aggregate size this tick of all secondary buffers
-	static inline Energy electricityBufferedLimit = 0;
-	static inline miniset<Entity*> electricityGenerators;
+	static inline ElectricityNetwork electricity;
 
 	// Every extant entity is tracked here. See ::get() and ::exists()
 	static inline slabmap<Entity,&Entity::id> all;
@@ -342,7 +325,6 @@ struct Entity {
 	Energy consume(Energy e);
 	float consumeRate(Energy e);
 	static void bulkConsumeElectricity(Spec* spec, Energy e, int count);
-	void generate();
 	bool electrical();
 	bool electrified();
 

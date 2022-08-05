@@ -20,8 +20,8 @@ void Charger::tickCharge() {
 		}
 	}
 
-	if (Entity::electricityDemand >= Entity::electricitySupply) return;
-	Energy excess = Entity::electricityCapacityReady - Entity::electricityDemand;
+	if (Entity::electricity.demand >= Entity::electricity.supply) return;
+	Energy excess = Entity::electricity.capacityReady - Entity::electricity.demand;
 
 	Energy predict = 0;
 	for (auto& charger: all) {
@@ -43,8 +43,8 @@ void Charger::tickDischarge() {
 	}
 
 	// +2% to allow generators (which lag load slightly) to adjust before kick in
-	if (Entity::electricityDemand <= (Entity::electricitySupply*1.02f)) return;
-	Energy shortfall = Entity::electricityDemand - Entity::electricitySupply;
+	if (Entity::electricity.demand <= (Entity::electricity.supply*1.02f)) return;
+	Energy shortfall = Entity::electricity.demand - Entity::electricity.supply;
 
 	float rate = shortfall.portion(predict);
 
@@ -88,8 +88,8 @@ void Charger::chargePrimary() {
 	if (energy < buffer) {
 		Energy rate = chargePrimaryRate();
 		Energy require = std::min(rate, buffer-energy);
-		Energy transfer = require * Entity::electricitySatisfaction;
-		Entity::electricityDemand += require;
+		Energy transfer = require * Entity::electricity.satisfaction;
+		Entity::electricity.demand += require;
 		energy = std::min(buffer, energy+transfer);
 		en->spec->statsGroup->energyConsumption.add(Sim::tick, transfer);
 	}
@@ -109,8 +109,8 @@ void Charger::chargeSecondary(float rate) {
 
 	if (energy < buffer) {
 		Energy require = std::min(en->spec->consumeChargeRate * rate, buffer-energy);
-		Energy transfer = require * Entity::electricitySatisfaction;
-		Entity::electricityDemand += require;
+		Energy transfer = require * Entity::electricity.satisfaction;
+		Entity::electricity.demand += require;
 		energy = std::min(buffer, energy+transfer);
 		en->spec->statsGroup->energyConsumption.add(Sim::tick, transfer);
 	}
@@ -122,9 +122,9 @@ Energy Charger::dischargeSecondaryPredict() {
 	if (!en->spec->bufferElectricity) return 0;
 
 	auto rate = std::min(energy, en->spec->bufferDischargeRate);
-	Entity::electricityBufferedLevel += energy;
-	Entity::electricityBufferedLimit += buffer;
-	Entity::electricityCapacityBufferedReady += rate;
+	Entity::electricity.bufferedLevel += energy;
+	Entity::electricity.bufferedLimit += buffer;
+	Entity::electricity.capacityBufferedReady += rate;
 	return rate;
 }
 
@@ -134,7 +134,7 @@ void Charger::dischargeSecondary(float rate) {
 
 	Energy supplied = consume(en->spec->bufferDischargeRate * rate);
 	en->spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-	Entity::electricitySupply += supplied;
+	Entity::electricity.supply += supplied;
 }
 
 Energy Charger::consume(Energy e) {

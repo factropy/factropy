@@ -27,7 +27,8 @@ void Entity::reset() {
 	repairActions.clear();
 	removing.clear();
 	exploding.clear();
-	electricityGenerators.clear();
+	electricity.producers.clear();
+	electricity.consumers.clear();
 	names.clear();
 	sequence = 0;
 	Burner::reset();
@@ -121,32 +122,29 @@ void Entity::preTick() {
 	}
 
 	// Updated by ::generate()
-	electricitySupply = 0;
-	electricityCapacity = 0;
-	electricityCapacityBuffered = 0;
-	electricityCapacityReady = 0;
-	electricityCapacityBufferedReady = 0;
-	electricityBufferedLevel = 0;
-	electricityBufferedLimit = 0;
+	electricity.supply = 0;
+	electricity.capacity = 0;
+	electricity.capacityBuffered = 0;
+	electricity.capacityReady = 0;
+	electricity.capacityBufferedReady = 0;
+	electricity.bufferedLevel = 0;
+	electricity.bufferedLimit = 0;
 
 	for (auto& [_,spec]: Spec::all) {
 		spec->statsGroup->energyConsumption.set(Sim::tick, 0);
 		spec->statsGroup->energyGeneration.set(Sim::tick, 0);
 	}
 
-	// Generators adjust output based on the last tick's electricityLoad so there's
+	// Generators adjust output based on the last tick's electricity.load so there's
 	// a slight delay in response to changes in consumption. This isn't unrealistic;
 	// in fact it should probably lag for longer
-	for (auto en: electricityGenerators) {
-		if (en->isGhost()) continue;
-		en->generate();
-	}
+	for (auto node: electricity.producers) node.produce();
 
 	Charger::tickDischarge();
 
-	electricityLoad = electricityDemand.portion(electricityCapacityReady);
-	electricitySatisfaction = electricitySupply.portion(electricityDemand);
-	electricityDemand = 0;
+	electricity.load = electricity.demand.portion(electricity.capacityReady);
+	electricity.satisfaction = electricity.supply.portion(electricity.demand);
+	electricity.demand = 0;
 }
 
 void Entity::postTick() {
@@ -337,8 +335,12 @@ Entity& Entity::create(uint id, Spec *spec) {
 	}
 
 	if (spec->generateElectricity) {
-		electricityGenerators.insert(&en);
+		electricity.add(&en);
 		en.setGenerating(true);
+	}
+
+	if (spec->consumeElectricity) {
+		electricity.add(&en);
 	}
 
 	if (spec->named) {
@@ -521,7 +523,11 @@ void Entity::destroy() {
 	}
 
 	if (spec->generateElectricity) {
-		electricityGenerators.erase(this);
+		electricity.drop(this);
+	}
+
+	if (spec->consumeElectricity) {
+		electricity.drop(this);
 	}
 
 	if (spec->enemyTarget) {
@@ -1632,8 +1638,7 @@ Energy Entity::consume(Energy e) {
 	if (!isEnabled()) return c;
 
 	if (spec->consumeElectricity && electrified()) {
-		electricityDemand += e;
-		c = e * electricitySatisfaction;
+		c = electricity.consumers[this].consume(e);
 	}
 	if (spec->consumeFuel) {
 		c = burner().consume(e);
@@ -1664,91 +1669,8 @@ float Entity::consumeRate(Energy e) {
 void Entity::bulkConsumeElectricity(Spec* spec, Energy e, int count) {
 	e = (e * (float)count);
 	if (spec->consumeElectricity) {
-		electricityDemand += e;
+		electricity.demand += e;
 		spec->statsGroup->energyConsumption.add(Sim::tick, e);
-	}
-}
-
-void Entity::generate() {
-	ensure(mutating);
-	if (!isEnabled() || !isGenerating() || !electrified()) return;
-
-	// At the start of the game when a single generator exists, or when the electricity network
-	// fuel supply crashes and generators need to restart, load must always be slightly > 0.
-	Energy energy = std::max(Energy::J(1), spec->energyGenerate * electricityLoad);
-
-	if (spec->generateElectricity && spec->consumeFuel) {
-		auto& burn = burner();
-
-		Energy supplied = burn.consume(energy);
-		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		electricitySupply += supplied;
-
-		if (burn.energy) electricityCapacityReady += spec->energyGenerate;
-		electricityCapacity += spec->energyGenerate;
-
-		if (spec->burnerState) {
-			// Burner state is a smooth progression between 0 and #spec->states
-			state = std::floor((float)burn.energy.value/(float)burn.buffer.value * (float)spec->states.size());
-			state = std::min((uint16_t)spec->states.size(), std::max((uint16_t)1, state)) - 1;
-		}
-		return;
-	}
-
-	if (spec->generateElectricity && spec->consumeThermalFluid) {
-		auto& gen = generator();
-
-		Energy supplied = gen.consume(energy);
-		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		electricitySupply += supplied;
-
-		if (gen.supplying) electricityCapacityReady += spec->energyGenerate;
-		electricityCapacity += spec->energyGenerate;
-
-		// The state for generators is currently stopped, slow or fast. The steam-engine entity
-		// uses state to spin its flywheel albeit jerkily. This should be done in a smoother
-		// fashion someday
-		if (spec->generatorState && supplied) {
-			state += supplied > (spec->energyGenerate * 0.5f) ? 2: 1;
-			if (state >= spec->states.size()) state -= spec->states.size();
-		}
-
-		return;
-	}
-
-	if (spec->windTurbine) {
-		float wind = Sim::windSpeed({pos().x, pos().y-(spec->collision.h/2.0f), pos().z});
-
-		Energy supplied = spec->energyGenerate * wind;
-		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		electricitySupply += supplied;
-
-		if (wind > 0.0f) {
-			state += std::ceil(wind/10.0f);
-			if (state >= spec->states.size()) state -= spec->states.size();
-
-			electricityCapacityReady += supplied;
-			electricityCapacity += supplied;
-		}
-
-		return;
-	}
-
-	if (spec->generateElectricity && spec->consumeMagic) {
-		Energy supplied = energy;
-		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		electricitySupply += supplied;
-		electricityCapacityReady += spec->energyGenerate;
-		electricityCapacity += spec->energyGenerate;
-
-		// The state for generators is currently stopped, slow or fast. The steam-engine entity
-		// uses state to spin its flywheel albeit jerkily. This should be done in a smoother
-		// fashion someday
-		if (spec->generatorState && supplied) {
-			state += supplied > (spec->energyGenerate * 0.5f) ? 2: 1;
-			if (state >= spec->states.size()) state -= spec->states.size();
-		}
-		return;
 	}
 }
 
