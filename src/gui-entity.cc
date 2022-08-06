@@ -1295,7 +1295,7 @@ void GuiEntity::overlayHovering(bool full) {
 
 			for (auto es: Entity::intersecting(en->powerpole().coverage())) {
 				if (en->id == es->id) continue;
-				if (es->electrical() && !es->spec->consumeElectricityAnywhere)
+				if (es->spec->consumeElectricity || es->spec->generateElectricity || es->spec->consumeCharge)
 					scene.cuboid(es->cuboid(), 0xffffffff, scene.pen());
 			}
 		});

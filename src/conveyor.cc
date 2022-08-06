@@ -451,8 +451,21 @@ void Conveyor::tick() {
 		leaderUpdate(id);
 	}
 
-	for (auto [spec,count]: extant) {
-		Entity::bulkConsumeElectricity(spec, spec->conveyorEnergyDrain, count);
+	// consume energy in bulk for the length of each belt, using the first normal conveyor
+	// that isn't a more complex entity with its own consumption (tube, balancer etc) as a
+	// baseline.
+	for (auto& belt: ConveyorBelt::all) {
+		for (auto& conveyor: belt->conveyors) {
+			if (conveyor.en->spec->conveyorEnergyDrain && !conveyor.en->spec->consumeElectricity) {
+				auto lead = conveyor.en;
+				auto spec = lead->spec;
+				auto pole = PowerPole::covering(lead->box());
+				if (pole && pole->network) {
+					pole->network->consume(spec, spec->conveyorEnergyDrain, belt->conveyors.size());
+				}
+				break;
+			}
+		}
 	}
 }
 

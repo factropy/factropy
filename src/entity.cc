@@ -130,8 +130,6 @@ void Entity::preTick() {
 	ElectricityNetwork::tick();
 
 	for (auto& network: ElectricityNetwork::all) network.updatePre();
-
-	Charger::tickCharge();
 }
 
 void Entity::postTick() {
@@ -1656,7 +1654,7 @@ Energy Entity::consume(Energy e) {
 	Energy c = 0;
 	if (!isEnabled()) return c;
 
-	if (spec->consumeElectricity && electrified()) {
+	if (spec->consumeElectricity) {
 		c = ElectricityConsumer::get(id).consume(e);
 	}
 	if (spec->consumeFuel) {
@@ -1681,26 +1679,6 @@ Energy Entity::consume(Energy e) {
 
 float Entity::consumeRate(Energy e) {
 	return consume(e).portion(e);
-}
-
-// For numerous simple components like conveyors it's faster to consume energy once per
-// tick rather than hammer the postTick() energy consumption/drain checks
-void Entity::bulkConsumeElectricity(Spec* spec, Energy e, int count) {
-//	e = (e * (float)count);
-//	if (spec->consumeElectricity) {
-//		electricity.demand += e;
-//		spec->statsGroup->energyConsumption.add(Sim::tick, e);
-//	}
-}
-
-bool Entity::electrical() {
-	return spec->consumeElectricity || spec->generateElectricity;
-}
-
-bool Entity::electrified() {
-	if (spec->consumeElectricity) return electricityConsumer().network != nullptr;
-	if (spec->generateElectricity) return electricityProducer().network != nullptr;
-	return spec->consumeElectricityAnywhere;
 }
 
 void Entity::damage(Health hits) {

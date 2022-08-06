@@ -96,7 +96,6 @@ Spec::Spec(std::string name) {
 	consumeFuel = false;
 	burnerState = false;
 	consumeElectricity = false;
-	consumeElectricityAnywhere = false;
 	consumeThermalFluid = false;
 	consumeCharge = false;
 	consumeChargeEffect = false;

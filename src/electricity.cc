@@ -61,7 +61,7 @@ void ElectricityProducer::produce() {
 
 		Energy supplied = burn.consume(energy);
 		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		network->production[spec].add(Sim::tick, supplied);
+		network->production[spec->statsGroup].add(Sim::tick, supplied);
 		network->supply += supplied;
 
 		if (burn.energy) network->capacityReady += spec->energyGenerate;
@@ -80,7 +80,7 @@ void ElectricityProducer::produce() {
 
 		Energy supplied = gen.consume(energy);
 		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		network->production[spec].add(Sim::tick, supplied);
+		network->production[spec->statsGroup].add(Sim::tick, supplied);
 		network->supply += supplied;
 
 		if (gen.supplying) network->capacityReady += spec->energyGenerate;
@@ -103,7 +103,7 @@ void ElectricityProducer::produce() {
 
 		Energy supplied = spec->energyGenerate * wind;
 		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		network->production[spec].add(Sim::tick, supplied);
+		network->production[spec->statsGroup].add(Sim::tick, supplied);
 		network->supply += supplied;
 
 		if (wind > 0.0f) {
@@ -120,7 +120,7 @@ void ElectricityProducer::produce() {
 	if (spec->generateElectricity && spec->consumeMagic) {
 		Energy supplied = energy;
 		spec->statsGroup->energyGeneration.add(Sim::tick, supplied);
-		network->production[spec].add(Sim::tick, supplied);
+		network->production[spec->statsGroup].add(Sim::tick, supplied);
 		network->supply += supplied;
 		network->capacityReady += spec->energyGenerate;
 		network->capacity += spec->energyGenerate;
@@ -177,7 +177,7 @@ Energy ElectricityConsumer::consume(Energy e) {
 	if (en->isGhost()) return 0;
 	network->demand += e;
 	e = e * network->satisfaction;
-	network->consumption[en->spec].add(Sim::tick, e);
+	network->consumption[en->spec->statsGroup].add(Sim::tick, e);
 	return e;
 }
 
@@ -229,7 +229,7 @@ void ElectricityBuffer::discharge() {
 		if (transfer) {
 			level -= transfer;
 			spec->statsGroup->energyGeneration.add(Sim::tick, transfer);
-			network->production[spec].add(Sim::tick, transfer);
+			network->production[spec->statsGroup].add(Sim::tick, transfer);
 			network->supply += transfer;
 		}
 	}
@@ -254,7 +254,7 @@ void ElectricityBuffer::charge() {
 		if (transfer) {
 			level += transfer;
 			spec->statsGroup->energyConsumption.add(Sim::tick, transfer);
-			network->consumption[spec].add(Sim::tick, transfer);
+			network->consumption[spec->statsGroup].add(Sim::tick, transfer);
 			network->demand += transfer;
 		}
 	}
@@ -460,6 +460,22 @@ void ElectricityNetwork::drop(ElectricityConsumer& consumer) {
 void ElectricityNetwork::drop(ElectricityBuffer& buffer) {
 	buffers.erase(buffer.id);
 	buffer.network = nullptr;
+}
+
+Energy ElectricityNetwork::consume(Spec* spec, Energy e) {
+	demand += e;
+	e = e * satisfaction;
+	consumption[spec->statsGroup].add(Sim::tick, e);
+	spec->statsGroup->energyConsumption.add(Sim::tick, e);
+	return e;
+}
+
+void ElectricityNetwork::consume(Spec* spec, Energy e, int count) {
+	e = e * (float)count;
+	demand += e;
+	e = e * satisfaction;
+	consumption[spec->statsGroup].add(Sim::tick, e);
+	spec->statsGroup->energyConsumption.add(Sim::tick, e);
 }
 
 ElectricityNetworkState ElectricityNetwork::aggregate() {

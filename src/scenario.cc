@@ -770,13 +770,6 @@ public:
 			spec->consumeElectricity = to_bool(consumeElectricity);
 		}
 
-		if (spec->consumeElectricity) {
-			auto consumeElectricityAnywhere = field("consumeElectricityAnywhere");
-			if (is_bool(consumeElectricityAnywhere)) {
-				spec->consumeElectricityAnywhere = to_bool(consumeElectricityAnywhere);
-			}
-		}
-
 		auto consumeFuel = field("consumeFuel");
 		if (is_bool(consumeFuel)) {
 			spec->consumeFuel = to_bool(consumeFuel);
@@ -2598,6 +2591,7 @@ void ScenarioBase::specifications() {
 	spec->armInput = Point::North*2.0f + Point::Down*0.25f;
 	spec->armOutput = Point::South*2.0f + Point::Down*0.25f;
 	spec->armSpeed = 1.0f/60.0f;
+	spec->statsGroup = Spec::byName("arm");
 	spec->rotateGhost = true;
 	spec->rotateExtant = true;
 	spec->health = 150;
@@ -4626,8 +4620,8 @@ void ScenarioBase::cartTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(50*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(50*tier);
-	spec->consumeChargeRate = Energy::kW(50*tier);
+	spec->consumeChargeBuffer = Energy::MJ(10*tier);
+	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
 	spec->storeAnything = true;
@@ -4704,7 +4698,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(50*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::MJ(1);
+	spec->consumeChargeBuffer = Energy::MJ(10);
 	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
@@ -4809,7 +4803,7 @@ void ScenarioBase::truckTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(150*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(150*tier);
+	spec->consumeChargeBuffer = Energy::MJ(50*tier);
 	spec->consumeChargeRate = Energy::kW(150*tier);
 	spec->store = true;
 	spec->tipStorage = true;
@@ -4895,7 +4889,7 @@ void ScenarioBase::truckTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(150*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(150*tier);
+	spec->consumeChargeBuffer = Energy::MJ(50*tier);
 	spec->consumeChargeRate = Energy::kW(150*tier);
 	spec->store = true;
 	spec->capacity = Mass::kg(800*tier);

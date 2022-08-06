@@ -15,8 +15,6 @@ namespace Sim {
 
 	TimeSeries statsTick;
 	TimeSeries statsChunk;
-	TimeSeries statsElectricityDemand;
-	TimeSeries statsElectricitySupply;
 	TimeSeries statsEntityPre;
 	TimeSeries statsEntityPost;
 	TimeSeries statsGhost;
@@ -54,6 +52,7 @@ namespace Sim {
 	TimeSeries statsMonocar;
 	TimeSeries statsSource;
 	TimeSeries statsPowerPole;
+	TimeSeries statsCharger;
 
 	OpenSimplex* opensimplex;
 	std::mutex mutex;
@@ -122,8 +121,6 @@ namespace Sim {
 		seed = 0;
 		statsTick.clear();
 		statsChunk.clear();
-		statsElectricityDemand.clear();
-		statsElectricitySupply.clear();
 		statsEntityPre.clear();
 		statsEntityPost.clear();
 		statsGhost.clear();
@@ -161,6 +158,7 @@ namespace Sim {
 		statsMonocar.clear();
 		statsSource.clear();
 		statsPowerPole.clear();
+		statsCharger.clear();
 
 		for (auto& item: Item::all) {
 			item.production.clear();
@@ -226,11 +224,6 @@ namespace Sim {
 		alerts.monocarsBlocked = 0;
 		alerts.entitiesDamaged = 0;
 
-		statsElectricityDemand.set(tick, 0);//Entity::electricity.demand);
-		statsElectricityDemand.update(tick);
-		statsElectricitySupply.set(tick, 0);//Entity::electricity.supply);
-		statsElectricitySupply.update(tick);
-
 		tick++;
 
 		for (auto& item: Item::all) {
@@ -248,6 +241,7 @@ namespace Sim {
 		statsGhost.track(tick, Ghost::tick);
 		statsNetworker.track(tick, Networker::tick);
 		statsPowerPole.track(tick, PowerPole::tick);
+		statsCharger.track(tick, Charger::tick);
 		statsPile.track(tick, Pile::tick);
 		statsExplosive.track(tick, Explosive::tick);
 
@@ -264,7 +258,6 @@ namespace Sim {
 
 		crew.job([&]() {
 			statsConveyor.track(tick, Conveyor::tick);
-			statsBalancer.track(tick, Balancer::tick);
 			groupA.now();
 		});
 
@@ -275,6 +268,7 @@ namespace Sim {
 		// Components that cannot run concurrently with anything
 
 		statsSource.track(tick, Source::tick);
+		statsBalancer.track(tick, Balancer::tick);
 		statsUnveyor.track(tick, Unveyor::tick);
 		statsArm.track(tick, Arm::tick);
 		statsLoader.track(tick, Loader::tick);

@@ -582,10 +582,7 @@ void StatsPopup2::draw() {
 			};
 
 			std::deque<Series> plots = {
-//				{ .title = "Tick", .ts = &Sim::statsTick},
 				{ .title = "Chunk", .ts = &Sim::statsChunk},
-//				{ .title = "ElectricityDemand", .ts = &Sim::statsElectricityDemand},
-//				{ .title = "ElectricitySupply", .ts = &Sim::statsElectricitySupply},
 				{ .title = "EntityPre", .ts = &Sim::statsEntityPre},
 				{ .title = "EntityPost", .ts = &Sim::statsEntityPost},
 				{ .title = "Ghost", .ts = &Sim::statsGhost},
@@ -612,6 +609,7 @@ void StatsPopup2::draw() {
 				{ .title = "Explosion", .ts = &Sim::statsExplosion},
 				{ .title = "Turret", .ts = &Sim::statsTurret},
 				{ .title = "Computer", .ts = &Sim::statsComputer},
+				{ .title = "Router", .ts = &Sim::statsRouter},
 				{ .title = "Enemy", .ts = &Sim::statsEnemy},
 				{ .title = "Zeppelin", .ts = &Sim::statsZeppelin},
 				{ .title = "FlightLogistic", .ts = &Sim::statsFlightLogistic},
@@ -622,6 +620,7 @@ void StatsPopup2::draw() {
 				{ .title = "Monocar", .ts = &Sim::statsMonocar},
 				{ .title = "Source", .ts = &Sim::statsSource},
 				{ .title = "PowerPole", .ts = &Sim::statsPowerPole},
+				{ .title = "Charger", .ts = &Sim::statsCharger},
 			};
 
 			std::sort(plots.begin(), plots.end(), [](const auto& a, const auto& b) {
@@ -642,6 +641,7 @@ void StatsPopup2::draw() {
 
 				double yLim = std::ceil(yMax);
 
+				PushFont(Config::sidebar.font.imgui);
 				if (ImPlot::BeginPlot(fmtc("##%d", ++id), ImVec2(-1,-1), ImPlotFlags_NoChild | ImPlotFlags_NoFrame | ImPlotFlags_NoInputs)) {
 					ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_NoDecorations);
 					ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, yLim, ImPlotCond_Always);
@@ -652,6 +652,7 @@ void StatsPopup2::draw() {
 
 					ImPlot::EndPlot();
 				}
+				PopFont();
 			});
 
 			EndTabItem();

@@ -321,9 +321,6 @@ struct Entity {
 	// only care that they *can* consume energy not how they do it.
 	Energy consume(Energy e);
 	float consumeRate(Energy e);
-	static void bulkConsumeElectricity(Spec* spec, Energy e, int count);
-	bool electrical();
-	bool electrified();
 
 	// Apply damage. May result in ::unmanage() and ::remove()
 	void damage(Health hits);

@@ -244,8 +244,6 @@ namespace Sim {
 					auto out = std::ofstream(path + "/time-series.json");
 
 					json state;
-					state["statsElectricityDemand"] = Save::timeSeriesSave(&Sim::statsElectricityDemand);
-					state["statsElectricitySupply"] = Save::timeSeriesSave(&Sim::statsElectricitySupply);
 					state["statsEntityPre"] = Save::timeSeriesSave(&Sim::statsEntityPre);
 					state["statsEntityPost"] = Save::timeSeriesSave(&Sim::statsEntityPost);
 					state["statsStore"] = Save::timeSeriesSave(&Sim::statsStore);
@@ -399,8 +397,6 @@ namespace Sim {
 //
 //			for (std::string line; std::getline(in, line);) {
 //				auto state = json::parse(line);
-//				Save::timeSeriesLoad(&Sim::statsElectricityDemand, state["statsElectricityDemand"]);
-//				Save::timeSeriesLoad(&Sim::statsElectricitySupply, state["statsElectricitySupply"]);
 //				Save::timeSeriesLoad(&Sim::statsEntity, state["statsEntity"]);
 //				Save::timeSeriesLoad(&Sim::statsStore, state["statsStore"]);
 //				Save::timeSeriesLoad(&Sim::statsArm, state["statsArm"]);

@@ -195,7 +195,6 @@ struct Spec {
 	bool burnerState;
 	std::string consumeFuelType;
 	bool consumeElectricity;
-	bool consumeElectricityAnywhere;
 	bool consumeThermalFluid;
 	bool consumeCharge;
 	Energy consumeChargeBuffer;

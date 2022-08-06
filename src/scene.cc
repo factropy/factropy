@@ -1522,7 +1522,7 @@ void Scene::update(uint w, uint h, float f) {
 					auto& charger = en.charger();
 					ImGui::Print(charger.energy.format().c_str());
 					ImGui::SameLine();
-					ImGui::PrintRight(charger.chargePrimaryRate().formatRate().c_str());
+					ImGui::PrintRight(charger.chargeRate().formatRate().c_str());
 					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, colorEnergy);
 					ImGui::SmallBar(charger.level());
 					ImGui::PopStyleColor(1);

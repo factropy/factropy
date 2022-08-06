@@ -156,6 +156,7 @@ struct ConveyorBelt {
 	int sideLoad = Conveyor::SideLoadLeft;
 	uint firstActiveLeft = 0;
 	uint firstActiveRight = 0;
+//	uint pole = 0;
 	void activeLeft(uint offset);
 	void activeRight(uint offset);
 	void flush();
