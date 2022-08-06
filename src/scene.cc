@@ -1329,10 +1329,13 @@ void Scene::update(uint w, uint h, float f) {
 			}
 
 			if (hovering->spec->powerpole) {
-				ImGui::Spacing();
-				if (hovering->status == GuiEntity::Status::Alert) ImGui::Alert("Disconnected");
-				else if (hovering->status == GuiEntity::Status::Warning) ImGui::Warning("Electricity");
-				else ImGui::Notice("Connected");
+				Sim::locked([&]() {
+					if (!Entity::exists(hovering->id)) return;
+					auto& en = Entity::get(hovering->id);
+					auto& pole = en.powerpole();
+					ImGui::Spacing();
+					Popup::powerpoleNotice(pole);
+				});
 			}
 
 			if (hovering->spec->crafter) {

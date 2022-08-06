@@ -125,4 +125,8 @@ public:
 		auto it = index.find((entry){.key = k});
 		return it != index.end() ? &pool.referSlot((*it).slot): nullptr;
 	}
+
+	V& front() {
+		return *begin();
+	}
 };

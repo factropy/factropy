@@ -131,9 +131,6 @@ struct Entity {
 	// Some Entity fields cannot change during a tick
 	static inline std::atomic<bool> mutating = {true};
 
-	// Current RTS style magic-electricity-network-everywhere
-	static inline ElectricityNetwork electricity;
-
 	// Every extant entity is tracked here. See ::get() and ::exists()
 	static inline slabmap<Entity,&Entity::id> all;
 	static inline uint sequence = 0;
@@ -397,4 +394,7 @@ struct Entity {
 	Tube& tube() const;
 	Source& source() const;
 	PowerPole& powerpole() const;
+	ElectricityProducer& electricityProducer() const;
+	ElectricityConsumer& electricityConsumer() const;
+	ElectricityBuffer& electricityBuffer() const;
 };

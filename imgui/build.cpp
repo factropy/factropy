@@ -134,11 +134,11 @@ namespace ImGui {
 	void MultiBar(float fraction, std::vector<float> splits, std::vector<ImU32> colors) {
 		fraction = std::max(0.01f, fraction);
 
-		auto origin = ImGui::GetCursorPos();
+		auto origin = GetCursorPos();
 
 		auto aorigin = origin;
-		aorigin.x += ImGui::GetWindowPos().x;
-		aorigin.y += ImGui::GetWindowPos().y;
+		aorigin.x += GetWindowPos().x;
+		aorigin.y += GetWindowPos().y;
 
 		ImVec2 space = {GetContentRegionAvail().x, GetFontSize()/3};
 		float cursor = 0;
@@ -162,16 +162,18 @@ namespace ImGui {
 	void OverflowBar(float n, ImU32 ok, ImU32 bad) {
 		n = std::max(0.01f, n);
 
-		auto origin = GetCursorPos();
-		origin.x += GetWindowPos().x;
-		origin.y += GetWindowPos().y;
+		auto top = GetCursorPos();
+
+		auto origin = top;
+		origin.x += GetWindowPos().x - GetScrollX();
+		origin.y += GetWindowPos().y - GetScrollY();
 
 		ImVec2 space = {GetContentRegionAvail().x, GetFontSize()/3};
 
 		GetWindowDrawList()->AddRectFilled(origin, {origin.x + space.x, origin.y + space.y}, GetColorU32(ImGuiCol_FrameBg));
 		GetWindowDrawList()->AddRectFilled(origin, {origin.x + space.x * n, origin.y + space.y}, n > 0.999f ? bad: ok);
 
-		SetCursorPos({GetCursorPos().x, origin.y + space.y});
+		SetCursorPos(ImVec2(top.x, top.y + space.y));
 		SpacingV();
 	}
 

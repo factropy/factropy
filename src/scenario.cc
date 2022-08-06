@@ -846,11 +846,6 @@ public:
 		}
 
 		if (spec->powerpole) {
-			auto powerpoleRoot = field("powerpoleRoot");
-			if (is_bool(powerpoleRoot)) {
-				spec->powerpoleRoot = to_bool(powerpoleRoot);
-			}
-
 			auto powerpoleRange = field("powerpoleRange");
 			if (is_number(powerpoleRange)) {
 				spec->powerpoleRange = to_number(powerpoleRange);
@@ -909,14 +904,26 @@ public:
 			spec->bufferElectricity = to_bool(bufferElectricity);
 		}
 
-		auto bufferElectricityState = field("bufferElectricityState");
-		if (is_bool(bufferElectricityState)) {
-			spec->bufferElectricityState = to_bool(bufferElectricityState);
-		}
+		if (spec->bufferElectricity) {
+			auto bufferElectricityState = field("bufferElectricityState");
+			if (is_bool(bufferElectricityState)) {
+				spec->bufferElectricityState = to_bool(bufferElectricityState);
+			}
 
-		auto bufferDischargeRate = field("bufferDischargeRate");
-		if (is_integer(bufferDischargeRate)) {
-			spec->bufferDischargeRate = to_integer(bufferDischargeRate);
+			auto bufferDischargeRate = field("bufferDischargeRate");
+			if (is_integer(bufferDischargeRate)) {
+				spec->bufferDischargeRate = to_integer(bufferDischargeRate);
+			}
+
+			auto bufferChargeRate = field("bufferChargeRate");
+			if (is_integer(bufferChargeRate)) {
+				spec->bufferChargeRate = to_integer(bufferChargeRate);
+			}
+
+			auto bufferCapacity = field("bufferCapacity");
+			if (is_integer(bufferCapacity)) {
+				spec->bufferCapacity = to_integer(bufferCapacity);
+			}
 		}
 
 		auto crafter = field("crafter");

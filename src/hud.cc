@@ -39,6 +39,7 @@ void HUD::draw() {
 	} hovered;
 
 	Goal* goal = Goal::current();
+	auto estate = ElectricityNetwork::aggregate();
 
 	Begin("##hud", nullptr, flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
 		PushFont(Config::hud.font.imgui);
@@ -54,10 +55,10 @@ void HUD::draw() {
 			BeginGroup();
 			Print("Electricity:"); SameLine();
 			Sim::locked([&]() {
-				auto capacity = Entity::electricity.capacityReady; // + Entity::electricity.capacityBufferedReady;
-				PrintRight(fmtc("%s / %s", Entity::electricity.demand.formatRate(), capacity.formatRate()));
-				OverflowBar(Entity::electricity.demand.portion(capacity), ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
-				OverflowBar(Entity::electricity.bufferedLevel.portion(Entity::electricity.bufferedLimit), ImColorSRGB(0xffff00ff), ImColorSRGB(0x9999ddff));
+				auto capacity = estate.capacityReady; // + estate.capacityBufferedReady;
+				PrintRight(fmtc("%s / %s", estate.demand.formatRate(), capacity.formatRate()));
+				OverflowBar(estate.demand.portion(capacity), ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
+				OverflowBar(estate.bufferedLevel.portion(estate.bufferedLimit), ImColorSRGB(0xffff00ff), ImColorSRGB(0x9999ddff));
 			});
 			EndGroup();
 			hovered.electricity = IsItemHovered();
@@ -285,7 +286,7 @@ void HUD::draw() {
 					Print(spec->title.c_str());
 					SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
 					PushStyleColor(ImGuiCol_PlotHistogram, Color(0x00cc00ff));
-					SmallBar(energy.portion(Entity::electricity.supply));
+					SmallBar(energy.portion(estate.supply));
 					PopStyleColor(1);
 					Spacing();
 				}
@@ -294,7 +295,7 @@ void HUD::draw() {
 					Print("(other)");
 					SameLine(); PrintRight(fmtc("%s", otherStuff.formatRate()));
 					PushStyleColor(ImGuiCol_PlotHistogram, Color(0x00cc00ff));
-					SmallBar(otherStuff.portion(Entity::electricity.supply));
+					SmallBar(otherStuff.portion(estate.supply));
 					PopStyleColor(1);
 					Spacing();
 				}
@@ -311,7 +312,7 @@ void HUD::draw() {
 					Print(spec->title.c_str());
 					SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
 					PushStyleColor(ImGuiCol_PlotHistogram, Color(0xcc0000ff));
-					SmallBar(energy.portion(Entity::electricity.demand));
+					SmallBar(energy.portion(estate.demand));
 					PopStyleColor(1);
 					Spacing();
 				}
@@ -320,7 +321,7 @@ void HUD::draw() {
 					Print("(other)");
 					SameLine(); PrintRight(fmtc("%s", otherStuff.formatRate()));
 					PushStyleColor(ImGuiCol_PlotHistogram, Color(0xcc0000ff));
-					SmallBar(otherStuff.portion(Entity::electricity.demand));
+					SmallBar(otherStuff.portion(estate.demand));
 					PopStyleColor(1);
 					Spacing();
 				}

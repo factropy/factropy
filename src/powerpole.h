@@ -5,6 +5,7 @@
 struct PowerPole;
 
 #include "slabmap.h"
+#include "electricity.h"
 
 struct PowerPole {
 	uint id;
@@ -19,14 +20,11 @@ struct PowerPole {
 	static PowerPole& get(uint id);
 
 	static inline gridmap<64,PowerPole*> gridCoverage;
+	static PowerPole* covering(Box box);
 	static bool covered(Box box);
-	static bool powered(Box box);
 
-	static inline miniset<PowerPole*> roots;
-	static inline activeset<PowerPole*,60> queue;
-
-	uint root = 0;
 	miniset<uint> links;
+	ElectricityNetwork* network = nullptr;
 
 	void destroy();
 

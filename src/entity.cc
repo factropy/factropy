@@ -27,8 +27,6 @@ void Entity::reset() {
 	repairActions.clear();
 	removing.clear();
 	exploding.clear();
-	electricity.producers.clear();
-	electricity.consumers.clear();
 	names.clear();
 	sequence = 0;
 	Burner::reset();
@@ -69,6 +67,9 @@ void Entity::reset() {
 	Monocar::reset();
 	Source::reset();
 	PowerPole::reset();
+	ElectricityProducer::reset();
+	ElectricityConsumer::reset();
+	ElectricityNetwork::reset();
 }
 
 std::size_t Entity::memory() {
@@ -121,36 +122,22 @@ void Entity::preTick() {
 		repairActions.erase(eid);
 	}
 
-	// Updated by ::generate()
-	electricity.supply = 0;
-	electricity.capacity = 0;
-	electricity.capacityBuffered = 0;
-	electricity.capacityReady = 0;
-	electricity.capacityBufferedReady = 0;
-	electricity.bufferedLevel = 0;
-	electricity.bufferedLimit = 0;
-
 	for (auto& [_,spec]: Spec::all) {
 		spec->statsGroup->energyConsumption.set(Sim::tick, 0);
 		spec->statsGroup->energyGeneration.set(Sim::tick, 0);
 	}
 
-	// Generators adjust output based on the last tick's electricity.load so there's
-	// a slight delay in response to changes in consumption. This isn't unrealistic;
-	// in fact it should probably lag for longer
-	for (auto node: electricity.producers) node.produce();
+	ElectricityNetwork::tick();
 
-	Charger::tickDischarge();
+	for (auto& network: ElectricityNetwork::all) network.updatePre();
 
-	electricity.load = electricity.demand.portion(electricity.capacityReady);
-	electricity.satisfaction = electricity.supply.portion(electricity.demand);
-	electricity.demand = 0;
+	Charger::tickCharge();
 }
 
 void Entity::postTick() {
 	ensure(mutating);
 
-	Charger::tickCharge();
+	for (auto& network: ElectricityNetwork::all) network.updatePost();
 
 	for (auto& [_,spec]: Spec::all) {
 		spec->statsGroup->energyConsumption.update(Sim::tick);
@@ -335,12 +322,16 @@ Entity& Entity::create(uint id, Spec *spec) {
 	}
 
 	if (spec->generateElectricity) {
-		electricity.add(&en);
+		ElectricityProducer::create(id);
 		en.setGenerating(true);
 	}
 
 	if (spec->consumeElectricity) {
-		electricity.add(&en);
+		ElectricityConsumer::create(id);
+	}
+
+	if (spec->bufferElectricity) {
+		ElectricityBuffer::create(id);
 	}
 
 	if (spec->named) {
@@ -523,11 +514,15 @@ void Entity::destroy() {
 	}
 
 	if (spec->generateElectricity) {
-		electricity.drop(this);
+		electricityProducer().destroy();
 	}
 
 	if (spec->consumeElectricity) {
-		electricity.drop(this);
+		electricityConsumer().destroy();
+	}
+
+	if (spec->bufferElectricity) {
+		electricityBuffer().destroy();
 	}
 
 	if (spec->enemyTarget) {
@@ -1243,6 +1238,18 @@ Entity& Entity::index() {
 		gridSlabs.insert(aabb, this);
 	}
 
+	if (spec->generateElectricity) {
+		electricityProducer().connect();
+	}
+
+	if (spec->consumeElectricity) {
+		electricityConsumer().connect();
+	}
+
+	if (spec->bufferElectricity) {
+		electricityBuffer().connect();
+	}
+
 	if (!isGhost() && !spec->junk && !spec->enemy && spec->health && health < spec->health) {
 		damaged.insert(id);
 	}
@@ -1314,6 +1321,18 @@ Entity& Entity::unindex() {
 
 	if (spec->slab) {
 		gridSlabs.remove(aabb, this);
+	}
+
+	if (spec->generateElectricity) {
+		electricityProducer().disconnect();
+	}
+
+	if (spec->consumeElectricity) {
+		electricityConsumer().disconnect();
+	}
+
+	if (spec->bufferElectricity) {
+		electricityBuffer().disconnect();
 	}
 
 	damaged.erase(id);
@@ -1638,7 +1657,7 @@ Energy Entity::consume(Energy e) {
 	if (!isEnabled()) return c;
 
 	if (spec->consumeElectricity && electrified()) {
-		c = electricity.consumers[this].consume(e);
+		c = ElectricityConsumer::get(id).consume(e);
 	}
 	if (spec->consumeFuel) {
 		c = burner().consume(e);
@@ -1667,11 +1686,11 @@ float Entity::consumeRate(Energy e) {
 // For numerous simple components like conveyors it's faster to consume energy once per
 // tick rather than hammer the postTick() energy consumption/drain checks
 void Entity::bulkConsumeElectricity(Spec* spec, Energy e, int count) {
-	e = (e * (float)count);
-	if (spec->consumeElectricity) {
-		electricity.demand += e;
-		spec->statsGroup->energyConsumption.add(Sim::tick, e);
-	}
+//	e = (e * (float)count);
+//	if (spec->consumeElectricity) {
+//		electricity.demand += e;
+//		spec->statsGroup->energyConsumption.add(Sim::tick, e);
+//	}
 }
 
 bool Entity::electrical() {
@@ -1679,7 +1698,9 @@ bool Entity::electrical() {
 }
 
 bool Entity::electrified() {
-	return electrical() && (spec->consumeElectricityAnywhere || PowerPole::powered(box()));
+	if (spec->consumeElectricity) return electricityConsumer().network != nullptr;
+	if (spec->generateElectricity) return electricityProducer().network != nullptr;
+	return spec->consumeElectricityAnywhere;
 }
 
 void Entity::damage(Health hits) {
@@ -1894,5 +1915,17 @@ Source& Entity::source() const {
 
 PowerPole& Entity::powerpole() const {
 	return PowerPole::get(id);
+}
+
+ElectricityProducer& Entity::electricityProducer() const {
+	return ElectricityProducer::get(id);
+}
+
+ElectricityConsumer& Entity::electricityConsumer() const {
+	return ElectricityConsumer::get(id);
+}
+
+ElectricityBuffer& Entity::electricityBuffer() const {
+	return ElectricityBuffer::get(id);
 }
 

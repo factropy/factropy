@@ -226,9 +226,9 @@ namespace Sim {
 		alerts.monocarsBlocked = 0;
 		alerts.entitiesDamaged = 0;
 
-		statsElectricityDemand.set(tick, Entity::electricity.demand);
+		statsElectricityDemand.set(tick, 0);//Entity::electricity.demand);
 		statsElectricityDemand.update(tick);
-		statsElectricitySupply.set(tick, Entity::electricity.supply);
+		statsElectricitySupply.set(tick, 0);//Entity::electricity.supply);
 		statsElectricitySupply.update(tick);
 
 		tick++;

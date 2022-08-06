@@ -34,6 +34,7 @@ struct Popup {
 
 	static void crafterNotice(Crafter& crafter);
 	static void launcherNotice(Launcher& launcher);
+	static void powerpoleNotice(PowerPole& pole);
 	static void goalRateChart(Goal* goal, Goal::Rate& rate, float h);
 };
 

@@ -399,7 +399,26 @@ void GuiEntity::loadPowerPole() {
 		powerpole->point = pole.point();
 
 		if (spec->status) {
-			status = !ghost && pole.root != 0 ? Status::Ok: Status::Alert;
+			// should roughly align with Popup::powerpoleNotice()
+			status = Status::Ok;
+			if (ghost || !pole.network) {
+				status = Status::Warning;
+			}
+			else
+			if (pole.network->lowPower()) {
+				status = Status::Alert;
+			}
+			else
+			if (pole.network->brownOut()) {
+				status = Status::Warning;
+			}
+			else
+			if (pole.network->noCapacity()) {
+				status = Status::Warning;
+			}
+			else {
+				status = Status::Ok;
+			}
 		}
 
 		for (auto& sid: pole.links) {

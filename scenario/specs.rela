@@ -2774,12 +2774,11 @@ function()
 		collision = [0, 0, 0, 4, 6, 12],
 		iconD = 6,
 		iconV = 1,
-		consumeCharge = true,
-		consumeChargeBuffer = MJ(100),
-		consumeChargeRate = MW(1),
 		bufferElectricity = true,
 		bufferElectricityState = true,
 		bufferDischargeRate = MW(1),
+		bufferChargeRate = MW(1),
+		bufferCapacity = MJ(100),
 		materials = {
 			"steel-frame" = 50,
 			"electric-motor" = 50,
@@ -5035,7 +5034,6 @@ function()
 		energyGenerate = MW(3),
 		generatorState = true,
 		powerpole = true,
-		powerpoleRoot = true,
 		powerpoleRange = 16,
 		powerpoleCoverage = 4, // less than collision
 		powerpolePoint = [0,7.5,0],

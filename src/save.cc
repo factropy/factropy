@@ -235,6 +235,7 @@ namespace Sim {
 				Teleporter::saveAll(name);
 				Launcher::saveAll(name);
 				PowerPole::saveAll(name);
+				ElectricityNetwork::saveAll(name);
 
 				Goal::saveAll(name);
 				Message::saveAll(name);
@@ -388,6 +389,7 @@ namespace Sim {
 		Teleporter::loadAll(name);
 		Launcher::loadAll(name);
 		PowerPole::loadAll(name);
+		ElectricityNetwork::loadAll(name);
 
 		Goal::loadAll(name);
 		Message::loadAll(name);
@@ -3027,7 +3029,6 @@ void PowerPole::saveAll(const char* name) {
 	for (auto& pole: all) {
 		json state;
 		state["id"] = pole.id;
-		state["root"] = pole.root;
 		state["managed"] = pole.managed;
 
 		int i = 0;
@@ -3048,7 +3049,6 @@ void PowerPole::loadAll(const char* name) {
 	for (std::string line; std::getline(in, line);) {
 		auto state = json::parse(line);
 		PowerPole& pole = get(state["id"]);
-		pole.root = state["root"];
 		pole.managed = state["managed"];
 
 		for (auto sid: state["links"]) {
@@ -3062,6 +3062,42 @@ void PowerPole::loadAll(const char* name) {
 
 	in.close();
 }
+
+void ElectricityNetwork::saveAll(const char* name) {
+	auto path = std::string(name);
+	auto out = std::ofstream(path + "/electricity-networks.json");
+
+	for (auto& network: all) {
+		if (!network.poles.size()) continue;
+
+		json state;
+		state["id"] = network.id;
+		state["pole"] = network.poles.front();
+		out << state << "\n";
+	}
+
+	out.close();
+}
+
+void ElectricityNetwork::loadAll(const char* name) {
+	auto path = std::string(name);
+	auto in = std::ifstream(path + "/electricity-networks.json");
+
+	for (std::string line; std::getline(in, line);) {
+		auto state = json::parse(line);
+		auto& network = ElectricityNetwork::create(state["id"]);
+
+		auto& pole = PowerPole::get(state["pole"]);
+		pole.network = &network;
+		network.poles.push(pole.id);
+
+		ElectricityNetwork::sequence = std::max(ElectricityNetwork::sequence, network.id);
+	}
+
+	ElectricityNetwork::rebuild = true;
+	in.close();
+}
+
 
 void Goal::saveAll(const char* name) {
 	auto path = std::string(name);

@@ -6,10 +6,12 @@ struct Charger;
 
 #include "slabmap.h"
 #include "store.h"
+#include "electricity.h"
 
 struct Charger {
 	uint id;
 	Entity* en;
+	ElectricityNetwork* network;
 	static void tickCharge();
 	static void tickDischarge();
 	static void reset();
@@ -22,6 +24,8 @@ struct Charger {
 
 	Energy energy;
 	Energy buffer;
+
+	void updateNetwork();
 
 	void destroy();
 	Energy consume(Energy e);
