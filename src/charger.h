@@ -22,6 +22,7 @@ struct Charger {
 
 	Energy energy;
 	Energy buffer;
+	bool connected;
 
 	void destroy();
 	Energy consume(Energy e);

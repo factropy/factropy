@@ -654,11 +654,6 @@ public:
 			spec->forceDelete = to_bool(forceDelete);
 		}
 
-		auto forceDeleteStore = field("forceDeleteStore");
-		if (is_bool(forceDeleteStore)) {
-			spec->forceDeleteStore = to_bool(forceDeleteStore);
-		}
-
 		auto slab = field("slab");
 		if (is_bool(slab)) {
 			spec->slab = to_bool(slab);
@@ -863,6 +858,11 @@ public:
 		auto beacon = field("beacon");
 		if (is_vector(beacon)) {
 			spec->beacon = to_point(beacon);
+		}
+
+		auto icon = field("icon");
+		if (is_vector(icon)) {
+			spec->icon = to_point(icon);
 		}
 
 		auto effector = field("effector");

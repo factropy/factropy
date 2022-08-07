@@ -179,6 +179,11 @@ struct Scene {
 		Mesh* flame;
 	} bits;
 
+	struct {
+		Mesh* triangle;
+		Mesh* electricity;
+	} icon;
+
 	std::array<float,1024> packets;
 
 	std::map<Spec*,std::vector<uint64_t>> iconTextures;
@@ -209,6 +214,8 @@ struct Scene {
 	void square(const Point& centroid, float half, const Color& color, float pen = 0.0f);
 	void line(const Point& a, const Point& b, const Color& color, float penW = 0.0f, float penH = 0.0f);
 	void cuboid(const Cuboid& cuboid, const Color& color, float pen = 0.0f);
+	void warning(Mesh* symbol, Point pos);
+	void alert(Mesh* symbol, Point pos);
 	bool keyDown(int key);
 	bool keyReleased(int key);
 	bool buttonDown(int button);

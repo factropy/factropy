@@ -793,8 +793,10 @@ Stack Store::overflowDefaultTo(Store& dst, uint size) {
 		return {0,0};
 	}
 	for (Level& sl: levels) {
-		if (dst.isOverflowDefault(sl.iid) && isActiveProviding(sl.iid, &sl) && dst.countSpace(sl.iid)) {
-			return {sl.iid, 1};
+		uint excess = countActiveProvidable(sl.iid);
+		uint accept = dst.countSpace(sl.iid);
+		if (excess && accept && dst.isOverflowDefault(sl.iid) && isActiveProviding(sl.iid, &sl)) {
+			return {sl.iid, std::min(size, std::min(excess, accept))};
 		}
 	}
 	return {0,0};

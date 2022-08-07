@@ -34,12 +34,16 @@ void ElectricityProducer::destroy() {
 }
 
 void ElectricityProducer::connect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (connected()) return;
 	auto pole = PowerPole::covering(en->box());
-	if (pole) pole->network->add(*this);
+	if (pole && pole->network) pole->network->add(*this);
 }
 
 void ElectricityProducer::disconnect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (!connected()) return;
 	if (network) network->drop(*this);
 }
@@ -161,17 +165,22 @@ void ElectricityConsumer::destroy() {
 }
 
 void ElectricityConsumer::connect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (connected()) return;
 	auto pole = PowerPole::covering(en->box());
-	if (pole) pole->network->add(*this);
+	if (pole && pole->network) pole->network->add(*this);
 }
 
 void ElectricityConsumer::disconnect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (!connected()) return;
 	if (network) network->drop(*this);
 }
 
 Energy ElectricityConsumer::consume(Energy e) {
+	if (en->isGhost()) ensure(!connected());
 	if (!connected()) return 0;
 	if (!en->isEnabled()) return 0;
 	if (en->isGhost()) return 0;
@@ -206,17 +215,22 @@ void ElectricityBuffer::destroy() {
 }
 
 void ElectricityBuffer::connect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (connected()) return;
 	auto pole = PowerPole::covering(en->box());
-	if (pole) pole->network->add(*this);
+	if (pole && pole->network) pole->network->add(*this);
 }
 
 void ElectricityBuffer::disconnect() {
+	if (en->isGhost()) ensure(!connected());
+	if (en->isGhost()) return;
 	if (!connected()) return;
 	if (network) network->drop(*this);
 }
 
 void ElectricityBuffer::discharge() {
+	if (en->isGhost()) ensure(!connected());
 	if (!connected()) return;
 	if (en->isGhost()) return;
 	if (!en->isEnabled()) return;
@@ -242,6 +256,7 @@ void ElectricityBuffer::discharge() {
 }
 
 void ElectricityBuffer::charge() {
+	if (en->isGhost()) ensure(!connected());
 	if (!connected()) return;
 	if (en->isGhost()) return;
 	if (!en->isEnabled()) return;

@@ -58,6 +58,9 @@ void Scene::init() {
 		Point::West.rotation() * Mat4::scale(1.0, 1.0, 0.1)
 	));
 
+	icon.triangle = new Mesh("models/icon-triangle.stl");
+	icon.electricity = new Mesh("models/icon-electricity.stl");
+
 	for (auto& packet: packets) packet = Sim::random() > 0.5f;
 
 	position = {100,100,100};
@@ -170,6 +173,24 @@ void Scene::square(const Point& centroid, float half, const Color& color, float 
 	line(b, c, color, pen);
 	line(c, d, color, pen);
 	line(d, a, color, pen);
+}
+
+void Scene::warning(Mesh* symbol, Point pos) {
+	float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+	float bob = std::sin(glm::radians(spin));
+	auto rot = Mat4::rotateY(glm::radians(spin));
+	auto trx = (pos + Point::Up*(0.25f*bob) + scene.offset).translation();
+	scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, Color(0xffff00ff), 2.0);
+	symbol->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+}
+
+void Scene::alert(Mesh* symbol, Point pos) {
+	float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+	float bob = std::sin(glm::radians(spin));
+	auto rot = Mat4::rotateY(glm::radians(spin));
+	auto trx = (pos + Point::Up*(0.25f*bob) + scene.offset).translation();
+	scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, Color(0xff0000ff), 2.0);
+	symbol->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
 }
 
 void Scene::updateMouse() {
@@ -643,6 +664,7 @@ void Scene::updateEntities() {
 						continue;
 					}
 					ge->instance();
+					ge->icon();
 				}
 			}
 

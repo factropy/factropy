@@ -177,8 +177,8 @@ void Loader::update() {
 
 	auto& conveyor = en->conveyor();
 
-	if (!conveyor.blocked() && !conveyor.empty()) {
-		en->consume(en->spec->energyConsume);
+	if (!conveyor.empty()) {
+		if (en->consume(en->spec->energyConsume) == Energy(0)) return;
 	}
 
 	if (loading && !conveyor.left.offloading() && !conveyor.right.offloading()) {

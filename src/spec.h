@@ -89,7 +89,6 @@ struct Spec {
 	bool directRevert;
 
 	bool forceDelete;
-	bool forceDeleteStore;
 	bool collideBuild;
 
 	bool rotateGhost;
@@ -349,6 +348,7 @@ struct Spec {
 	bool ruled;
 	bool status;
 	Point beacon;
+	Point icon;
 
 	bool tube;
 	float tubeOrigin;

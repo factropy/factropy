@@ -1507,6 +1507,12 @@ Entity& Entity::deconstruct(bool items) {
 				gstore.insert({iid,1});
 			}
 		}
+
+		if (spec->tube) {
+			for (auto thing: tube().stuff) {
+				gstore.insert({thing.iid,1});
+			}
+		}
 	}
 
 	// When a game is loaded, the old ghost contents may differ from an
@@ -1655,20 +1661,25 @@ Energy Entity::consume(Energy e) {
 	if (!isEnabled()) return c;
 
 	if (spec->consumeElectricity) {
-		c = ElectricityConsumer::get(id).consume(e);
+		c = electricityConsumer().consume(e);
 	}
+	else
 	if (spec->consumeFuel) {
 		c = burner().consume(e);
 	}
+	else
 	if (spec->consumeCharge) {
 		c = charger().consume(e);
 	}
+	else
 	if (spec->consumeThermalFluid) {
 		c = generator().consume(e);
 	}
+	else
 	if (spec->consumeMagic) {
 		c = e;
 	}
+
 	// chargers add a level of indirection to electricity
 	// consumption and manage consumption tracking directly
 	if (!spec->consumeCharge) {

@@ -45,7 +45,6 @@ Spec::Spec(std::string name) {
 	directRevert = false;
 
 	forceDelete = false;
-	forceDeleteStore = false;
 	collideBuild = true;
 
 	health = 0;
@@ -289,6 +288,7 @@ Spec::Spec(std::string name) {
 	ruled = false;
 	status = false;
 	beacon = Point::Zero;
+	icon = Point::Zero;
 
 	tube = false;
 	tubeOrigin = 0;

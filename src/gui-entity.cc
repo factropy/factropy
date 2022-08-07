@@ -187,6 +187,10 @@ void GuiEntity::load(const Entity& en) {
 		Item* item = Item::get(iid);
 		color = item->parts.front()->color;
 	}
+
+	if (!ghost && spec->generateElectricity && !en.electricityProducer().connected()) flags |= ELECTRICITY;
+	if (!ghost && spec->consumeElectricity && !en.electricityConsumer().connected()) flags |= ELECTRICITY;
+	if (!ghost && spec->consumeCharge && !en.charger().connected) flags |= ELECTRICITY;
 }
 
 void GuiEntity::loadConveyor(const Entity& en) {
@@ -1425,6 +1429,14 @@ void GuiEntity::overlayAlignment() {
 
 	scene.line(origin + north*far + west*far, origin + south*far + east*far, color);
 	scene.line(origin + south*far + west*far, origin + north*far + east*far, color);
+}
+
+void GuiEntity::icon() {
+	if (flags & ELECTRICITY) {
+		Point i = spec->icon == Point::Zero ? Point::Up*(spec->collision.h/2+0.5f) : spec->icon;
+		Point p = i.transform(dir().rotation()) + pos();
+		scene.alert(scene.icon.electricity, p);
+	}
 }
 
 Color GuiEntity::cartRouteColor(int line) {

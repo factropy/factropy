@@ -107,18 +107,6 @@ void GUI::update() {
 		return scene.hovering && scene.hovering->spec->directable();
 	};
 
-	auto hoveringStoreForceDeleteWithContents = [&]() {
-		if (scene.hovering && scene.hovering->spec->forceDeleteStore) {
-			bool hit = false;
-			Sim::locked([&]() {
-				auto en = Entity::find(scene.hovering->id);
-				hit = en && !en->store().isEmpty();
-			});
-			return hit;
-		}
-		return false;
-	};
-
 	auto hoveringPermanentEntity = [&]() {
 		return scene.hovering && (scene.hovering->flags & Entity::PERMANENT) != 0;
 	};
@@ -128,11 +116,11 @@ void GUI::update() {
 	};
 
 	auto hoveringDeletable = [&]() {
-		return scene.hovering && specDeletable(scene.hovering->spec) && !hoveringDirecting() && !hoveringPermanentEntity() && !hoveringStoreForceDeleteWithContents();
+		return scene.hovering && specDeletable(scene.hovering->spec) && !hoveringDirecting() && !hoveringPermanentEntity();
 	};
 
 	auto hoveringForceDeletable = [&]() {
-		return scene.hovering && !hoveringDirecting() && !hoveringPermanentEntity() && (specForceDeletable(scene.hovering->spec) || hoveringStoreForceDeleteWithContents()) ;
+		return scene.hovering && !hoveringDirecting() && !hoveringPermanentEntity() && specForceDeletable(scene.hovering->spec) ;
 	};
 
 	auto hoveringCutable = [&]() {
@@ -828,7 +816,6 @@ void GUI::update() {
 					auto& en = Entity::get(id);
 					if (!Entity::exists(id)) continue;
 					if (te->spec->forceDelete && !force) continue;
-					if (te->spec->forceDeleteStore && !force && !en.store().isEmpty()) continue;
 					if (scene.directing && scene.directing->id == id) continue;
 					if (!te->spec->deconstructable) continue;
 					if (en.isPermanent()) continue;
@@ -848,7 +835,6 @@ void GUI::update() {
 					if (!Entity::exists(id)) break;
 					auto& en = Entity::get(id);
 					if (te->spec->forceDelete && !force) break;
-					if (te->spec->forceDeleteStore && !force && !en.store().isEmpty()) break;
 					if (scene.directing && scene.directing->id == id) break;
 					if (!te->spec->deconstructable) break;;
 					if (en.isPermanent()) break;
