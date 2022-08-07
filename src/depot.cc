@@ -327,6 +327,22 @@ void Depot::update() {
 				}
 			}
 		}
+		// overflow back to providers
+		for (auto se: src) {
+			auto& ss = *se.store;
+			if (!ss.overflow) continue;
+			for (auto de: dst) {
+				if (de.en == se.en) continue;
+				auto& ds = *de.store;
+				if (ds.overflow) continue;
+				if (!ds.hint.accepting) continue;
+				Stack stack = ss.overflowBalanceTo(ds, cargo);
+				if (stack.size) {
+					dispatch(id, se.en->id, de.en->id, stack);
+					return true;
+				}
+			}
+		}
 		return false;
 	};
 

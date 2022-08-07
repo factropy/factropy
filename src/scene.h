@@ -219,6 +219,7 @@ struct Scene {
 	std::pair<bool,Point> collisionRayGround(const Ray& ray, float level = 0.0f);
 	Point groundTarget(float level = 0.0f);
 	Point mouseGroundTarget(float level = 0.0f);
+	Point mouseTerrainTarget();
 	void updateMouse();
 	void updateCamera();
 	void updateVisibleCells();

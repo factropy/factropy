@@ -1479,7 +1479,7 @@ void Depot::loadAll(const char* name) {
 		Depot& depot = get(state["id"]);
 		depot.construction = state["construction"];
 		depot.deconstruction = state["deconstruction"];
-		//depot.network = state["network"];
+		depot.network = state["network"];
 
 		for (uint did: state["drones"]) {
 			depot.drones.insert(did);

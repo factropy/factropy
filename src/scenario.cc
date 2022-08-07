@@ -2279,7 +2279,7 @@ void ScenarioBase::specifications() {
 	spec->placeOnHillPlatform = 3.0f;
 	spec->windTurbine = true;
 	spec->generateElectricity = true;
-	spec->energyGenerate = Energy::kW(20);
+	spec->energyGenerate = Energy::kW(10);
 	spec->health = 150;
 	spec->enemyTarget = true;
 

@@ -800,6 +800,32 @@ Stack Store::overflowDefaultTo(Store& dst, uint size) {
 	return {0,0};
 }
 
+// special case: rebalance overflow back to provider with space
+Stack Store::overflowBalanceTo(Store& dst, uint size) {
+	if (!dst.input || !output || !overflow || dst.overflow) return {0,0};
+
+	for (Level& sl: levels) {
+		if (!dst.relevant(sl.iid)) continue;
+		uint excess = countProvidable(sl.iid, &sl);
+		uint accept = dst.countAcceptable(sl.iid);
+		if (excess && accept && dst.isAccepting(sl.iid) && isProviding(sl.iid, &sl)) {
+			return {sl.iid, std::min(size, std::min(excess, accept))};
+		}
+	}
+
+	for (auto& stack: stacks) {
+		if (level(stack.iid)) continue;
+		if (!dst.relevant(stack.iid)) continue;
+		uint excess = stack.size;
+		uint accept = dst.countAcceptable(stack.iid);
+		if (excess && accept && dst.isAccepting(stack.iid) && isProviding(stack.iid)) {
+			return {stack.iid, std::min(size, std::min(excess, accept))};
+		}
+	}
+
+	return {0,0};
+}
+
 minimap<Signal,&Signal::key> Store::signals() {
 	minimap<Signal,&Signal::key> sigs;
 	for (auto& stack: stacks) {

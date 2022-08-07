@@ -46,6 +46,7 @@ struct GUI {
 	float ups = 0.0f;
 	float fps = 0.0f;
 
+	std::map<std::string,std::string> controlHintsRelated;
 	std::map<std::string,std::string> controlHintsGeneral;
 	std::map<std::string,std::string> controlHintsSpecific;
 

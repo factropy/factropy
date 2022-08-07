@@ -279,6 +279,13 @@ Point Scene::mouseGroundTarget(float level) {
 	return hit;
 }
 
+Point Scene::mouseTerrainTarget() {
+	Point pos = mouseGroundTarget();
+	while (world.elevation(pos) > pos.y)
+		pos += -mouse.ray.direction;
+	return pos;
+}
+
 bool Scene::keyDown(int key) {
 	auto it = keys.find(key);
 	return it == keys.end() ? false: it->second;
@@ -470,11 +477,14 @@ void Scene::updateCamera() {
 	if (selecting && mouse.left.clicked) {
 		selection = {Point::Zero, Point::Zero};
 		selecting = false;
-		selectingTypes = SelectAll;
 	}
 
 	if (selecting) {
 		selectionBox = Box(selection.a + (Point::Down*1000.0f), selection.b + (Point::Up*1000.0f));
+	}
+
+	if (!selecting) {
+		selectingTypes = SelectAll;
 	}
 }
 
@@ -920,7 +930,7 @@ void Scene::updatePlacing() {
 		bool placingMoved = false;
 
 		if (placing->entities.size() == 1 && placing->entities[0]->spec->placeOnHill) {
-			auto pos = mouseGroundTarget();
+			auto pos = mouseTerrainTarget();
 			auto pe = placing->entities[0];
 			Box box = pe->spec->placeOnHillBox(pos);
 			placing->move(Point(pos.x, world.hillPlatform(box), pos.z));
@@ -1745,7 +1755,14 @@ void Scene::update(uint w, uint h, float f) {
 		};
 
 		if (gui.controlHintsSpecific.size()) controlHints(gui.controlHintsSpecific);
+		if (gui.controlHintsRelated.size()) controlHints(gui.controlHintsRelated);
 		if (gui.controlHintsGeneral.size()) controlHints(gui.controlHintsGeneral);
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Print("Show this window");
+		ImGui::SameLine();
+		ImGui::PrintRight("[SpaceBar]");
 
 		tipEnd();
 	}

@@ -131,6 +131,7 @@ struct Store {
 	Stack overflowTo(Store& dst, uint size = 1);
 	Stack overflowTo(Store& dst, miniset<uint>& filter, uint size = 1);
 	Stack overflowDefaultTo(Store& dst, uint size = 1);
+	Stack overflowBalanceTo(Store& dst, uint size = 1);
 	minimap<Signal,&Signal::key> signals();
 };
 
