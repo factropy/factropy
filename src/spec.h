@@ -207,8 +207,15 @@ struct Spec {
 	bool bufferElectricity;
 	bool bufferElectricityState;
 	Energy bufferDischargeRate;
+	Energy bufferChargeRate;
+	Energy bufferCapacity;
 	Energy energyGenerate;
 	bool generatorState;
+
+	bool powerpole;
+	float powerpoleRange;
+	float powerpoleCoverage;
+	Point powerpolePoint;
 
 	bool effector;
 	float effectorElectricity;

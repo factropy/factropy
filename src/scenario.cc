@@ -63,8 +63,11 @@ public:
 		func matrix_multiply    = { .name = "matrix_multiply",    .cb = &RelaMod::matrix_multiply    };
 		func matrix_invert      = { .name = "matrix_invert",      .cb = &RelaMod::matrix_invert      };
 		func world_elevation    = { .name = "world_elevation",    .cb = &RelaMod::world_elevation    };
+		func world_flat_area    = { .name = "world_flat_area",    .cb = &RelaMod::world_flat_area    };
 		func entity_create      = { .name = "entity_create",      .cb = &RelaMod::entity_create      };
 		func entity_move        = { .name = "entity_move",        .cb = &RelaMod::entity_move        };
+		func entity_place       = { .name = "entity_place",       .cb = &RelaMod::entity_place       };
+		func entity_permanent   = { .name = "entity_permanent",   .cb = &RelaMod::entity_permanent   };
 		func entity_materialize = { .name = "entity_materialize", .cb = &RelaMod::entity_materialize };
 		func entity_insert      = { .name = "entity_insert",      .cb = &RelaMod::entity_insert      };
 		func entity_level       = { .name = "entity_level",       .cb = &RelaMod::entity_level       };
@@ -72,6 +75,7 @@ public:
 		func toolbar_spec       = { .name = "toolbar_spec",       .cb = &RelaMod::toolbar_spec       };
 		func license_spec       = { .name = "license_spec",       .cb = &RelaMod::license_spec       };
 		func license_recipe     = { .name = "license_recipe",     .cb = &RelaMod::license_recipe     };
+		func camera_view        = { .name = "camera_view",        .cb = &RelaMod::camera_view        };
 		func sentinelB;
 	} funcs;
 
@@ -817,9 +821,38 @@ public:
 			spec->energyGenerate = to_integer(energyGenerate);
 		}
 
+		if (spec->energyGenerate) {
+			auto generatorState = field("generatorState");
+			if (is_bool(generatorState)) {
+				spec->generatorState = to_bool(generatorState);
+			}
+		}
+
 		auto generateElectricity = field("generateElectricity");
 		if (is_bool(generateElectricity)) {
 			spec->generateElectricity = to_bool(generateElectricity);
+		}
+
+		auto powerpole = field("powerpole");
+		if (is_bool(powerpole)) {
+			spec->powerpole = to_bool(powerpole);
+		}
+
+		if (spec->powerpole) {
+			auto powerpoleRange = field("powerpoleRange");
+			if (is_number(powerpoleRange)) {
+				spec->powerpoleRange = to_number(powerpoleRange);
+			}
+
+			auto powerpoleCoverage = field("powerpoleCoverage");
+			if (is_number(powerpoleCoverage)) {
+				spec->powerpoleCoverage = to_number(powerpoleCoverage);
+			}
+
+			auto powerpolePoint = field("powerpolePoint");
+			if (is_vector(powerpolePoint)) {
+				spec->powerpolePoint = to_point(powerpolePoint);
+			}
 		}
 
 		auto status = field("status");
@@ -864,14 +897,26 @@ public:
 			spec->bufferElectricity = to_bool(bufferElectricity);
 		}
 
-		auto bufferElectricityState = field("bufferElectricityState");
-		if (is_bool(bufferElectricityState)) {
-			spec->bufferElectricityState = to_bool(bufferElectricityState);
-		}
+		if (spec->bufferElectricity) {
+			auto bufferElectricityState = field("bufferElectricityState");
+			if (is_bool(bufferElectricityState)) {
+				spec->bufferElectricityState = to_bool(bufferElectricityState);
+			}
 
-		auto bufferDischargeRate = field("bufferDischargeRate");
-		if (is_integer(bufferDischargeRate)) {
-			spec->bufferDischargeRate = to_integer(bufferDischargeRate);
+			auto bufferDischargeRate = field("bufferDischargeRate");
+			if (is_integer(bufferDischargeRate)) {
+				spec->bufferDischargeRate = to_integer(bufferDischargeRate);
+			}
+
+			auto bufferChargeRate = field("bufferChargeRate");
+			if (is_integer(bufferChargeRate)) {
+				spec->bufferChargeRate = to_integer(bufferChargeRate);
+			}
+
+			auto bufferCapacity = field("bufferCapacity");
+			if (is_integer(bufferCapacity)) {
+				spec->bufferCapacity = to_integer(bufferCapacity);
+			}
 		}
 
 		auto crafter = field("crafter");
@@ -1857,6 +1902,20 @@ public:
 		stack_push(make_number(world.elevation(pos)));
 	}
 
+	void world_flat_area() {
+		auto radius = to_number(stack_pop());
+		auto pos = to_point(stack_pop());
+		pos = pos.floor(0);
+		while (!world.isLand(pos.box().grow(radius))) {
+			pos += Point::South;
+			pos = pos.floor(0);
+		}
+		for (auto ej: Entity::intersecting(pos, radius+1)) {
+			if (ej->spec->junk) ej->remove();
+		}
+		stack_push(make_point(pos));
+	}
+
 	void entity_create() {
 		auto name = to_string(stack_pop());
 		auto& en = Entity::create(Entity::next(), Spec::byName(name));
@@ -1868,6 +1927,20 @@ public:
 		auto pos = to_point(stack_pop());
 		uint id = (uint)to_integer(stack_pop());
 		Entity::get(id).move(pos, dir);
+	}
+
+	void entity_place() {
+		auto dir = to_point(stack_pop());
+		auto pos = to_point(stack_pop());
+		uint id = (uint)to_integer(stack_pop());
+		auto &en = Entity::get(id);
+		en.place(pos, dir);
+	}
+
+	void entity_permanent() {
+		uint id = (uint)to_integer(stack_pop());
+		auto& en = Entity::get(id);
+		en.setPermanent(true);
 	}
 
 	void entity_materialize() {
@@ -1924,6 +1997,11 @@ public:
 	void license_recipe() {
 		auto name = to_string(stack_pop());
 		Recipe::byName(name)->licensed = true;
+	}
+
+	void camera_view() {
+		auto pos = to_point(stack_pop());
+		scene.view(pos.floor(0));
 	}
 };
 
@@ -2513,6 +2591,7 @@ void ScenarioBase::specifications() {
 	spec->armInput = Point::North*2.0f + Point::Down*0.25f;
 	spec->armOutput = Point::South*2.0f + Point::Down*0.25f;
 	spec->armSpeed = 1.0f/60.0f;
+	spec->statsGroup = Spec::byName("arm");
 	spec->rotateGhost = true;
 	spec->rotateExtant = true;
 	spec->health = 150;
@@ -3652,6 +3731,8 @@ void ScenarioBase::specifications() {
 	meshes["falconLaunchpadLD"] = new Mesh("models/falcon-launchpad-ld.stl");
 	meshes["falconBody"] = new Mesh("models/falcon-body-hd.stl");
 	meshes["falconBodyLD"] = new Mesh("models/falcon-body-ld.stl");
+	meshes["falconFins"] = new Mesh("models/falcon-fins-hd.stl");
+	meshes["falconFinsLD"] = new Mesh("models/falcon-fins-ld.stl");
 	meshes["falconNose"] = new Mesh("models/falcon-nose-hd.stl");
 	meshes["falconNoseLD"] = new Mesh("models/falcon-nose-ld.stl");
 	meshes["falconLeg"] = new Mesh("models/falcon-leg-hd.stl");
@@ -3679,7 +3760,6 @@ void ScenarioBase::specifications() {
 	spec->selection = spec->collision;
 	spec->iconD = 10;
 	spec->iconV = 9;
-
 	spec->pipe = true;
 	spec->pipeCapacity = Liquid::l(5000);
 	spec->pipeHints = true;
@@ -3698,6 +3778,11 @@ void ScenarioBase::specifications() {
 		{ Item::byName("circuit-board")->id, 10 },
 		{ Item::byName("pipe")->id, 10 },
 	};
+
+	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
+		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
+		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
+		->transform(Mat4::translate(0,5,0));
 
 	auto falconLeg = (new Part(0x222222ff))->gloss(starshipGloss)
 		->lod(mesh("falconLeg"), Part::MD, Part::SHADOW)
@@ -3726,6 +3811,7 @@ void ScenarioBase::specifications() {
 		(new Part(0x333333ff))->gloss(starshipGloss)
 			->lod(mesh("falconBase"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBaseLD"), Part::VLD, Part::NOSHADOW),
+		falconFins,
 		falconLeg,
 		falconLeg,
 		falconLeg,
@@ -3762,6 +3848,7 @@ void ScenarioBase::specifications() {
 				center,
 				center * rocket * up * spin,
 				Mat4::translate(0,5,0) * center * rocket * up * spin,
+				center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(  0.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians( 90.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(180.0f)) * center * rocket * up * spin,
@@ -3772,6 +3859,7 @@ void ScenarioBase::specifications() {
 			});
 
 			spec->statesShow.push_back({
+				true,
 				true,
 				true,
 				true,
@@ -3872,12 +3960,10 @@ void ScenarioBase::specifications() {
 		spec->consumeMagic = true;
 		spec->store = true;
 		spec->tipStorage = true;
-		spec->capacity = Mass::kg(2500);
+		spec->capacity = Mass::kg(5000);
 		spec->logistic = true;
 		spec->storeSetLower = true;
 		spec->storeSetUpper = true;
-		spec->generateElectricity = true;
-		spec->energyGenerate = Energy::MW(3);
 		spec->rotateGhost = true;
 		spec->plan = false;
 		spec->clone = false;
@@ -4534,8 +4620,8 @@ void ScenarioBase::cartTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(50*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(50*tier);
-	spec->consumeChargeRate = Energy::kW(50*tier);
+	spec->consumeChargeBuffer = Energy::MJ(10*tier);
+	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
 	spec->storeAnything = true;
@@ -4612,7 +4698,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(50*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::MJ(1);
+	spec->consumeChargeBuffer = Energy::MJ(10);
 	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
@@ -4717,7 +4803,7 @@ void ScenarioBase::truckTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(150*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(150*tier);
+	spec->consumeChargeBuffer = Energy::MJ(50*tier);
 	spec->consumeChargeRate = Energy::kW(150*tier);
 	spec->store = true;
 	spec->tipStorage = true;
@@ -4803,7 +4889,7 @@ void ScenarioBase::truckTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(150*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::kJ(150*tier);
+	spec->consumeChargeBuffer = Energy::MJ(50*tier);
 	spec->consumeChargeRate = Energy::kW(150*tier);
 	spec->store = true;
 	spec->capacity = Mass::kg(800*tier);

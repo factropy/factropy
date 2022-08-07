@@ -139,6 +139,8 @@ GuiEntity::~GuiEntity() {
 	tube = nullptr;
 	delete monorail;
 	monorail = nullptr;
+	delete powerpole;
+	powerpole = nullptr;
 }
 
 void GuiEntity::load(const Entity& en) {
@@ -175,6 +177,7 @@ void GuiEntity::load(const Entity& en) {
 	loadPipe();
 	loadComputer();
 	loadRouter();
+	loadPowerPole();
 
 	if (spec->coloredAuto && !iid && spec->store) {
 		iid = en.store().hint.iid;
@@ -383,6 +386,52 @@ void GuiEntity::loadRouter() {
 		}
 
 		if (!isEnabled() || !router.rules.size()) status = Status::Warning;
+	}
+}
+
+void GuiEntity::loadPowerPole() {
+	if (spec->powerpole) {
+		if (!powerpole)
+			powerpole = new powerpoleState;
+
+		auto& pole = PowerPole::get(id);
+		powerpole->wires.clear();
+		powerpole->point = pole.point();
+
+		if (spec->status) {
+			// should roughly align with Popup::powerpoleNotice()
+			status = Status::Ok;
+			if (ghost || !pole.network) {
+				status = Status::Warning;
+			}
+			else
+			if (pole.network->lowPower()) {
+				status = Status::Alert;
+			}
+			else
+			if (pole.network->brownOut()) {
+				status = Status::Warning;
+			}
+			else
+			if (pole.network->noCapacity()) {
+				status = Status::Warning;
+			}
+			else {
+				status = Status::Ok;
+			}
+		}
+
+		for (auto& sid: pole.links) {
+			auto& sibling = PowerPole::get(sid);
+			powerpole->wires.push_back(sibling.point());
+		}
+
+		if (ghost) {
+			for (auto sid: pole.siblings()) {
+				auto& sibling = PowerPole::get(sid);
+				powerpole->wires.push_back(sibling.point());
+			}
+		}
 	}
 }
 
@@ -804,6 +853,40 @@ void GuiEntity::instanceItems() {
 	}
 }
 
+void GuiEntity::instanceCables() {
+
+	auto line = [&](const Point& a, const Point& b) {
+		auto c = b-a;
+		auto pen = scene.pen()/2.0;
+		auto scale = Mat4::scale(pen,pen,c.length());
+		auto rotate = c.rotation();
+		auto translate = (a + (c * 0.5) + scene.offset).translation();
+		scene.unit.mesh.line->instance(scene.shader.part.id(), scale * rotate * translate, Color(0x444444ff));
+	};
+
+	if (spec->powerpole && powerpole) {
+		for (auto& end: powerpole->wires) {
+			// The electricity grid is a doubly-linked loom, so render each wire only once
+			// Ghosts that are fake entities being placed have no real wires, so force those
+			if (!ghost && powerpole->point < end) continue;
+			Point posA = powerpole->point;
+			Point posB = end;
+			Point dirAB = (posB-posA).normalize();
+			float distance = posA.distance(posB);
+			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
+			Point dirA = (middle-posA).normalize();
+			Point dirB = (posB-middle).normalize();
+			auto curve = Rail(posA, dirA, posB, dirB);
+			auto last = posA;
+			for (auto next: curve.steps(1.0f)) {
+				line(last, next);
+				last = next;
+			}
+			line(last, posB);
+		}
+	}
+}
+
 void GuiEntity::overlayHovering(bool full) {
 	Color input = 0xffffffff;
 	Color output = 0xffff00ff;
@@ -1200,6 +1283,23 @@ void GuiEntity::overlayHovering(bool full) {
 	if (spec->explosive) {
 		scene.circle(pos().floor(0.1), spec->explosionSpec->explosionRadius, 0xff0000ff, scene.pen());
 	}
+
+	if (spec->powerpole) {
+		Point p = ground() + (Point::Up * 0.05);
+		scene.square(p, spec->powerpoleCoverage, 0xffffffff, scene.pen());
+		scene.circle(p, spec->powerpoleRange, Config::window.grid, scene.pen());
+
+		Sim::locked([&]() {
+			auto en = Entity::find(id);
+			if (!en) return;
+
+			for (auto es: Entity::intersecting(en->powerpole().coverage())) {
+				if (en->id == es->id) continue;
+				if (es->spec->consumeElectricity || es->spec->generateElectricity || es->spec->consumeCharge)
+					scene.cuboid(es->cuboid(), 0xffffffff, scene.pen());
+			}
+		});
+	}
 }
 
 void GuiEntity::overlayDirecting() {
@@ -1575,6 +1675,27 @@ GuiFakeEntity* GuiFakeEntity::update() {
 			.rail = scene.connecting->spec->railTo(scene.connecting->pos(), scene.connecting->dir(), spec, pos(), dir()),
 			.line = Monorail::Red,
 		}};
+	}
+
+	// placing linked power poles
+	if (spec->powerpole) {
+		Sim::locked([&]() {
+			if (!powerpole)
+				powerpole = new powerpoleState;
+
+			powerpole->wires.clear();
+			powerpole->point = pos() + Point::Up*(spec->collision.h/2);
+
+			auto range = Cylinder(powerpole->point, spec->powerpoleRange+0.001, 1000);
+			for (auto se: Entity::intersecting(range)) {
+				if (se->id == id) continue;
+				if (!se->spec->powerpole) continue;
+				auto& sibling = PowerPole::get(se->id);
+				if (!sibling.range().contains(powerpole->point)) continue;
+				if (!range.contains(sibling.point())) continue;
+				powerpole->wires.push_back(sibling.point());
+			}
+		});
 	}
 
 	return this;

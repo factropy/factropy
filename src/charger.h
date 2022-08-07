@@ -6,12 +6,12 @@ struct Charger;
 
 #include "slabmap.h"
 #include "store.h"
+#include "electricity.h"
 
 struct Charger {
 	uint id;
 	Entity* en;
-	static void tickCharge();
-	static void tickDischarge();
+	static void tick();
 	static void reset();
 	static void saveAll(const char* name);
 	static void loadAll(const char* name);
@@ -25,11 +25,7 @@ struct Charger {
 
 	void destroy();
 	Energy consume(Energy e);
-	Energy chargePrimaryRate();
-	void chargePrimary();
-	void chargeSecondary(float rate);
-	Energy chargeSecondaryPredict();
-	void dischargeSecondary(float rate);
-	Energy dischargeSecondaryPredict();
+	Energy chargeRate();
+	void charge();
 	float level();
 };

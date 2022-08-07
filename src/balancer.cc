@@ -132,6 +132,9 @@ void Balancer::tick() {
 
 	for (auto group: BalancerGroup::all) {
 
+		for (auto& member: group->members)
+			member.balancer->en->consume(member.balancer->en->spec->energyConsume);
+
 		minivec<BalancerGroup::Member*> priorityIn;
 		minivec<BalancerGroup::Member*> priorityOut;
 		minivec<BalancerGroup::Member*> filtered;

@@ -208,7 +208,16 @@ void Tube::update() {
 	}
 
 	if (next) {
-		float fueled = en->consumeRate(en->spec->energyConsume);
+		Energy require = en->spec->energyConsume;
+		Energy energy = en->consume(require);
+
+		for (uint sid = next; sid && energy < require; ) {
+			auto& sib = all[sid];
+			energy += sib.en->consume(require-energy);
+			sid = sib.next;
+		}
+
+		float fueled = energy.portion(require);
 		uint speed = std::ceil(std::max(10.0f, (float)en->spec->tubeSpeed * fueled)); // mm/s
 
 		auto& sib = all[next];

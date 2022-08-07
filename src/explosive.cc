@@ -49,7 +49,7 @@ void Explosive::update() {
 	auto r = radius();
 	r = world.blast(Sphere(en.pos(), r));
 
-	for (auto je: Entity::intersecting(Sphere(en.pos().floor(0.0), r))) {
+	for (auto je: Entity::intersecting(Cylinder(en.pos().floor(0.0), r, 1000))) {
 		if (je->id == id) continue;
 		if (!je->spec->junk && je->ground().y < 0.25f) continue;
 		if (je->spec->drone) continue;

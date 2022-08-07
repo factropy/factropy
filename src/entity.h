@@ -21,6 +21,7 @@ struct Entity;
 #include "point.h"
 #include "box.h"
 #include "sphere.h"
+#include "cylinder.h"
 #include "cuboid.h"
 #include "curve.h"
 #include "rail.h"
@@ -65,6 +66,8 @@ struct Entity;
 #include "monorail.h"
 #include "monocar.h"
 #include "source.h"
+#include "powerpole.h"
+#include "electricity.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -91,6 +94,7 @@ struct Entity {
 	static const uint32_t MARKED2 = 1<<6;
 	static const uint32_t BLOCKED = 1<<7;
 	static const uint32_t RULED = 1<<8;
+	static const uint32_t PERMANENT = 1<<9;
 
 	// Spatial indexes of entity axis-aligned bounding boxes
 	static const uint32_t GRID = 16;
@@ -126,27 +130,6 @@ struct Entity {
 
 	// Some Entity fields cannot change during a tick
 	static inline std::atomic<bool> mutating = {true};
-
-	// Current RTS style magic-electricity-network-everywhere
-	static inline float electricityLoad = 0.0f;
-	static inline float electricitySatisfaction = 0.0f;
-	// Joules demanded last tick
-	static inline Energy electricityDemand = 0;
-	// Joules supplied last tick
-	static inline Energy electricitySupply = 0;
-	// Wattage theoretical limit this tick from all primary generators
-	static inline Energy electricityCapacity = 0;
-	// Wattage theoretical limit this tick from all secondary buffers
-	static inline Energy electricityCapacityBuffered = 0;
-	// Wattage actual limit this tick from fueled primary generators
-	static inline Energy electricityCapacityReady = 0;
-	// Wattage actual limit this tick from charged secondary buffers
-	static inline Energy electricityCapacityBufferedReady = 0;
-	// Joules stored this tick in secondary buffers
-	static inline Energy electricityBufferedLevel = 0;
-	// Aggregate size this tick of all secondary buffers
-	static inline Energy electricityBufferedLimit = 0;
-	static inline miniset<Entity*> electricityGenerators;
 
 	// Every extant entity is tracked here. See ::get() and ::exists()
 	static inline slabmap<Entity,&Entity::id> all;
@@ -218,6 +201,19 @@ struct Entity {
 		return hits;
 	}
 
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder);
+
+	template <class G>
+	static std::vector<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
+		std::vector<Entity*> hits;
+		for (Entity* en: gm.search(cylinder.box())) {
+			if (en->box().intersects(cylinder)) {
+				hits.push_back(en);
+			}
+		}
+		return hits;
+	}
+
 	static std::vector<Entity*> intersecting(Point pos, float radius);
 	static std::vector<Entity*> enemiesInRange(Point pos, float radius);
 	static Entity* at(Point p); // intersecting[0]
@@ -244,6 +240,8 @@ struct Entity {
 	Entity& setBlocked(bool state);
 	bool isRuled() const;
 	Entity& setRuled(bool state);
+	bool isPermanent() const;
+	Entity& setPermanent(bool state);
 	bool isGenerating() const;
 	Entity& setGenerating(bool state);
 	bool isMarked1() const;
@@ -290,6 +288,7 @@ struct Entity {
 	Entity& move(Point p, Point d);
 	Entity& move(float x, float y, float z);
 	Entity& bump(Point p, Point d);
+	Entity& place(Point p, Point d);
 
 	// Player-controlled N/E/S/W entity rotation
 	Entity& rotate();
@@ -322,8 +321,6 @@ struct Entity {
 	// only care that they *can* consume energy not how they do it.
 	Energy consume(Energy e);
 	float consumeRate(Energy e);
-	static void bulkConsumeElectricity(Spec* spec, Energy e, int count);
-	void generate();
 
 	// Apply damage. May result in ::unmanage() and ::remove()
 	void damage(Health hits);
@@ -393,4 +390,8 @@ struct Entity {
 	Monocar& monocar() const;
 	Tube& tube() const;
 	Source& source() const;
+	PowerPole& powerpole() const;
+	ElectricityProducer& electricityProducer() const;
+	ElectricityConsumer& electricityConsumer() const;
+	ElectricityBuffer& electricityBuffer() const;
 };

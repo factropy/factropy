@@ -1,28 +1,73 @@
 
+home = world_flat_area(origin, 30)
+
+falcon = entity_create("falcon")
+smr = entity_create("smr")
+supply = entity_create("container-supply")
 zeppelin = entity_create("zeppelin")
-entity_move(zeppelin, point_scale(up, world_elevation(origin)+30.0), south)
+
+entity_place(falcon, home, south)
+entity_place(smr, point_add(home, point_scale(south, 12.0)), south)
+entity_place(supply, point_add(point_add(home, point_scale(north, 9.0)), point_scale(east, 2.0)), west)
+
+entity_move(zeppelin, point_add(point_add(home, point_scale(up, 50.0)), point_scale(west, 30)), south)
+
+entity_materialize(falcon)
+entity_materialize(smr)
+entity_materialize(supply)
 entity_materialize(zeppelin)
 
+entity_permanent(falcon)
+entity_permanent(smr)
+entity_permanent(supply)
+entity_permanent(zeppelin)
+
+function()
+	function pole(bump)
+		id = entity_create("powerpole-small")
+		pos = point_add(home, bump)
+		entity_place(id, pos, south)
+		entity_materialize(id)
+	end
+	pole([6,0,6])
+	pole([6,0,-10])
+end()
+
+function()
+	for x in 3
+		for z in 3
+			id = entity_create("slab")
+			pos = point_add(home, [(x-1)*12,0,(z-1)*12])
+			entity_place(id, pos, south)
+			entity_materialize(id)
+		end
+	end
+end()
+
 materials = {
-	"steel-sheet" = 300,
-	"steel-frame" = 200,
-	"copper-sheet" = 200,
-	"brick" = 200,
-	"circuit-board" = 200,
-	"gear-wheel" = 200,
-	"pipe" = 200,
-	"electric-motor" = 100,
+	"steel-sheet" = 600,
+	"steel-frame" = 400,
+	"copper-sheet" = 400,
+	"copper-wire" = 400,
+	"brick" = 400,
+	"circuit-board" = 400,
+	"gear-wheel" = 400,
+	"pipe" = 400,
+	"electric-motor" = 200,
 	"repair-kit" = 100,
-	"ammo1" = 50,
 }
 
 for item,count in materials
-	entity_insert(zeppelin, item, count)
-	entity_level(zeppelin, item, count, count)
+	entity_insert(supply, item, count)
+	entity_level(supply, item, count/2, count)
+	entity_level(zeppelin, item, count/2, count/2)
 end
 
 entity_level(zeppelin, "log", 0, 0)
 entity_level(zeppelin, "stone", 0, 0)
+entity_level(supply, "log", 0, 1000)
+entity_level(supply, "stone", 0, 1000)
+
 entity_direct(zeppelin)
 
 toolbar_spec("arm")
@@ -39,7 +84,11 @@ toolbar_spec("conveyor-1")
 toolbar_spec("tube-small-1")
 toolbar_spec("pipe-straight")
 toolbar_spec("turret")
+toolbar_spec("powerpole-small")
 
 license_spec("miner")
 license_recipe("mine-iron-ore")
 
+license_spec("powerpole-small")
+
+camera_view(home)

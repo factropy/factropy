@@ -261,6 +261,29 @@ void Popup::launcherNotice(Launcher& launcher) {
 	}
 }
 
+void Popup::powerpoleNotice(PowerPole& pole) {
+	using namespace ImGui;
+
+	if (!pole.network) {
+		Warning("Disconnected");
+	}
+	else
+	if (pole.network->lowPower()) {
+		Alert("Low Power");
+	}
+	else
+	if (pole.network->brownOut()) {
+		Warning("Brown-out");
+	}
+	else
+	if (pole.network->noCapacity()) {
+		Warning("No Production");
+	}
+	else {
+		Notice("Connected");
+	}
+}
+
 void Popup::goalRateChart(Goal* goal, Goal::Rate& rate, float h) {
 	using namespace ImGui;
 
@@ -559,10 +582,7 @@ void StatsPopup2::draw() {
 			};
 
 			std::deque<Series> plots = {
-//				{ .title = "Tick", .ts = &Sim::statsTick},
 				{ .title = "Chunk", .ts = &Sim::statsChunk},
-//				{ .title = "ElectricityDemand", .ts = &Sim::statsElectricityDemand},
-//				{ .title = "ElectricitySupply", .ts = &Sim::statsElectricitySupply},
 				{ .title = "EntityPre", .ts = &Sim::statsEntityPre},
 				{ .title = "EntityPost", .ts = &Sim::statsEntityPost},
 				{ .title = "Ghost", .ts = &Sim::statsGhost},
@@ -589,6 +609,7 @@ void StatsPopup2::draw() {
 				{ .title = "Explosion", .ts = &Sim::statsExplosion},
 				{ .title = "Turret", .ts = &Sim::statsTurret},
 				{ .title = "Computer", .ts = &Sim::statsComputer},
+				{ .title = "Router", .ts = &Sim::statsRouter},
 				{ .title = "Enemy", .ts = &Sim::statsEnemy},
 				{ .title = "Zeppelin", .ts = &Sim::statsZeppelin},
 				{ .title = "FlightLogistic", .ts = &Sim::statsFlightLogistic},
@@ -598,6 +619,8 @@ void StatsPopup2::draw() {
 				{ .title = "Monorail", .ts = &Sim::statsMonorail},
 				{ .title = "Monocar", .ts = &Sim::statsMonocar},
 				{ .title = "Source", .ts = &Sim::statsSource},
+				{ .title = "PowerPole", .ts = &Sim::statsPowerPole},
+				{ .title = "Charger", .ts = &Sim::statsCharger},
 			};
 
 			std::sort(plots.begin(), plots.end(), [](const auto& a, const auto& b) {
@@ -618,6 +641,7 @@ void StatsPopup2::draw() {
 
 				double yLim = std::ceil(yMax);
 
+				PushFont(Config::sidebar.font.imgui);
 				if (ImPlot::BeginPlot(fmtc("##%d", ++id), ImVec2(-1,-1), ImPlotFlags_NoChild | ImPlotFlags_NoFrame | ImPlotFlags_NoInputs)) {
 					ImPlot::SetupAxis(ImAxis_X1, nullptr, ImPlotAxisFlags_NoDecorations);
 					ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0, yLim, ImPlotCond_Always);
@@ -628,6 +652,7 @@ void StatsPopup2::draw() {
 
 					ImPlot::EndPlot();
 				}
+				PopFont();
 			});
 
 			EndTabItem();
@@ -1065,7 +1090,7 @@ void EntityPopup2::draw() {
 
 		bool operableStore = en.spec->store && (en.spec->storeSetLower || en.spec->storeSetUpper);
 
-		if (operableStore || en.spec->computer || en.spec->router) medium(); else small();
+		if (operableStore || en.spec->computer || en.spec->router || en.spec->powerpole) medium(); else small();
 		Begin(fmtc("%s###entity", en.title()), &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
 		if (BeginTabBar("entity-tabs", ImGuiTabBarFlags_None)) {
@@ -2986,6 +3011,93 @@ void EntityPopup2::draw() {
 
 				PopID();
 
+				EndTabItem();
+			}
+
+			if (en.spec->powerpole && BeginTabItem("Electricity", nullptr, focusedTab())) {
+				auto& powerpole = en.powerpole();
+
+				PushID("powerpole");
+
+				SpacingV();
+				powerpoleNotice(powerpole);
+
+				if (powerpole.network) {
+					auto network = powerpole.network;
+
+					auto capacity = network->capacityReady;
+					SpacingV();
+					Print(fmtc("Electricity Network #%u", network->id)); SameLine();
+					PrintRight(fmtc("%s / %s", network->demand.formatRate(), capacity.formatRate()));
+					OverflowBar(network->load, ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
+					OverflowBar(network->bufferedLevel.portion(network->bufferedLimit), ImColorSRGB(0xffff00ff), ImColorSRGB(0x9999ddff));
+
+//					SpacingV();
+//					OverflowBar(network->satisfaction, ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
+//					OverflowBar(network->charge, ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
+//					OverflowBar(network->discharge, ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
+
+					struct Stat {
+						Spec* spec = nullptr;
+						Energy energy = 0;
+					};
+
+					minivec<Stat> production;
+					minivec<Stat> consumption;
+
+					for (auto& [spec,series]: network->production) {
+						auto energy = Energy(series.ticks[series.tick(Sim::tick-1)]);
+						if (energy) production.push_back({spec,energy});
+					}
+
+					for (auto& [spec,series]: network->consumption) {
+						auto energy = Energy(series.ticks[series.tick(Sim::tick-1)]);
+						if (energy) consumption.push_back({spec,energy});
+					}
+
+					std::sort(production.begin(), production.end(), [&](const auto& a, const auto& b) {
+						return a.energy > b.energy;
+					});
+
+					std::sort(consumption.begin(), consumption.end(), [&](const auto& a, const auto& b) {
+						return a.energy > b.energy;
+					});
+
+					SpacingV();
+					SpacingV();
+					BeginTable("list", 2);
+
+					float column = GetContentRegionAvail().x/2;
+					TableSetupColumn("Consumers", ImGuiTableColumnFlags_WidthFixed, column);
+					TableSetupColumn("Producers", ImGuiTableColumnFlags_WidthFixed, column);
+					TableHeadersRow();
+
+					TableNextColumn();
+					SpacingV();
+					for (auto& [spec,energy]: consumption) {
+						Print(spec->title.c_str());
+						SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
+						PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
+						SmallBar(energy.portion(network->demand));
+						PopStyleColor(1);
+						SpacingV();
+					}
+
+					TableNextColumn();
+					SpacingV();
+					for (auto& [spec,energy]: production) {
+						Print(spec->title.c_str());
+						SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
+						PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
+						SmallBar(energy.portion(network->supply));
+						PopStyleColor(1);
+						SpacingV();
+					}
+
+					EndTable();
+				}
+
+				PopID();
 				EndTabItem();
 			}
 

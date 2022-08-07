@@ -14,9 +14,9 @@ void Effector::tick() {
 	for (auto effector: active) {
 		effector->update();
 	}
-	for (auto spec: specs) {
-		Entity::bulkConsumeElectricity(spec, spec->effectorEnergyDrain, spec->count.extant);
-	}
+//	for (auto spec: specs) {
+//		Entity::bulkConsumeElectricity(spec, spec->effectorEnergyDrain, spec->count.extant);
+//	}
 }
 
 float Effector::effect(uint eid, enum Type type) {

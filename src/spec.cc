@@ -108,8 +108,15 @@ Spec::Spec(std::string name) {
 	bufferElectricity = false;
 	bufferElectricityState = false;
 	bufferDischargeRate = 0;
+	bufferChargeRate = 0;
+	bufferCapacity = 0;
 	energyGenerate = 0;
 	generatorState = false;
+
+	powerpole = false;
+	powerpoleRange = 0;
+	powerpoleCoverage = 0;
+	powerpolePoint = Point::Zero;
 
 	vehicle = false;
 	vehicleStop = false;
@@ -449,6 +456,7 @@ bool Spec::operable() const {
 		|| (tube && conveyor)
 		|| monorail
 		|| monocar
+		|| powerpole
 		|| pipeCapacity > Liquid::l(10000)
 	;
 }

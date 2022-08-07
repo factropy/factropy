@@ -161,6 +161,17 @@ void Scene::circle(const Point& centroid, float radius, const Color& color, floa
 	}
 }
 
+void Scene::square(const Point& centroid, float half, const Color& color, float pen) {
+	Point a = centroid + Point::South*half + Point::West*half;
+	Point b = centroid + Point::West*half + Point::North*half;
+	Point c = centroid + Point::North*half + Point::East*half;
+	Point d = centroid + Point::East*half + Point::South*half;
+	line(a, b, color, pen);
+	line(b, c, color, pen);
+	line(c, d, color, pen);
+	line(d, a, color, pen);
+}
+
 void Scene::updateMouse() {
 	MouseState last = mouse;
 
@@ -503,6 +514,7 @@ void Scene::updateEntities() {
 	trigger doneHovering;
 	trigger doneInstancing;
 	trigger doneInstancingItems;
+	trigger doneInstancingCables;
 	trigger doneGhosting;
 
 	typedef minivec<Entity*> EBatch;
@@ -512,6 +524,7 @@ void Scene::updateEntities() {
 	channel<GBatch*,-1> forHovering;
 	channel<GBatch*,-1> forInstancing;
 	channel<GBatch*,-1> forInstancingItems;
+	channel<GBatch*,-1> forInstancingCables;
 	channel<GBatch*,-1> forGhosting;
 
 	channel<EBatch*,-1> oldEBatch;
@@ -535,6 +548,7 @@ void Scene::updateEntities() {
 					forHovering.send(out);
 					forInstancing.send(out);
 					forInstancingItems.send(out);
+					forInstancingCables.send(out);
 					oldGBatch.send(out);
 					out = new GBatch;
 					out->reserve(1000);
@@ -653,6 +667,18 @@ void Scene::updateEntities() {
 		});
 	}
 
+	// GuiEntity cable rendering, not Sim::locked, fed by instances
+	crew.job([&]() {
+		Mesh::batchInstances();
+
+		for (auto in: forInstancingCables) {
+			for (auto ge: *in) ge->instanceCables();
+		}
+
+		Mesh::flushInstances();
+		doneInstancingCables.now();
+	});
+
 	// GuiEntity ghost rendering, not Sim::locked, fed by instancers
 	// Runs last so that translucent ghosts can be sorted and rendered after extant entities
 	crew.job([&]() {
@@ -738,6 +764,19 @@ void Scene::updateEntities() {
 				}
 			}
 
+			// power cables may be in view when their poles are out of sight
+			// this should check the longest range from specs
+			// this should be a bit more selective based on the frustum
+			for (auto pole: PowerPole::gridCoverage.dump(region)) {
+				auto et = pole->en;
+				if (et->isMarked1()) continue;
+				et->setMarked1(true);
+				marked.push_back(et);
+				if (frustum.intersects(et->sphere().grow(100))) {
+					geBatch->push_back(&entityPools[future][0].emplace(et));
+				}
+			}
+
 			// waypoint lines may be in view when their waypoints are out of sight
 			for (auto et: Entity::intersecting(region, Entity::gridCartWaypoints)) {
 				if (et->isMarked1()) continue;
@@ -749,6 +788,7 @@ void Scene::updateEntities() {
 			forHovering.send(geBatch);
 			forInstancing.send(geBatch);
 			forInstancingItems.send(geBatch);
+			forInstancingCables.send(geBatch);
 
 			EBatch* enBatch = new EBatch;
 
@@ -797,10 +837,12 @@ void Scene::updateEntities() {
 	forHovering.close();
 	forInstancing.close();
 	forInstancingItems.close();
+	forInstancingCables.close();
 
 	doneHovering.wait();
 	doneInstancing.wait(Config::engine.sceneInstancingThreads);
 	doneInstancingItems.wait(Config::engine.sceneInstancingItemsThreads);
+	doneInstancingCables.wait();
 
 	forGhosting.close();
 	doneGhosting.wait();
@@ -930,6 +972,7 @@ void Scene::updatePlacing() {
 
 	for (auto te: placing->entities) {
 		te->instance();
+		te->instanceCables();
 
 		cuboid(
 			te->selectionCuboid(),
@@ -1285,6 +1328,16 @@ void Scene::update(uint w, uint h, float f) {
 				});
 			}
 
+			if (hovering->spec->powerpole) {
+				Sim::locked([&]() {
+					if (!Entity::exists(hovering->id)) return;
+					auto& en = Entity::get(hovering->id);
+					auto& pole = en.powerpole();
+					ImGui::Spacing();
+					Popup::powerpoleNotice(pole);
+				});
+			}
+
 			if (hovering->spec->crafter) {
 				Sim::locked([&]() {
 					if (!Entity::exists(hovering->id)) return;
@@ -1469,7 +1522,7 @@ void Scene::update(uint w, uint h, float f) {
 					auto& charger = en.charger();
 					ImGui::Print(charger.energy.format().c_str());
 					ImGui::SameLine();
-					ImGui::PrintRight(charger.chargePrimaryRate().formatRate().c_str());
+					ImGui::PrintRight(charger.chargeRate().formatRate().c_str());
 					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, colorEnergy);
 					ImGui::SmallBar(charger.level());
 					ImGui::PopStyleColor(1);

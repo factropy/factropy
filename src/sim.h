@@ -13,8 +13,6 @@ namespace Sim {
 
 	extern TimeSeries statsTick;
 	extern TimeSeries statsChunk;
-	extern TimeSeries statsElectricityDemand;
-	extern TimeSeries statsElectricitySupply;
 	extern TimeSeries statsEntityPre;
 	extern TimeSeries statsEntityPost;
 	extern TimeSeries statsGhost;
@@ -31,7 +29,6 @@ namespace Sim {
 	extern TimeSeries statsUnveyor;
 	extern TimeSeries statsLoader;
 	extern TimeSeries statsBalancer;
-	extern TimeSeries statsRopeway;
 	extern TimeSeries statsPath;
 	extern TimeSeries statsVehicle;
 	extern TimeSeries statsCart;
@@ -52,6 +49,8 @@ namespace Sim {
 	extern TimeSeries statsMonorail;
 	extern TimeSeries statsMonocar;
 	extern TimeSeries statsSource;
+	extern TimeSeries statsPowerPole;
+	extern TimeSeries statsCharger;
 
 	extern OpenSimplex* opensimplex;
 	extern uint64_t tick;
