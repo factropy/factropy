@@ -46,7 +46,7 @@ namespace Config {
 		Color ground = 0xc2b280ff;
 		Color groundSand = 0xc2b280ff;
 		Color groundGrass = 0x8ca66eff;
-		Color grid = 0x888888ff;
+		Color grid = 0xaa9966ff;
 		Color gridSand = 0xaa9966ff;
 		Color gridGrass = 0x778877ff;
 		uint sdlFlags = 0;
@@ -149,6 +149,7 @@ namespace Config {
 		bool grid = true;
 		bool alignment = false;
 		bool cardinalSnap = false;
+		bool autotip = true;
 
 		std::string dataPath;
 		std::string saveName;

@@ -4741,6 +4741,26 @@ void MainMenu::draw() {
 					" fluctuate without impacting the apparent speed of the game."
 				);
 
+				Checkbox("Build Grid [G]", &Config::mode.grid);
+				if (IsItemHovered()) tip(
+					"Show the build grid when zoomed in."
+				);
+
+				Checkbox("Build Alignment [H]", &Config::mode.alignment);
+				if (IsItemHovered()) tip(
+					"Show alignment lines when placing a ghost or blueprint."
+				);
+
+				Checkbox("Camera Snap [TAB]", &Config::mode.cardinalSnap);
+				if (IsItemHovered()) tip(
+					"Align the camera when close to the cardinal directions: North, South, East, West."
+				);
+
+				Checkbox("Tip Window", &Config::mode.autotip);
+				if (IsItemHovered()) tip(
+					"Show the tip window after 1s of mouse inactivity. [SPACEBAR] will always manually show it."
+				);
+
 				Checkbox("Enemy Attacks", &Enemy::enable);
 				if (IsItemHovered()) tip(
 					"The enemy, livid that your logistics skills are so awesome, will"
@@ -5069,21 +5089,6 @@ void MainMenu::draw() {
 					EndCombo();
 				}
 				PopItemWidth();
-
-				Checkbox("Build Grid [G]", &Config::mode.grid);
-				if (IsItemHovered()) tip(
-					"Show the build grid when zoomed in."
-				);
-
-				Checkbox("Build Alignment [H]", &Config::mode.alignment);
-				if (IsItemHovered()) tip(
-					"Show alignment lines when placing a ghost or blueprint."
-				);
-
-				Checkbox("Camera Snap [TAB]", &Config::mode.cardinalSnap);
-				if (IsItemHovered()) tip(
-					"Align the camera when close to the cardinal directions: North, South, East, West."
-				);
 
 				Checkbox("Shadows", &Config::mode.shadowmap);
 				if (IsItemHovered()) tip(

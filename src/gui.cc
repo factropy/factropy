@@ -75,16 +75,70 @@ bool GUI::active() {
 }
 
 void GUI::update() {
-	auto& controls = controlHints;
-	controls.clear();
+	controlHintsSpecific.clear();
+	controlHintsGeneral.clear();
 
 	bool worldFocused = !focused;
 
 	std::set<Config::Action> actionsEnabled;
 
-	bool somethingSelected = scene.selecting && scene.selected.size() > 0;
-	bool hoveringDirecting = scene.directing && scene.hovering && scene.directing->id == scene.hovering->id;
-	bool hoveringDirectable = scene.hovering && scene.hovering->spec->directable();
+	auto specDeletable = [&](Spec* spec) {
+		return (spec->junk || spec->deconstructable) && !spec->forceDelete;
+	};
+
+	auto specForceDeletable = [&](Spec* spec) {
+		return (spec->junk || spec->deconstructable) && spec->forceDelete;
+	};
+
+	auto hoveringDirecting = [&]() {
+		return scene.directing && scene.hovering && scene.directing->id == scene.hovering->id;
+	};
+
+	auto hoveringDirectable = [&]() {
+		return scene.hovering && scene.hovering->spec->directable();
+	};
+
+	auto hoveringStoreForceDeleteWithContents = [&]() {
+		if (scene.hovering && scene.hovering->spec->forceDeleteStore) {
+			bool hit = false;
+			Sim::locked([&]() {
+				auto en = Entity::find(scene.hovering->id);
+				hit = en && !en->store().isEmpty();
+			});
+			return hit;
+		}
+		return false;
+	};
+
+	auto hoveringPermanentEntity = [&]() {
+		return scene.hovering && (scene.hovering->flags & Entity::PERMANENT) != 0;
+	};
+
+	auto hoveringDeletable = [&]() {
+		return scene.hovering && specDeletable(scene.hovering->spec) && !hoveringDirecting() && !hoveringPermanentEntity() && !hoveringStoreForceDeleteWithContents();
+	};
+
+	auto hoveringForceDeletable = [&]() {
+		return scene.hovering && !hoveringDirecting() && !hoveringPermanentEntity() && (specForceDeletable(scene.hovering->spec) || hoveringStoreForceDeleteWithContents()) ;
+	};
+
+	auto somethingSelected = [&]() {
+		return scene.selecting && scene.selected.size() > 0;
+	};
+
+	auto somethingSelectedDeletable = [&]() {
+		if (somethingSelected()) {
+			for (auto ge: scene.selected) if (specDeletable(ge->spec)) return true;
+		}
+		return false;
+	};
+
+	auto somethingSelectedForceDeletable = [&]() {
+		if (somethingSelected()) {
+			for (auto ge: scene.selected) if (specForceDeletable(ge->spec)) return true;
+		}
+		return false;
+	};
 
 	// pipette and copy-single-entity are nearly identical, except copy preserves config
 	auto cloneSingle = [&](bool cfg) {
@@ -112,10 +166,10 @@ void GUI::update() {
 		});
 	};
 
-	if (scene.placing || somethingSelected || (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone)) {
-		controls["Ctrl+C"] = "Copy";
+	if (scene.placing || somethingSelected() || (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone)) {
+		controlHintsSpecific["Ctrl+C"] = "Copy";
 		actionsEnabled.insert(Config::Action::Copy);
-		controls["Ctrl+X"] = "Cut";
+		controlHintsSpecific["Ctrl+X"] = "Cut";
 		actionsEnabled.insert(Config::Action::Cut);
 	}
 
@@ -189,7 +243,7 @@ void GUI::update() {
 	};
 
 	if (scene.plans.size()) {
-		controls["Ctrl+V"] = "Paste";
+		controlHintsGeneral["Ctrl+V"] = "Paste";
 		actionsEnabled.insert(Config::Action::Paste);
 	}
 
@@ -198,12 +252,12 @@ void GUI::update() {
 	};
 
 	if (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone) {
-		controls["Alt+C"] = "Copy Config";
+		controlHintsSpecific["Alt+C"] = "Copy Config";
 		actionsEnabled.insert(Config::Action::CopyConfig);
 	}
 
 	if (scene.settings && (scene.hovering || scene.selected.size())) {
-		controls["Atl+V"] = "Paste Config";
+		controlHintsSpecific["Atl+V"] = "Paste Config";
 		actionsEnabled.insert(Config::Action::PasteConfig);
 	}
 
@@ -238,7 +292,7 @@ void GUI::update() {
 	};
 
 	if (scene.placing || (scene.hovering && !scene.hovering->spec->junk && scene.hovering->spec->clone)) {
-		controls["Q"] = "Pipette";
+		controlHintsSpecific["Q"] = "Pipette";
 		actionsEnabled.insert(Config::Action::Pipette);
 	}
 
@@ -261,8 +315,8 @@ void GUI::update() {
 		}
 	};
 
-	if (somethingSelected || (scene.hovering && scene.hovering->spec->upgrade)) {
-		controls["U"] = "Upgrade";
+	if (somethingSelected() || (scene.hovering && scene.hovering->spec->upgrade)) {
+		controlHintsSpecific["U"] = "Upgrade";
 		actionsEnabled.insert(Config::Action::Upgrade);
 	}
 
@@ -285,13 +339,13 @@ void GUI::update() {
 		}
 	};
 
-	if (!somethingSelected && scene.hovering && scene.hovering->spec->upgrade && scene.hovering->spec->upgradeCascade.size()) {
-		controls["Shift+U"] = "Upgrade Cascade";
+	if (!somethingSelected() && scene.hovering && scene.hovering->spec->upgrade && scene.hovering->spec->upgradeCascade.size()) {
+		controlHintsSpecific["Shift+U"] = "Upgrade Cascade";
 		actionsEnabled.insert(Config::Action::UpgradeCascade);
 	}
 
 	auto actionUpgradeCascade = [&]() {
-		if (!somethingSelected && scene.hovering && scene.hovering->spec->upgrade && scene.hovering->spec->upgradeCascade.size()) {
+		if (!somethingSelected() && scene.hovering && scene.hovering->spec->upgrade && scene.hovering->spec->upgradeCascade.size()) {
 			Sim::locked([&]() {
 				auto se = scene.hovering;
 				if (!Entity::exists(se->id)) return;
@@ -301,7 +355,7 @@ void GUI::update() {
 	};
 
 	if ((scene.placing && scene.placing->canRotate()) || (scene.hovering && scene.hovering->spec->rotateExtant)) {
-		controls["R"] = "Rotate";
+		controlHintsSpecific["R"] = "Rotate";
 		actionsEnabled.insert(Config::Action::Rotate);
 	}
 
@@ -321,7 +375,7 @@ void GUI::update() {
 	};
 
 	if (scene.placing && scene.placing->canCycle()) {
-		controls["C"] = scene.placing->entities[0]->spec->cycle->title.c_str();
+		controlHintsSpecific["C"] = scene.placing->entities[0]->spec->cycle->title.c_str();
 		actionsEnabled.insert(Config::Action::Cycle);
 	}
 
@@ -337,7 +391,7 @@ void GUI::update() {
 		&& !scene.selecting
 		&& hoveringOperable
 	){
-		controls["LClick"] = "Open";
+		controlHintsSpecific["LClick"] = "Open";
 		actionsEnabled.insert(Config::Action::Open);
 	}
 
@@ -352,10 +406,10 @@ void GUI::update() {
 		&& !scene.routing
 		&& !scene.connecting
 		&& !scene.selecting
-		&& !hoveringDirecting
-		&& hoveringDirectable
+		&& !hoveringDirecting()
+		&& hoveringDirectable()
 	){
-		controls["Ctrl+LClick"] = "Take control";
+		controlHintsSpecific["Ctrl+LClick"] = "Take control";
 		actionsEnabled.insert(Config::Action::Direct);
 	}
 
@@ -364,14 +418,14 @@ void GUI::update() {
 			delete scene.directing;
 			scene.directing = nullptr;
 		} else
-		if (hoveringDirectable) {
+		if (hoveringDirectable()) {
 			delete scene.directing;
 			scene.directing = new GuiEntity(scene.hovering->id);
 		}
 	};
 
 	if (scene.hovering && (scene.hovering->spec->cartWaypoint || scene.hovering->spec->tube || scene.hovering->spec->monorail)) {
-		controls["L"] = "Link up";
+		controlHintsSpecific["L"] = "Link up";
 		actionsEnabled.insert(Config::Action::Link);
 	}
 
@@ -417,8 +471,8 @@ void GUI::update() {
 		&& scene.connecting->id != scene.hovering->id
 		&& scene.hovering->spec->tube
 	){
-		controls["LClick"] = "Connect tube";
-		controls["RClick"] = "Disconnect tube";
+		controlHintsSpecific["LClick"] = "Connect tube";
+		controlHintsSpecific["RClick"] = "Disconnect tube";
 		actionsEnabled.insert(Config::Action::Connect);
 		actionsEnabled.insert(Config::Action::Disconnect);
 	}
@@ -448,9 +502,9 @@ void GUI::update() {
 	};
 
 	if (scene.routing) {
-		controls["1"] = "Red";
-		controls["2"] = "Blue";
-		controls["3"] = "Green";
+		controlHintsSpecific["1"] = "Red";
+		controlHintsSpecific["2"] = "Blue";
+		controlHintsSpecific["3"] = "Green";
 		actionsEnabled.insert(Config::Action::RouteRed);
 		actionsEnabled.insert(Config::Action::RouteBlue);
 		actionsEnabled.insert(Config::Action::RouteGreen);
@@ -469,7 +523,7 @@ void GUI::update() {
 		&& (scene.hovering->spec->cartWaypoint || scene.hovering->spec->monorail)
 	){
 		actionsEnabled.insert(Config::Action::RouteSetNext);
-		controls["LClick"] = "Set route";
+		controlHintsSpecific["LClick"] = "Set route";
 	}
 
 	auto actionRouteSetNext = [&]() {
@@ -499,7 +553,7 @@ void GUI::update() {
 
 	if (scene.routing) {
 		actionsEnabled.insert(Config::Action::RouteClrNext);
-		controls["RClick"] = "Clear route";
+		controlHintsSpecific["RClick"] = "Clear route";
 	}
 
 	auto actionRouteClrNext = [&]() {
@@ -516,17 +570,17 @@ void GUI::update() {
 	};
 
 	if (scene.hovering && scene.hovering->spec->pipe) {
-		controls["Shift+F"] = "Flush pipe";
+		controlHintsSpecific["Shift+F"] = "Flush pipe";
 		actionsEnabled.insert(Config::Action::Flush);
 	}
 
 	if (scene.hovering && scene.hovering->spec->conveyor) {
-		controls["Shift+F"] = "Empty belt";
+		controlHintsSpecific["Shift+F"] = "Empty belt";
 		actionsEnabled.insert(Config::Action::Flush);
 	}
 
 	if (scene.hovering && scene.hovering->spec->tube) {
-		controls["Shift+F"] = "Empty tube";
+		controlHintsSpecific["Shift+F"] = "Empty tube";
 		actionsEnabled.insert(Config::Action::Flush);
 	}
 
@@ -549,8 +603,8 @@ void GUI::update() {
 	};
 
 	if (scene.placing) {
-		controls["LClick"] = "Construct";
-		controls["Shift+LClick"] = "Construct forced";
+		controlHintsSpecific["LClick"] = "Construct";
+		controlHintsSpecific["Shift+LClick"] = "Construct forced";
 		actionsEnabled.insert(Config::Action::Construct);
 		actionsEnabled.insert(Config::Action::ConstructForce);
 	}
@@ -708,21 +762,13 @@ void GUI::update() {
 		});
 	};
 
-	if (somethingSelected) {
-		controls["Delete"] = "Deconstruct";
+	if (hoveringDeletable() || somethingSelectedDeletable()) {
+		controlHintsSpecific["Delete"] = "Deconstruct";
 		actionsEnabled.insert(Config::Action::Deconstruct);
-		actionsEnabled.insert(Config::Action::DeconstructForce);
 	}
-	else
-	if (scene.hovering && (scene.hovering->spec->forceDelete || scene.hovering->spec->forceDeleteStore) && !hoveringDirecting) {
-		controls["Shift+Delete"] = "Deconstruct";
-		actionsEnabled.insert(Config::Action::Deconstruct);
-		actionsEnabled.insert(Config::Action::DeconstructForce);
-	}
-	else
-	if (scene.hovering && scene.hovering->spec->deconstructable && !hoveringDirecting) {
-		controls["Delete"] = "Deconstruct";
-		actionsEnabled.insert(Config::Action::Deconstruct);
+
+	if (hoveringForceDeletable() || somethingSelectedForceDeletable()) {
+		controlHintsSpecific["Shift+Delete"] = "Deconstruct";
 		actionsEnabled.insert(Config::Action::DeconstructForce);
 	}
 
@@ -740,7 +786,7 @@ void GUI::update() {
 					if (scene.directing && scene.directing->id == id) continue;
 					if (!te->spec->deconstructable) continue;
 					if (en.isPermanent()) continue;
-					en.deconstruct();
+					en.deconstruct(true);
 				}
 			});
 			scene.selection = {Point::Zero, Point::Zero};
@@ -760,7 +806,7 @@ void GUI::update() {
 					if (scene.directing && scene.directing->id == id) break;
 					if (!te->spec->deconstructable) break;;
 					if (en.isPermanent()) break;
-					en.deconstruct();
+					en.deconstruct(true);
 					break;
 				}
 				if (scene.routing && id == scene.routing->id && scene.routing->spec->cartWaypoint) {
@@ -820,10 +866,10 @@ void GUI::update() {
 		&& !scene.connecting
 		&& !scene.selecting
 		&& scene.directing
-		&& hoveringDirectable
-		&& hoveringDirecting
+		&& hoveringDirectable()
+		&& hoveringDirecting()
 	){
-		controls["Ctrl+RClick"] = "Move";
+		controlHintsSpecific["Ctrl+RClick"] = "Move";
 	}
 
 	if (scene.directing) {
@@ -911,7 +957,7 @@ void GUI::update() {
 	}
 
 	if (toggleEnable) {
-		controls["O"] = "On/Off";
+		controlHintsSpecific["O"] = "On/Off";
 		actionsEnabled.insert(Config::Action::ToggleEnable);
 	}
 
@@ -954,7 +1000,7 @@ void GUI::update() {
 	};
 
 	if (scene.placing && scene.placing->canUpward()) {
-		controls["PageUp"] = scene.placing->canUpward()->title;
+		controlHintsSpecific["PageUp"] = scene.placing->canUpward()->title;
 		actionsEnabled.insert(Config::Action::SpecUp);
 	}
 
@@ -963,7 +1009,7 @@ void GUI::update() {
 	};
 
 	if (scene.placing && scene.placing->canDownward()) {
-		controls["PageDown"] = scene.placing->canDownward()->title;
+		controlHintsSpecific["PageDown"] = scene.placing->canDownward()->title;
 		actionsEnabled.insert(Config::Action::SpecDown);
 	}
 
@@ -972,27 +1018,27 @@ void GUI::update() {
 	};
 
 	if (scene.placing) {
-		controls["Escape"] = "Discard plan";
+		controlHintsSpecific["Escape"] = "Discard plan";
 	}
 	else
 	if (scene.selecting) {
-		controls["Escape"] = "Discard selection";
+		controlHintsSpecific["Escape"] = "Discard selection";
 	}
 	else
 	if (scene.routing) {
-		controls["Escape"] = "Stop routing";
+		controlHintsSpecific["Escape"] = "Stop routing";
 	}
 	else
 	if (scene.connecting) {
-		controls["Escape"] = "Stop routing";
+		controlHintsSpecific["Escape"] = "Stop routing";
 	}
 	else
 	if (scene.connecting) {
-		controls["Escape"] = "Stop connecting";
+		controlHintsSpecific["Escape"] = "Stop connecting";
 	}
 
 	if (scene.selecting) {
-		controls["J"] = "Trees/Rocks";
+		controlHintsSpecific["J"] = "Trees/Rocks";
 		actionsEnabled.insert(Config::Action::SelectJunk);
 	}
 
@@ -1001,7 +1047,7 @@ void GUI::update() {
 	};
 
 	if (scene.selecting) {
-		controls["K"] = "Piles/Slabs";
+		controlHintsSpecific["K"] = "Piles/Slabs";
 		actionsEnabled.insert(Config::Action::SelectUnder);
 	}
 
@@ -1036,7 +1082,7 @@ void GUI::update() {
 	}
 
 	if (selectedPaint) {
-		controls["P"] = "Paint";
+		controlHintsSpecific["P"] = "Paint";
 		actionsEnabled.insert(Config::Action::Paint);
 	}
 

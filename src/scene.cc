@@ -184,7 +184,7 @@ void Scene::updateMouse() {
 	mouse.dy = my - last.y;
 
 	if (mouse.dx || mouse.dy)
-		mouse.moved = Sim::tick;
+		mouse.moved = frame;
 
 	mouse.wheel = wheel;
 	wheel = 0;
@@ -1225,7 +1225,7 @@ void Scene::update(uint w, uint h, float f) {
 		routing->overlayAlignment();
 	}
 
-	bool showTip = keyDown(SDLK_SPACE);
+	bool showTip = keyDown(SDLK_SPACE) || (Config::mode.autotip && (frame-mouse.moved) > fps);
 
 	if (focused && showTip && !(selecting || placing || hovering)) {
 		auto box = mouseGroundTarget().box().grow(0.5);
@@ -1723,7 +1723,7 @@ void Scene::update(uint w, uint h, float f) {
 			}
 		}
 
-		if (gui.controlHints.size()) {
+		auto controlHints = [&](auto& controls) {
 			ImGui::Spacing();
 			ImGui::Separator();
 			struct kv {
@@ -1731,7 +1731,7 @@ void Scene::update(uint w, uint h, float f) {
 				std::string blurb;
 			};
 			std::vector<kv> pairs;
-			for (auto [combo,blurb]: gui.controlHints) {
+			for (auto [combo,blurb]: controls) {
 				pairs.push_back({combo,blurb});
 			}
 			std::sort(pairs.begin(), pairs.end(), [](const auto& a, const auto& b) {
@@ -1742,7 +1742,10 @@ void Scene::update(uint w, uint h, float f) {
 				ImGui::SameLine();
 				ImGui::PrintRight(fmtc("[%s]", kv.combo.c_str()));
 			}
-		}
+		};
+
+		if (gui.controlHintsSpecific.size()) controlHints(gui.controlHintsSpecific);
+		if (gui.controlHintsGeneral.size()) controlHints(gui.controlHintsGeneral);
 
 		tipEnd();
 	}

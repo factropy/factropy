@@ -102,8 +102,8 @@ int main(int argc, char* argv[]) {
 	binary = argv[0];
 
 	Config::version.major = 0;
-	Config::version.minor = 1;
-	Config::version.patch = 60;
+	Config::version.minor = 2;
+	Config::version.patch = 1;
 
 	snprintf(Config::version.text, sizeof(Config::version.text),
 		"%d.%d.%d-alpha",
@@ -304,18 +304,18 @@ int main(int argc, char* argv[]) {
 				}
 				catch (const std::exception& e) {
 					ensuref(false,
-						"Save game \"%s\" is corrupt\r\n"
-						"Deleting it will generate a new world but leave autosaveN intact\r\n"
-						"If this is the result of a recent game crash please report a bug.\r\n"
-						"Exception: %s\r\n",
+						"Cannot load \"%s\"\r\n"
+						"Exception: %s\r\n"
+						"Deleting it will generate a new world but leave autosaveN intact.\r\n"
+						"If this is the result of a recent game crash please report a bug.\r\n",
 						Config::savePath(Config::mode.saveName),
 						e.what()
 					);
 				}
 				catch (...) {
 					ensuref(false,
-						"Save game \"%s\" is corrupt.\r\n"
-						"Deleting it will generate a new world but leave autosaveN intact\r\n"
+						"Cannot load \"%s\"\r\n"
+						"Deleting it will generate a new world but leave autosaveN intact.\r\n"
 						"If this is the result of a recent game crash please report a bug.\r\n",
 						Config::savePath(Config::mode.saveName)
 					);

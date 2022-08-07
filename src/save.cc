@@ -285,12 +285,26 @@ namespace Sim {
 				auto state = json::parse(line);
 
 				if (state.contains("version")) {
-					throwf(
-						state["version"][0] <= Config::version.major &&
-						state["version"][1] <= Config::version.minor &&
-						state["version"][2] <= Config::version.patch,
-						"Saved game is from Factropy %d.%d.%d but this is version %d.%d.%d."
-						" Please update the game to continue."
+					int sMajor = (int)state["version"][0];
+					int sMinor = (int)state["version"][1];
+					int sPatch = (int)state["version"][2];
+					int cMajor = Config::version.major;
+					int cMinor = Config::version.minor;
+					int cPatch = Config::version.patch;
+
+					bool sameMajorMinor = sMajor == cMajor && sMinor == cMinor;
+
+					throwf(sameMajorMinor,
+						"Saved game from %d.%d.%d is incompatible with version %d.%d.%d.",
+						sMajor, sMinor, sPatch, cMajor, cMinor, cPatch
+					);
+
+					bool sameOrNewer = sameMajorMinor && sPatch <= cPatch;
+
+					throwf(sameOrNewer,
+						"Saved game comes from %d.%d.%d but this is version %d.%d.%d."
+						" Please update the game to continue.",
+						sMajor, sMinor, sPatch, cMajor, cMinor, cPatch
 					);
 				}
 
@@ -776,7 +790,11 @@ void Entity::loadAll(const char* name) {
 		dir = dir.normalize();
 
 		if (en.spec->alignStrict(pos, dir) && !en.spec->monorailContainer) {
-			dir = contains(en.spec->rotations, dir) ? dir: en.spec->rotations.front();
+			if (!contains(en.spec->rotations, dir) && dir == Point::East && contains(en.spec->rotations, Point::West)) dir = Point::West;
+			if (!contains(en.spec->rotations, dir) && dir == Point::West && contains(en.spec->rotations, Point::East)) dir = Point::East;
+			if (!contains(en.spec->rotations, dir) && dir == Point::North && contains(en.spec->rotations, Point::South)) dir = Point::South;
+			if (!contains(en.spec->rotations, dir) && dir == Point::South && contains(en.spec->rotations, Point::North)) dir = Point::North;
+			if (!contains(en.spec->rotations, dir)) dir = en.spec->rotations.front();
 			pos = en.spec->aligned(pos, dir);
 		}
 

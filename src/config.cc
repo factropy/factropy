@@ -170,7 +170,11 @@ namespace Config {
 	}
 
 	void load() {
-		char* path = SDL_GetPrefPath("factropy.com", "factropy");
+		std::string folder = (version.minor > 1)
+			? fmt("factropy.%d.%d", version.major, version.minor)
+			: "factropy";
+
+		char* path = SDL_GetPrefPath("factropy.com", folder.c_str());
 		mode.dataPath = std::string(path ? path: "./");
 		if (path) SDL_free(path);
 
@@ -248,6 +252,10 @@ namespace Config {
 			Config::mode.autosave = state["mode"]["autosave"];
 		}
 
+		if (state.contains("/mode/autotip"_json_pointer)) {
+			Config::mode.autotip = state["mode"]["autotip"];
+		}
+
 		if (state.contains("/mode/grid"_json_pointer)) {
 			Config::mode.grid = state["mode"]["grid"];
 		}
@@ -314,6 +322,7 @@ namespace Config {
 		};
 
 		state["mode"]["autosave"] = Config::mode.autosave;
+		state["mode"]["autotip"] = Config::mode.autotip;
 		state["mode"]["grid"] = Config::mode.grid;
 		state["mode"]["alignment"] = Config::mode.alignment;
 		state["mode"]["cardinalSnap"] = Config::mode.cardinalSnap;

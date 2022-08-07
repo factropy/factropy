@@ -1526,23 +1526,6 @@ containerSmall({
 })
 
 containerSmall({
-	name = "container-supply",
-	title = "Container (Supply)",
-	color = 0x0000aaff,
-	health = 0,
-	build = false,
-	clone = false,
-	plan = false,
-	enable = true,
-	tipStorage = true,
-	logistic = true,
-	construction = true,
-	storeSetLower = true,
-	storeSetUpper = true,
-	forceDeleteStore = true,
-})
-
-containerSmall({
 	name = "container-shipping",
 	title = "Container (Shipping)",
 	color = 0x8d6e54ff,
