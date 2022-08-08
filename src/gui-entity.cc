@@ -190,7 +190,7 @@ void GuiEntity::load(const Entity& en) {
 
 	if (!ghost && spec->generateElectricity && !en.electricityProducer().connected()) flags |= ELECTRICITY;
 	if (!ghost && spec->consumeElectricity && !en.electricityConsumer().connected()) flags |= ELECTRICITY;
-	if (!ghost && spec->consumeCharge && !en.charger().connected) flags |= ELECTRICITY;
+	if (!ghost && spec->consumeCharge && !en.charger().powered()) flags |= ELECTRICITY;
 }
 
 void GuiEntity::loadConveyor(const Entity& en) {
@@ -284,6 +284,8 @@ void GuiEntity::loadCart() {
 		else if (cart.fueled < 0.99) status = Status::Warning;
 		else status = Status::Ok;
 		cartLine = cart.line;
+
+		if (cart.blocked) flags |= BLOCKED;
 	}
 }
 
@@ -427,13 +429,15 @@ void GuiEntity::loadPowerPole() {
 
 		for (auto& sid: pole.links) {
 			auto& sibling = PowerPole::get(sid);
-			powerpole->wires.push_back(sibling.point());
+			auto end = sibling.point();
+			powerpole->wires.push_back({end, powerpole->point < end});
 		}
 
 		if (ghost) {
 			for (auto sid: pole.siblings()) {
 				auto& sibling = PowerPole::get(sid);
-				powerpole->wires.push_back(sibling.point());
+				auto end = sibling.point();
+				powerpole->wires.push_back({end, powerpole->point < end});
 			}
 		}
 	}
@@ -869,12 +873,12 @@ void GuiEntity::instanceCables() {
 	};
 
 	if (spec->powerpole && powerpole) {
-		for (auto& end: powerpole->wires) {
+		for (auto& wire: powerpole->wires) {
 			// The electricity grid is a doubly-linked loom, so render each wire only once
 			// Ghosts that are fake entities being placed have no real wires, so force those
-			if (!ghost && powerpole->point < end) continue;
+			if (!ghost && !wire.render) continue;
 			Point posA = powerpole->point;
-			Point posB = end;
+			Point posB = wire.target;
 			Point dirAB = (posB-posA).normalize();
 			float distance = posA.distance(posB);
 			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
@@ -1432,10 +1436,19 @@ void GuiEntity::overlayAlignment() {
 }
 
 void GuiEntity::icon() {
-	if (flags & ELECTRICITY) {
+	auto at = [&]() {
 		Point i = spec->icon == Point::Zero ? Point::Up*(spec->collision.h/2+0.5f) : spec->icon;
-		Point p = i.transform(dir().rotation()) + pos();
-		scene.alert(scene.icon.electricity, p);
+		return i.transform(dir().rotation()) + pos();
+	};
+
+	if (flags & ELECTRICITY) {
+		scene.alert(scene.icon.electricity, at());
+		return;
+	}
+
+	if (flags & BLOCKED) {
+		scene.warning(scene.icon.exclaim, at());
+		return;
 	}
 }
 
@@ -1705,7 +1718,7 @@ GuiFakeEntity* GuiFakeEntity::update() {
 				auto& sibling = PowerPole::get(se->id);
 				if (!sibling.range().contains(powerpole->point)) continue;
 				if (!range.contains(sibling.point())) continue;
-				powerpole->wires.push_back(sibling.point());
+				powerpole->wires.push_back({sibling.point(), powerpole->point < sibling.point()});
 			}
 		});
 	}

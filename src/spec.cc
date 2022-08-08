@@ -76,6 +76,7 @@ Spec::Spec(std::string name) {
 
 	place = Land;
 	placeOnHill = false;
+	placeOnWaterSurface = false;
 	placeOnHillPlatform = 0.0f;
 
 	collision = {0,0,0,0,0,0};
@@ -355,7 +356,9 @@ Point Spec::aligned(Point p, Point dir) const {
 		}
 
 		if (alignStrict(p, dir)) {
-			p.y = underground ? -collision.h*0.5: collision.h*0.5;
+			p.y = collision.h*0.5;
+			if (underground) p.y = -collision.h*0.5;
+			if (placeOnWaterSurface) p.y = -3.0f + collision.h*0.5;
 		}
 
 		p.z = std::floor(p.z);
@@ -371,7 +374,8 @@ bool Spec::alignStrict(Point pos, Point dir) const {
 	float yMax = collision.h*0.5 + 0.01;
 	bool grounded = pos.y > yMin && pos.y < yMax;
 	bool undergrounded = pos.y < -yMin && pos.y > -yMax;
-	return align && (grounded || undergrounded) && !drone && !zeppelin && !flightPath && !cart && !missile && !junk && !monocar && !vehicle;
+	return align && (grounded || undergrounded || placeOnWaterSurface)
+		&& !drone && !zeppelin && !flightPath && !cart && !missile && !junk && !monocar && !vehicle;
 }
 
 // AABB

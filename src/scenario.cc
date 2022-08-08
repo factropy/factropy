@@ -1213,6 +1213,11 @@ public:
 			spec->materialsMultiplyHill = to_number(materialsMultiplyHill);
 		}
 
+		auto placeOnWaterSurface = field("placeOnWaterSurface");
+		if (is_bool(placeOnWaterSurface)) {
+			spec->placeOnWaterSurface = to_bool(placeOnWaterSurface);
+		}
+
 		auto turret = field("turret");
 		if (is_bool(turret)) {
 			spec->turret = to_bool(turret);
@@ -3779,10 +3784,10 @@ void ScenarioBase::specifications() {
 		{ Item::byName("pipe")->id, 10 },
 	};
 
-	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
-		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
-		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
-		->transform(Mat4::translate(0,5,0));
+//	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
+//		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
+//		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
+//		->transform(Mat4::translate(0,5,0));
 
 	auto falconLeg = (new Part(0x222222ff))->gloss(starshipGloss)
 		->lod(mesh("falconLeg"), Part::MD, Part::SHADOW)
@@ -3811,7 +3816,7 @@ void ScenarioBase::specifications() {
 		(new Part(0x333333ff))->gloss(starshipGloss)
 			->lod(mesh("falconBase"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBaseLD"), Part::VLD, Part::NOSHADOW),
-		falconFins,
+//		falconFins,
 		falconLeg,
 		falconLeg,
 		falconLeg,
@@ -3848,7 +3853,7 @@ void ScenarioBase::specifications() {
 				center,
 				center * rocket * up * spin,
 				Mat4::translate(0,5,0) * center * rocket * up * spin,
-				center * rocket * up * spin,
+//				center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(  0.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians( 90.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(180.0f)) * center * rocket * up * spin,
@@ -3862,7 +3867,7 @@ void ScenarioBase::specifications() {
 				true,
 				true,
 				true,
-				true,
+//				true,
 				true,
 				true,
 				true,
@@ -4613,6 +4618,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->plan = false;
 	spec->clone = true;
 	spec->beacon = Point::Up*0.6 + Point::South*0.55;
+	spec->icon = Point::Up*1.25;
 	spec->cart = true;
 	spec->cartSpeed = 10000.0/(float)(60*60*60);
 	spec->cartWait = 120;
@@ -4691,6 +4697,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->plan = false;
 	spec->clone = true;
 	spec->beacon = Point::Up*0.6 + Point::South*0.55;
+	spec->icon = Point::Up*1.25;
 	spec->cart = true;
 	spec->cartSpeed = 10000.0/(float)(60*60*60);
 	spec->cartWait = 120;

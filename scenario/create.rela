@@ -67,9 +67,6 @@ for item,count in materials
 	entity_level(zeppelin, item, count/2, count/2)
 end
 
-entity_level(zeppelin, "log", 0, 0)
-entity_level(zeppelin, "stone", 0, 0)
-
 entity_direct(zeppelin)
 
 toolbar_spec("arm")

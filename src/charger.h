@@ -29,4 +29,5 @@ struct Charger {
 	Energy chargeRate();
 	void charge();
 	float level();
+	bool powered();
 };

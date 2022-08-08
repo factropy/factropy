@@ -4872,7 +4872,7 @@ end()
 
 add_spec({
 	name = "powerpole-small",
-	title = "Power Pole (Small)",
+	title = "Power Pole",
 	health = 150,
 	rotations = [south],
 	rotateGhost = true,
@@ -4926,8 +4926,53 @@ add_spec({
 })
 
 add_spec({
+	name = "powerbuoy-small",
+	title = "Power Buoy",
+	health = 150,
+	rotations = [south],
+	rotateGhost = true,
+	rotateExtant = true,
+	status = true,
+	beacon = [0,1.5,0],
+	powerpole = true,
+	powerpoleRange = 16,
+	powerpoleCoverage = 8,
+	powerpolePoint = [0,1.5,0],
+	collision = [0, 0, 0, 1, 3, 1],
+	place = [placement.water],
+	placeOnWaterSurface = true,
+	iconD = 2.5,
+	iconV = 0,
+	parts = [
+		{
+			color = colors.steel,
+			gloss = gloss.metallic,
+			translate = down*1.5,
+			lods = [
+				["models/buoy-frame-hd.stl", high, shadow],
+				["models/buoy-frame-ld.stl", medium, shadow],
+				["models/buoy-frame-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			gloss = gloss.metallic,
+			translate = down*1.5,
+			lods = [
+				["models/buoy-ring-hd.stl", high, shadow],
+				["models/buoy-ring-ld.stl", medium, shadow],
+			],
+		},
+	],
+	materials = {
+		"steel-frame" = 1,
+		"copper-wire" = 3,
+	},
+})
+
+add_spec({
 	name = "powerpole-large",
-	title = "Power Pole (Large)",
+	title = "Power Pylon",
 	health = 150,
 	rotations = [south],
 	rotateGhost = true,

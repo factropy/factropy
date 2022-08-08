@@ -39,6 +39,11 @@ void Plan::move(Point p) {
 		offsets[0] = Point(0, entities[0]->spec->collision.h/2.0f, 0);
 	}
 
+	if (entities.size() == 1 && entities[0]->spec->placeOnWaterSurface) {
+		// Spec::aligned enforces p.y, so offset must compensate
+		offsets[0] = Point(0, 3.0f, 0);
+	}
+
 	for (uint i = 0; i < entities.size(); i++) {
 		auto te = entities[i];
 		te->move(position + offsets[i]);

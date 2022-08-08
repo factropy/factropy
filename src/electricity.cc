@@ -522,3 +522,7 @@ bool ElectricityNetworkState::noCapacity() {
 	return capacityReady == Energy(0);
 }
 
+ElectricityNetwork* ElectricityNetwork::primary() {
+	for (auto& network: all) return &network;
+	return nullptr;
+}

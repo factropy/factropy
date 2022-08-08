@@ -133,6 +133,10 @@ void Store::update() {
 		hint.activeproviding = hint.activeproviding || (n > lvl.upper);
 	}
 
+	if (!overflow) for (Stack& stk: stacks) {
+		if (!level(stk.iid)) hint.activeproviding = true;
+	}
+
 	if (overflow) for (Stack& stk: stacks) {
 		if (!level(stk.iid)) hint.providing = true;
 	}
@@ -730,7 +734,7 @@ Stack Store::supplyFrom(Store& src, miniset<uint>& filter, uint size) {
 Stack Store::forceOverflowTo(Store& dst, uint size) {
 	if (!dst.isFull()) {
 		for (Level& sl: levels) {
-			if (!dst.relevant(sl.iid)) continue;
+//			if (!dst.relevant(sl.iid)) continue;
 			uint excess = countActiveProvidable(sl.iid, &sl);
 			uint accept = dst.countSpace(sl.iid);
 			if (excess && accept && isActiveProviding(sl.iid, &sl)) {
@@ -753,6 +757,17 @@ Stack Store::overflowTo(Store& dst, uint size) {
 			return {sl.iid, std::min(size, std::min(excess, accept))};
 		}
 	}
+
+	// stacks without levels are implicitly active for overlow
+	for (Stack& stack: stacks) {
+		if (!dst.relevant(stack.iid)) continue;
+		if (level(stack.iid)) continue;
+		uint excess = stack.size;
+		uint accept = dst.countAcceptable(stack.iid);
+		if (excess && accept && dst.isAccepting(stack.iid)) {
+			return {stack.iid, std::min(size, std::min(excess, accept))};
+		}
+	}
 	return {0,0};
 }
 
@@ -766,6 +781,18 @@ Stack Store::overflowTo(Store& dst, miniset<uint>& filter, uint size) {
 		uint accept = dst.countAcceptable(sl.iid);
 		if (excess && accept && dst.isAccepting(sl.iid) && isActiveProviding(sl.iid, &sl)) {
 			return {sl.iid, std::min(size, std::min(excess, accept))};
+		}
+	}
+
+	// stacks without levels are implicitly active for overlow
+	for (Stack& stack: stacks) {
+		if (!dst.relevant(stack.iid)) continue;
+		if (level(stack.iid)) continue;
+		if (!filter.count(stack.iid)) continue;
+		uint excess = stack.size;
+		uint accept = dst.countAcceptable(stack.iid);
+		if (excess && accept && dst.isAccepting(stack.iid)) {
+			return {stack.iid, std::min(size, std::min(excess, accept))};
 		}
 	}
 	return {0,0};
@@ -792,11 +819,22 @@ Stack Store::overflowDefaultTo(Store& dst, uint size) {
 		}
 		return {0,0};
 	}
+
 	for (Level& sl: levels) {
 		uint excess = countActiveProvidable(sl.iid);
 		uint accept = dst.countSpace(sl.iid);
 		if (excess && accept && dst.isOverflowDefault(sl.iid) && isActiveProviding(sl.iid, &sl)) {
 			return {sl.iid, std::min(size, std::min(excess, accept))};
+		}
+	}
+
+	// stacks without levels are implicitly active for overlow
+	for (Stack& stack: stacks) {
+		if (level(stack.iid)) continue;
+		uint excess = stack.size;
+		uint accept = dst.countSpace(stack.iid);
+		if (excess && accept && dst.isOverflowDefault(stack.iid)) {
+			return {stack.iid, std::min(size, std::min(excess, accept))};
 		}
 	}
 	return {0,0};

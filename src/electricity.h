@@ -113,5 +113,6 @@ struct ElectricityNetwork : ElectricityNetworkState {
 	Energy consume(Spec* en, Energy e);
 	void consume(Spec* spec, Energy e, int count);
 
+	static ElectricityNetwork* primary();
 	static ElectricityNetworkState aggregate();
 };

@@ -100,6 +100,7 @@ struct Spec {
 
 	int place;
 	bool placeOnHill;
+	bool placeOnWaterSurface;
 	float placeOnHillPlatform;
 	std::vector<Footing> footings;
 

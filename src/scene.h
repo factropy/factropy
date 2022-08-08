@@ -181,6 +181,7 @@ struct Scene {
 
 	struct {
 		Mesh* triangle;
+		Mesh* exclaim;
 		Mesh* electricity;
 	} icon;
 
@@ -227,6 +228,7 @@ struct Scene {
 	Point groundTarget(float level = 0.0f);
 	Point mouseGroundTarget(float level = 0.0f);
 	Point mouseTerrainTarget();
+	Point mouseWaterSurfaceTarget();
 	void updateMouse();
 	void updateCamera();
 	void updateVisibleCells();

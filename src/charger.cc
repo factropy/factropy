@@ -64,3 +64,6 @@ float Charger::level() {
 	return energy.portion(buffer);
 }
 
+bool Charger::powered() {
+	return connected || energy > Energy(0);
+}

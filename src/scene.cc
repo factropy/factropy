@@ -59,6 +59,7 @@ void Scene::init() {
 	));
 
 	icon.triangle = new Mesh("models/icon-triangle.stl");
+	icon.exclaim = new Mesh("models/icon-exclaim.stl");
 	icon.electricity = new Mesh("models/icon-electricity.stl");
 
 	for (auto& packet: packets) packet = Sim::random() > 0.5f;
@@ -283,7 +284,7 @@ std::pair<bool,Point> Scene::collisionRayGround(const Ray& ray, float level) {
 
 		if (distance > 0.0) {
 			Point hit = ray.position + (ray.direction * distance);
-			return std::pair<bool,Point>(true, {hit.x,0,hit.z});
+			return std::pair<bool,Point>(true, {hit.x,level,hit.z});
 		}
 	}
 
@@ -291,12 +292,12 @@ std::pair<bool,Point> Scene::collisionRayGround(const Ray& ray, float level) {
 }
 
 Point Scene::groundTarget(float level) {
-	auto [_,hit] = collisionRayGround(Ray(position, direction), 0);
+	auto [_,hit] = collisionRayGround(Ray(position, direction), level);
 	return hit;
 }
 
 Point Scene::mouseGroundTarget(float level) {
-	auto [_,hit] = collisionRayGround(mouse.ray, 0);
+	auto [_,hit] = collisionRayGround(mouse.ray, level);
 	return hit;
 }
 
@@ -305,6 +306,10 @@ Point Scene::mouseTerrainTarget() {
 	while (world.elevation(pos) > pos.y)
 		pos += -mouse.ray.direction;
 	return pos;
+}
+
+Point Scene::mouseWaterSurfaceTarget() {
+	return mouseGroundTarget(-4.0f);
 }
 
 bool Scene::keyDown(int key) {
@@ -956,6 +961,11 @@ void Scene::updatePlacing() {
 			auto pe = placing->entities[0];
 			Box box = pe->spec->placeOnHillBox(pos);
 			placing->move(Point(pos.x, world.hillPlatform(box), pos.z));
+			placingMoved = true;
+		}
+		else
+		if (placing->entities.size() == 1 && placing->entities[0]->spec->placeOnWaterSurface) {
+			placing->move(mouseWaterSurfaceTarget());
 			placingMoved = true;
 		}
 		else

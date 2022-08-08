@@ -20,5 +20,16 @@ module bolt() {
 	}
 }
 
+module exclaim($fn=8) {
+	translate([0,0,-0.2]) rotate([90,0,0]) union() {
+		hull() {
+			translate([0,0.45,0]) cyl(0.04, 0.04, 0.25);
+			translate([0,0.15,0]) cyl(0.04, 0.04, 0.25);
+		};
+		cyl(0.04, 0.04, 0.25);
+	}
+}
+
 //triangle();
-bolt();
+//bolt();
+exclaim();

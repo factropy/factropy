@@ -15,6 +15,7 @@ struct GuiFakeEntity;
 
 struct GuiEntity {
 	static const uint32_t ELECTRICITY = 1<<16;
+	static const uint32_t BLOCKED = 1<<17;
 
 	uint id;
 	Spec* spec;
@@ -88,7 +89,11 @@ struct GuiEntity {
 	monorailState* monorail = nullptr;
 
 	struct powerpoleState {
-		minivec<Point> wires;
+		struct Wire {
+			Point target = Point::Zero;
+			bool render = false;
+		};
+		minivec<Wire> wires;
 		Point point;
 	};
 
