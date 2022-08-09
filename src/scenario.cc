@@ -94,8 +94,8 @@ public:
 
 		modules.common   = module(common.c_str());
 		modules.create   = module(create.c_str());
-		modules.goals    = module(fmtc("function()\n%s\nend()\n", goals));
-		modules.messages = module(fmtc("function()\n%s\nend()\n", messages));
+		modules.goals    = module(goals.c_str());
+		modules.messages = module(messages.c_str());
 
 		for (const auto& file: std::filesystem::directory_iterator("scenario/items/")) {
 			if (file.path().extension() == ".rela") {
@@ -2194,13 +2194,9 @@ void ScenarioBase::fluids() {
 	fluid->title = "Hydrofluoric Acid";
 	fluid->color = 0x00ffffff;
 
-	fluid = Fluid::create(Fluid::next(), "hydrogen");
-	fluid->title = "Liquid Hydrogen";
-	fluid->color = 0xee82eeff;
-
-	fluid = Fluid::create(Fluid::next(), "oxygen");
-	fluid->title = "Liquid Oxygen";
-	fluid->color = 0x87ceebff;
+	fluid = Fluid::create(Fluid::next(), "ammonia");
+	fluid->title = "Ammonia";
+	fluid->color = 0xccccffff;
 
 	fluid = Fluid::create(Fluid::next(), "hydrazine");
 	fluid->title = "Hydrazine";
@@ -2759,8 +2755,11 @@ void ScenarioBase::specifications() {
 	spec->recipeTags = {"reacting"};
 	spec->crafterRecipe = Recipe::byName("reacting");
 	spec->materials = {
-		{ Item::byName("brick")->id, 5 },
-		{ Item::byName("copper-sheet")->id, 3 },
+		{ Item::byName("brick")->id, 50 },
+		{ Item::byName("steel-frame")->id, 50 },
+		{ Item::byName("filter")->id, 50 },
+		{ Item::byName("electric-motor")->id, 50 },
+		{ Item::byName("computer")->id, 5 },
 	};
 
 	meshes["bwrBase"] = new Mesh("models/bwr-base-hd.stl");
@@ -3038,44 +3037,44 @@ void ScenarioBase::specifications() {
 	meshes["computerRack"] = new Mesh("models/computer-rack-hd.stl");
 	meshes["computerRackLD"] = new Mesh("models/computer-rack-ld.stl");
 
-	spec = new Spec("computer");
-	spec->title = "Computer";
-	spec->health = 150;
-	spec->rotateGhost = true;
-	spec->rotateExtant = true;
-	spec->computer = true;
-	spec->computerDataStackSize = 8;
-	spec->computerReturnStackSize = 8;
-	spec->computerRAMSize = 32;
-	spec->computerROMSize = 32;
-	spec->computerCyclesPerTick = 60;
-	spec->consumeElectricity = true;
-	spec->energyDrain = Energy::W(100);
-	spec->collision = {0, 0, 0, 1, 2, 1};
-	spec->selection = spec->collision;
-	spec->iconD = 1.5;
-	spec->iconV = 0;
-	spec->enable = true;
-	spec->networker = true;
-	spec->networkInterfaces = 2;
-	spec->networkWifi = {0,1,0};
-	spec->status = true;
-	spec->beacon = {0,1,0};
-	spec->parts = {
-		(new Part(0x888888ff))
-			->lod(mesh("computerRack"), Part::HD, Part::SHADOW)
-			->lod(mesh("computerRackLD"), Part::MD, Part::SHADOW)
-			->lod(mesh("computerRackLD"), Part::VLD, Part::NOSHADOW)
-			->transform(Mat4::translate(0,-1,0)),
-	};
-	spec->materials = {
-		{ Item::byName("steel-frame")->id, 1 },
-		{ Item::byName("copper-wire")->id, 10 },
-		{ Item::byName("solder")->id, 3 },
-		{ Item::byName("circuit-board")->id, 10 },
-		{ Item::byName("mother-board")->id, 1 },
-		{ Item::byName("battery")->id, 1 },
-	};
+//	spec = new Spec("computer");
+//	spec->title = "Computer";
+//	spec->health = 150;
+//	spec->rotateGhost = true;
+//	spec->rotateExtant = true;
+//	spec->computer = true;
+//	spec->computerDataStackSize = 8;
+//	spec->computerReturnStackSize = 8;
+//	spec->computerRAMSize = 32;
+//	spec->computerROMSize = 32;
+//	spec->computerCyclesPerTick = 60;
+//	spec->consumeElectricity = true;
+//	spec->energyDrain = Energy::W(100);
+//	spec->collision = {0, 0, 0, 1, 2, 1};
+//	spec->selection = spec->collision;
+//	spec->iconD = 1.5;
+//	spec->iconV = 0;
+//	spec->enable = true;
+//	spec->networker = true;
+//	spec->networkInterfaces = 2;
+//	spec->networkWifi = {0,1,0};
+//	spec->status = true;
+//	spec->beacon = {0,1,0};
+//	spec->parts = {
+//		(new Part(0x888888ff))
+//			->lod(mesh("computerRack"), Part::HD, Part::SHADOW)
+//			->lod(mesh("computerRackLD"), Part::MD, Part::SHADOW)
+//			->lod(mesh("computerRackLD"), Part::VLD, Part::NOSHADOW)
+//			->transform(Mat4::translate(0,-1,0)),
+//	};
+//	spec->materials = {
+//		{ Item::byName("steel-frame")->id, 1 },
+//		{ Item::byName("copper-wire")->id, 10 },
+//		{ Item::byName("solder")->id, 3 },
+//		{ Item::byName("circuit-board")->id, 10 },
+//		{ Item::byName("mother-board")->id, 1 },
+//		{ Item::byName("battery")->id, 1 },
+//	};
 
 	meshes["oilRigBase"] = new Mesh("models/oil-rig-base-hd.stl");
 	meshes["oilRigBaseLD"] = new Mesh("models/oil-rig-base-ld.stl");
@@ -3462,7 +3461,7 @@ void ScenarioBase::specifications() {
 	};
 
 	spec->materials = {
-		{ Item::byName("mother-board")->id, 3 },
+		{ Item::byName("computer")->id, 3 },
 		{ Item::byName("circuit-board")->id, 10 },
 		{ Item::byName("steel-sheet")->id, 10 },
 		{ Item::byName("steel-frame")->id, 5 },
@@ -3533,192 +3532,6 @@ void ScenarioBase::specifications() {
 		}
 	}
 
-	spec = new Spec("starship");
-	spec->title = "Starship";
-	spec->starship = true;
-	spec->health = 150;
-	spec->store = true;
-	spec->storeSetUpper = true;
-	spec->storeAnything = true;
-	spec->tipStorage = true;
-	spec->capacity = Mass::kg(10000);
-	spec->rotateGhost = true;
-	spec->rotateExtant = true;
-	spec->launcher = true;
-	spec->launcherFuel = {
-		{Fluid::byName("hydrogen")->id,10000},
-		{Fluid::byName("oxygen")->id,5000},
-	};
-	spec->enable = true;
-	spec->collision = {0, 0, 0, 20, 45, 20};
-	spec->selection = spec->collision;
-	spec->iconD = 15;
-	spec->iconV = 18;
-	spec->enemyTarget = true;
-	spec->pipeHints = true;
-	spec->pipeInputConnections = {
-		Point(10.0f, -22.0f, 6.5f).transform(Mat4::rotateY(glm::radians(0.0f))),
-		Point(10.0f, -22.0f, -6.5f).transform(Mat4::rotateY(glm::radians(0.0f))),
-		Point(10.0f, -22.0f, 6.5f).transform(Mat4::rotateY(glm::radians(180.0f))),
-		Point(10.0f, -22.0f, -6.5f).transform(Mat4::rotateY(glm::radians(180.0f))),
-	};
-
-	float starshipGloss = 4;
-
-	spec->networker = true;
-	spec->networkInterfaces = 1;
-	spec->networkWifi = {9.5,-19.5,9.5};
-
-	meshes["starshipNoseFin"] = new Mesh("models/starship-nosefin-hd.stl");
-	meshes["starshipNoseFinLD"] = new Mesh("models/starship-nosefin-ld.stl");
-	meshes["starshipTailFin"] = new Mesh("models/starship-tailfin-hd.stl");
-	meshes["starshipTailFinLD"] = new Mesh("models/starship-tailfin-ld.stl");
-	meshes["starshipRaptor"] = new Mesh("models/starship-raptor-hd.stl");
-	meshes["starshipRaptorLD"] = new Mesh("models/starship-raptor-ld.stl");
-	meshes["starshipPlume"] = new Mesh("models/starship-plume-hd.stl");
-	meshes["starshipPlumeLD"] = new Mesh("models/starship-plume-ld.stl");
-	meshes["starshipLaunchpad"] = new Mesh("models/starship-launchpad-hd.stl");
-	meshes["starshipLaunchpadLD"] = new Mesh("models/starship-launchpad-ld.stl");
-	meshes["starshipFrame"] = new Mesh("models/starship-frame-hd.stl");
-	meshes["starshipFrameLD"] = new Mesh("models/starship-frame-ld.stl");
-	meshes["starshipBody"] = new Mesh("models/starship-body-hd.stl");
-	meshes["starshipBodyLD"] = new Mesh("models/starship-body-ld.stl");
-	meshes["starshipNose"] = new Mesh("models/starship-nose-hd.stl");
-	meshes["starshipNoseLD"] = new Mesh("models/starship-nose-ld.stl");
-
-	auto starshipNoseFin = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipNoseFin"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipNoseFinLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipTailFin = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipTailFin"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipTailFinLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipRaptor = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipRaptor"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipRaptorLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipPlumeA = (new Part(0xFFA500ff))->translucent()
-		->lod(mesh("starshipPlume"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipPlumeB = (new Part(0xffff00ff))->translucent()
-		->lod(mesh("starshipPlume"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
-
-	spec->parts = {
-		(new Part(0x708090ff))->gloss(starshipGloss)
-			->lod(mesh("starshipLaunchpad"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipLaunchpadLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0x111111ff))->gloss(starshipGloss)
-			->lod(mesh("starshipFrame"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipFrameLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xA3C1DAff))->gloss(starshipGloss)
-			->lod(mesh("starshipBody"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipBodyLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xA3C1DAff))->gloss(starshipGloss)
-			->lod(mesh("starshipNose"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipNoseLD"), Part::VLD, Part::NOSHADOW),
-		starshipRaptor,
-		starshipRaptor,
-		starshipRaptor,
-		starshipNoseFin,
-		starshipNoseFin,
-		starshipTailFin,
-		starshipTailFin,
-		starshipPlumeB,
-		starshipPlumeB,
-		starshipPlumeB,
-		starshipPlumeA,
-		starshipPlumeA,
-		starshipPlumeA,
-	};
-
-	spec->parts[0]->filter = 1;
-
-	spec->highLOD = 10;
-
-	spec->materials = {
-		{ Item::byName("brick")->id, 100 },
-		{ Item::byName("steel-sheet")->id, 50 },
-		{ Item::byName("steel-frame")->id, 25 },
-		{ Item::byName("copper-sheet")->id, 50 },
-		{ Item::byName("circuit-board")->id, 50 },
-		{ Item::byName("pipe")->id, 50 },
-	};
-
-	{
-		Mat4 center = Mat4::translate(0,-22.5,0);
-
-		// @todo: make it belly-flop down :-)
-
-		auto fly = [&](float h, bool flame) {
-			int i = h;
-			h /= 100;
-			Mat4 up = Mat4::translate(0,h*h*h,0);
-			Mat4 spin = Mat4::rotateY(-glm::radians(h*h*h));
-
-			auto plumeScaleA = Mat4::scale((i%2 ? 0.9: 1.0), (i%2 ? 1.2: 1.3), (i%2 ? 0.9: 1.0));
-			auto plumeScaleB = Mat4::scale(0.75, (i%2 ? 1.1: 1.0), 0.75);
-
-			spec->states.push_back({
-				center,
-				center * Mat4::translate(0,1,0),
-				center * Mat4::translate(0,5,0) * up * spin,
-				center * Mat4::translate(0,35,0) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-0.0f)) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-				center * Mat4::rotateY(glm::radians(  -0.0f)) * Mat4::translate( 5,35,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(-180.0f)) * Mat4::translate(-5,35,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(  -0.0f)) * Mat4::translate( 5, 5,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(-180.0f)) * Mat4::translate(-5, 5,0) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(  -0.0f)) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(  -0.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-			});
-
-			spec->statesShow.push_back({
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				flame,
-				flame,
-				flame,
-				flame,
-				flame,
-				flame,
-			});
-		};
-
-		for (uint i = 0; i < 200; i++) {
-			fly(0, i > 150);
-		}
-
-		for (uint i = 0; i < 1000; i++) {
-			fly(i, true);
-		}
-
-		for (uint i = 1000; i > 0; i--) {
-			fly(i, true);
-		}
-
-		for (uint i = 0; i < 200; i++) {
-			fly(0, i < 50);
-		}
-	}
-
 	meshes["falconLaunchpad"] = new Mesh("models/falcon-launchpad-hd.stl");
 	meshes["falconLaunchpadLD"] = new Mesh("models/falcon-launchpad-ld.stl");
 	meshes["falconBody"] = new Mesh("models/falcon-body-hd.stl");
@@ -3774,16 +3587,23 @@ void ScenarioBase::specifications() {
 		{ Item::byName("pipe")->id, 10 },
 	};
 
-//	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
+	float falconGloss = 16;
+
+//	auto falconFins = (new Part(0x222222ff))->gloss(falconGloss)
 //		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
 //		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
 //		->transform(Mat4::translate(0,5,0));
 
-	auto falconLeg = (new Part(0x222222ff))->gloss(starshipGloss)
+	meshes["starshipRaptor"] = new Mesh("models/starship-raptor-hd.stl");
+	meshes["starshipRaptorLD"] = new Mesh("models/starship-raptor-ld.stl");
+	meshes["starshipPlume"] = new Mesh("models/starship-plume-hd.stl");
+	meshes["starshipPlumeLD"] = new Mesh("models/starship-plume-ld.stl");
+
+	auto falconLeg = (new Part(0x222222ff))->gloss(falconGloss)
 		->lod(mesh("falconLeg"), Part::MD, Part::SHADOW)
 		->lod(mesh("falconLegLD"), Part::VLD, Part::NOSHADOW);
 
-	auto falconRaptor = (new Part(0x111111ff))->gloss(starshipGloss)
+	auto falconRaptor = (new Part(0x111111ff))->gloss(falconGloss)
 		->lod(mesh("starshipRaptor"), Part::MD, Part::SHADOW)
 		->lod(mesh("starshipRaptorLD"), Part::VLD, Part::NOSHADOW);
 
@@ -3796,14 +3616,14 @@ void ScenarioBase::specifications() {
 		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
 
 	spec->parts = {
-		(new Part(0x708090ff))->gloss(starshipGloss)
+		(new Part(0x708090ff))->gloss(falconGloss)
 			->lod(mesh("falconLaunchpad"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconLaunchpadLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xffffffff))->gloss(starshipGloss)
+		(new Part(0xffffffff))->gloss(falconGloss)
 			->lod(mesh("falconBody"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBodyLD"), Part::VLD, Part::NOSHADOW)
 			->transform(Mat4::translate(0,5,0)),
-		(new Part(0x333333ff))->gloss(starshipGloss)
+		(new Part(0x333333ff))->gloss(falconGloss)
 			->lod(mesh("falconBase"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBaseLD"), Part::VLD, Part::NOSHADOW),
 //		falconFins,
@@ -4141,7 +3961,7 @@ void ScenarioBase::specifications() {
 			{ Item::byName("plastic-bar")->id, 100 },
 			{ Item::byName("electric-motor")->id, 100 },
 			{ Item::byName("battery")->id, 100 },
-			{ Item::byName("mother-board")->id, 5 },
+			{ Item::byName("computer")->id, 3 },
 		};
 
 		spec->highLOD = 10;

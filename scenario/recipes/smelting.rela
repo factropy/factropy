@@ -28,3 +28,12 @@ add_recipe({
 	tags = tags.smelting,
 })
 
+add_recipe({
+	name = "gold-smelting"
+	title = "Gold Smelting",
+	input = { "gold-powder" = 2 },
+	output = { "gold-ingot" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+

@@ -8,3 +8,12 @@ add_recipe({
 	output = { "aluminium-ingot" = 1 },
 })
 
+add_recipe({
+	name = "ammonia-electrolysis",
+	title = "Ammonia Electrolysis",
+	energy = MJ(3),
+	tags = tags.electrolysis,
+	input = { "water" = L(500), "stone-crushed" = 1 },
+	output = { "ammonia" = L(100) },
+})
+

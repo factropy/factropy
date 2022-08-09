@@ -44,10 +44,11 @@ bool Fluid::manufacturable() {
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
 		for (auto [fid,_]: recipe->outputFluids) {
-			if (fid == id) {
-				return true;
-			}
+			if (fid == id) return true;
 		}
+	}
+	for (auto& [_,spec]: Spec::all) {
+		if (spec->licensed && spec->source && spec->sourceFluid == this) return true;
 	}
 	return false;
 }

@@ -3447,7 +3447,7 @@ void RecipePopup::drawRecipe(Recipe* recipe) {
 		pop++;
 	}
 
-	if (!recipe->licensed && !highlited.recipe[recipe]) {
+	if ((!recipe->licensed || !recipe->manufacturable()) && !highlited.recipe[recipe]) {
 		PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
 		pop++;
 	}

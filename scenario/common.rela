@@ -25,6 +25,7 @@ colors = {
 	copperOre = 0x8FccccFF,
 	coal = 0x333333FF,
 	stone = 0x999999FF,
+	gold = 0xFFD700ff,
 	uraniumOre = 0x32CD32FF,
 	tinOre = 0x238E68FF,
 	leadOre = 0x666677FF,
@@ -131,6 +132,10 @@ mining = {
 	aluminium = {
 		ore = "aluminium-ore",
 		title = "Aluminium",
+	},
+	gold = {
+		ore = "gold-ore",
+		title = "Gold",
 	},
 }
 

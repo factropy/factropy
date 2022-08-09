@@ -277,11 +277,11 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 		def.push(fmt("%u", (uint)tilesSave.size()));
 
 		for (auto& tile: tilesSave) {
-			def.push(fmt("%f %d %d %u %u",
+			def.push(fmt("%f %d %d %s %u",
 				tile.elevation,
 				tile.x,
 				tile.y,
-				tile.resource,
+				tile.resource ? Item::get(tile.resource)->name: "_",
 				tile.count
 			));
 		}
@@ -336,7 +336,11 @@ void World::load(const char* name) {
 		ensure(isspace(*ptr));
 		int y = strtol(++ptr, &ptr, 10);
 		ensure(isspace(*ptr));
-		uint resource = strtoul(++ptr, &ptr, 10);
+		char* start = ++ptr;
+		while (!isspace(*ptr)) ptr++;
+		char *end = ptr;
+		auto name = std::string(start, end-start);
+		uint resource = name == "_" ? 0: Item::byName(name)->id;
 		ensure(isspace(*ptr));
 		uint count = strtoul(++ptr, &ptr, 10);
 		ensure(!*ptr);

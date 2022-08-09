@@ -102,7 +102,6 @@ add_goal({
 		"lead-smelting",
 		"silicon-smelting",
 		"brick-smelting",
-		"incinerate-log",
 	],
 	hints = [
 		"Furnaces require coal for fuel.",
@@ -226,6 +225,7 @@ add_goal({
 	recipes = [
 		"slurry-stone-crushed",
 		"slurry-clarification",
+		"incinerate-log",
 	],
 	hints = [
 		"Enemy scout detected in-system! They know you are here."
@@ -244,8 +244,6 @@ add_goal({
 		"pipe-underwater",
 		"pipe-valve",
 		"flare-stack",
-		"truck1",
-		"truck-engineer1",
 		"slab",
 	],
 	recipes = [
@@ -295,7 +293,6 @@ add_goal({
 	chits = 2,
 	specs = [
 		"electrolyser1",
-		"starship",
 		"blimp1",
 		"flight-pad-depot",
 		"flight-pad-load",
@@ -307,13 +304,18 @@ add_goal({
 		"container-shipping",
 	],
 	recipes = [
-		"electrolysis",
 		"hydrofluoric-acid",
 		"mine-aluminium-ore",
 		"aluminium-crushing",
 		"aluminium-electrolysis",
 		"aluminium-frame",
 		"oil-cracking",
+		"mine-gold-ore",
+		"gold-crushing",
+		"gold-smelting",
+		"gold-wire",
+		"ammonia-electrolysis",
+		"processor",
 	],
 	interval = 1,
 	period = 3,
@@ -349,6 +351,7 @@ add_goal({
 		"hill-explosive",
 	],
 	recipes = [
+		"computer",
 		"mine-uranium-ore",
 		"uranium-ammo",
 		"repair-kit3",
@@ -373,7 +376,6 @@ add_goal({
 	dependencies = ["supply4"],
 	chits = 3,
 	specs = [
-		"computer",
 		"battery-pack",
 		"air-filter",
 		"turret-laser",

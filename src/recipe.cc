@@ -291,3 +291,24 @@ std::vector<Amount> Recipe::totalRawFluids(std::vector<Recipe*>* path) {
 
 	return {total.begin(), total.end()};
 }
+
+bool Recipe::manufacturable() {
+	for (auto& [iid,_]: inputItems) {
+		auto item = Item::get(iid);
+		if (!item->manufacturable()) return false;
+	}
+	for (auto& [fid,_]: inputFluids) {
+		auto fluid = Fluid::get(fid);
+		if (!fluid->manufacturable()) return false;
+	}
+	for (auto& [_,spec]: Spec::all) {
+		if (!spec->licensed) continue;
+		for (auto& tag: tags) {
+			if (spec->recipeTags.count(tag)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+

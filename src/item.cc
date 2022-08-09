@@ -88,10 +88,11 @@ bool Item::manufacturable() {
 		if (!recipe->licensed) continue;
 		if (recipe->mine == id) return true;
 		for (auto [iid,_]: recipe->outputItems) {
-			if (iid == id) {
-				return true;
-			}
+			if (iid == id) return true;
 		}
+	}
+	for (auto& [_,spec]: Spec::all) {
+		if (spec->licensed && spec->source && spec->sourceItem == this) return true;
 	}
 	return false;
 }

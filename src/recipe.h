@@ -81,4 +81,6 @@ struct Recipe {
 	Energy totalEnergy(std::vector<Recipe*>* path = nullptr);
 	std::vector<Stack> totalRawItems(std::vector<Recipe*>* path = nullptr);
 	std::vector<Amount> totalRawFluids(std::vector<Recipe*>* path = nullptr);
+
+	bool manufacturable();
 };

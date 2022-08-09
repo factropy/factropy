@@ -1,5 +1,15 @@
 
 add_recipe({
+	name = "hydrazine",
+	title = "Hydrazine Synthesis",
+	energy = MJ(1),
+	tags = tags.chemistry,
+	input = { "log" = 1, "water" = L(100) },
+	output = { "hydrazine" = L(100) },
+	fluid = "hydrazine",
+})
+
+add_recipe({
 	name = "sulfuric-acid",
 	title = "Sulfuric Acid Hydration",
 	energy = kJ(600),
@@ -18,3 +28,4 @@ add_recipe({
 	output = { "hydrofluoric-acid" = L(50) },
 	fluid = "hydrofluoric-acid",
 })
+

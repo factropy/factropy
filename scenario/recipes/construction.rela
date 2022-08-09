@@ -27,6 +27,15 @@ add_recipe({
 })
 
 add_recipe({
+	name = "gold-wire"
+	title = "Gold Wire Extrusion",
+	input = { "gold-ingot" = 1 },
+	output = { "gold-wire" = 2 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
 	name = "solder"
 	title = "Solder Extrusion",
 	input = { "tin-ingot" = 1, "lead-ingot" = 1 },
@@ -159,6 +168,34 @@ add_recipe({
 	energy = energy.crafting*3,
 	tags = tags.crafting_with_fluid,
 	fluid = "water",
+})
+
+add_recipe({
+	name = "processor",
+	title = "Processor Lithography",
+	energy = MJ(5),
+	tags = tags.chemistry,
+	input = {
+		"silicon-ingot" = 1,
+		"gold-wire" = 2,
+		"hydrofluoric-acid" = L(50),
+	},
+	output = { "processor" = 1 },
+	fluid = "hydrofluoric-acid",
+})
+
+add_recipe({
+	name = "computer",
+	title = "Computer Assembly",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = {
+		"mother-board" = 1,
+		"processor" = 1,
+		"heatsink" = 1,
+		"aluminium-frame" = 1,
+	},
+	output = { "computer" = 1 },
 })
 
 

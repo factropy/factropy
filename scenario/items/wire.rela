@@ -36,5 +36,6 @@ function wire(name, title, color)
 end
 
 wire("copper-wire", "Copper Wire", colors.copper)
+wire("gold-wire", "Gold Wire", colors.gold)
 wire("solder", "Solder", 0x033f63ff)
 

@@ -19,4 +19,6 @@ end
 
 circuitBoard("circuit-board", "Circuit Board", 0x228800ff)
 circuitBoard("mother-board", "Mother Board", 0xDC143Cff)
+circuitBoard("processor", "Processor", 0x3c14dcff)
+circuitBoard("computer", "Computer", 0xffffffff)
 

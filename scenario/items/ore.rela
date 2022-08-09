@@ -95,7 +95,7 @@ add_item({
 	}],
 	armV = 0.3,
 	tubeV = 0.1,
-	mining = 0.6,
+	mining = 0.7,
 })
 
 add_item({
@@ -157,6 +157,24 @@ add_item({
 	mining = 0.7,
 })
 
+add_item({
+	name = "gold-ore",
+	title = "Gold Ore",
+	ore = "Gold",
+	raw = true,
+	parts = [{
+		color = colors.gold,
+		scale = 0.6,
+		lods = [
+			["models/coal.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.7,
+})
+
 function crushedOre(name, title, color, gloss)
 	add_item({
 		name = name,
@@ -192,7 +210,7 @@ crushedOre("silica-sand", "Silica Sand", 0xFFF8DCff, gloss.metallicOre)
 crushedOre("uranium-crushed", "Crushed Uranium", colors.uraniumOre, gloss.metallicOre)
 crushedOre("tin-crushed", "Crushed Tin", colors.tinOre, gloss.metallicOre)
 crushedOre("lead-crushed", "Crushed Lead", colors.leadOre, gloss.metallicOre)
-crushedOre("goal", "Gold", 0xFFD700ff, gloss.metallicOre)
+crushedOre("gold-powder", "Gold Powder", colors.gold, gloss.metallicOre)
 crushedOre("sulfur", "Sulfur", 0xffff00ff, gloss.metallicOre)
 crushedOre("alumina-powder", "Alumina Powder", colors.aluminium, gloss.metallicOre)
 crushedOre("uranium-238", "Uranium 238", 0x12AD12ff, gloss.metallicOre)

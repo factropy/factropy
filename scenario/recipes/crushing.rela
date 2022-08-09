@@ -42,7 +42,16 @@ add_recipe({
 	title = "Aluminium Crushing",
 	energy = kJ(1500),
 	tags = tags.crushing_with_fluid,
-	input = { "aluminium-ore" = 5, "water" = L(5) },
+	input = { "aluminium-ore" = 5, "steam" = L(100) },
 	output = { "alumina-powder" = 5, "stone-crushed" = 2 },
+})
+
+add_recipe({
+	name = "gold-crushing",
+	title = "Gold Extraction",
+	energy = kJ(1500),
+	tags = tags.crushing_with_fluid,
+	input = { "gold-ore" = 5, "ammonia" = L(100), "coal" = 1 },
+	output = { "gold-powder" = 5, "stone-crushed" = 2 },
 })
 
