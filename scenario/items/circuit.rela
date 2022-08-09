@@ -1,0 +1,22 @@
+
+function circuitBoard(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			lods = [
+				["models/circuit-board-hd.stl", high, noshadow],
+				["models/circuit-board-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.45,
+		droneV = 0.25,
+		tubeV = 0.1,
+		mass = kg(0.25),
+	})
+end
+
+circuitBoard("circuit-board", "Circuit Board", 0x228800ff)
+circuitBoard("mother-board", "Mother Board", 0xDC143Cff)
+

@@ -1,0 +1,313 @@
+function()
+	parts = [
+		{
+			color = 0xB0C4DEff,
+			filter = filter.powdercoat,
+			rotate = [up, -90],
+			lods = [
+				["models/boiler-chassis-hd.stl", high, shadow],
+				["models/boiler-chassis-ld.stl", medium, shadow],
+				["models/boiler-chassis-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = 0x666666ff,
+			gloss = gloss.metallic,
+			rotate = [up, -90],
+			lods = [
+				["models/boiler-firebox-hd.stl", high, shadow],
+				["models/boiler-firebox-ld.stl", medium, shadow],
+				["models/boiler-firebox-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = 0xda8a67ff,
+			gloss = 2,
+			rotate = [up, -90],
+			lods = [
+				["models/boiler-stack-hd.stl", high, shadow],
+				["models/boiler-stack-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x000000ff,
+			rotate = [up, -90],
+			lods = [
+				["models/boiler-stack-cover-hd.stl", high, shadow],
+				["models/boiler-stack-cover-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0xf73718FF,
+			glow = true,
+			rotate = [up, -90],
+			translate = up*0.01,
+			lods = [
+				["models/boiler-stack-cover-hd.stl", high, shadow],
+				["models/boiler-stack-cover-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			translate = [0,-0.5,1],
+			scale = [2,1,1],
+			lods = [
+				["models/pipe-straight-hd.stl", high, shadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			rotate = [up,90],
+			translate = [0.5,-0.5,-1],
+			lods = [
+				["models/pipe-straight-hd.stl", high, shadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			rotate = [up,90],
+			translate = [-0.5,-0.5,-1],
+			lods = [
+				["models/pipe-straight-hd.stl", high, shadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			smoke = {
+				direction = up,
+				particlesMax = 1200,
+				particlesPerTick = 10,
+				particleRadius = 0.015,
+				emitRadius = 0.25,
+				spreadFactor = 0.01,
+				tickRadiusFactor = 0.005,
+				tickDirectionFactor = 0.05,
+				tickDecayFactor = 0.99,
+				tickLifeLower = 60,
+				tickLifeUpper = 180,
+			},
+			translate = [0,1,0.6],
+		},
+		{
+			flame = true,
+			translate = [0,1,0.6],
+			scale = [1,0.75,1],
+		}
+	]
+
+	for i in 5
+		i = i-2
+		rotA = matrix_rotate(east,90)
+		traA = matrix_translate(up*0.5)
+		rotB = matrix_rotate(south, i*30)
+		traB = matrix_translate(south * 1.31)
+		trx = rotA * traA * rotB * traB
+		parts[#parts] = {
+			color = 0xB0C4DEff,
+			transform = trx,
+			lods = [ ["models/boiler-rivet-hd.stl", high, noshadow] ],
+		}
+	end
+
+	for i in 5
+		i = i-2
+		rotA = matrix_rotate(east,-90)
+		traA = matrix_translate(up*0.5)
+		rotB = matrix_rotate(south, i*30)
+		traB = matrix_translate(south * -1.31)
+		trx = rotA * traA * rotB * traB
+		parts[#parts] = {
+			color = 0xB0C4DEff,
+			transform = trx,
+			lods = [ ["models/boiler-rivet-hd.stl", high, noshadow] ],
+		}
+	end
+
+	states = []
+	statesShow = []
+
+	normalState = [
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+		identity,
+	]
+
+	normalShow = [
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+	]
+
+	for i in 10
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_scale(0.1*i),
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+		]
+		statesShow[#statesShow] = [
+			true,
+			true,
+			true,
+			true,
+			i > 0,
+			true,
+			true,
+			true,
+			true,
+			i > 0,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		]
+	end
+
+	for i in 80
+		states[#states] = normalState
+		statesShow[#statesShow] = normalShow
+	end
+
+	for i in 10
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_scale(0.1*(9-i)),
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+		]
+		statesShow[#statesShow] = [
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		]
+	end
+
+	add_spec({
+		name = "boiler",
+		title = "Boiler",
+		enemyTarget = true,
+		collision = [0, 0, 0, 2, 2, 3],
+		pipe = true,
+		pipeCapacity = L(1000),
+		health = 150,
+		align = true,
+		rotateGhost = true,
+		consumeFuel = true,
+		burnerState = true,
+		consumeFuelType = "chemical",
+		energyConsume = MW(2),
+		energyDrain = kW(60),
+		crafter = true,
+		crafterRate = 1.0,
+		crafterProgress = true,
+		recipeTags = ["boiling"],
+		crafterRecipe = "boiling",
+		materials = {
+			"brick" = 5,
+			"copper-sheet" = 3,
+		},
+		pipeHints = true,
+		pipeConnections = [
+			[1.0, -0.5, 1.0],
+			[-1.0, -0.5, 1.0],
+		],
+		pipeOutputConnections = [
+			[0.5, -0.5, -1.5],
+			[-0.5, -0.5, -1.5],
+		],
+		parts = parts,
+		states = states,
+		statesShow = statesShow,
+	})
+
+end()
+

@@ -1,0 +1,66 @@
+function()
+	states = []
+	for i in 180
+		deg = 0.25*i
+		rot = matrix_rotate(south, deg)
+		states[#states] = [identity,rot,rot]
+	end
+
+	add_spec({
+		name = "flywheel",
+		title = "Flywheel",
+		enemyTarget = true,
+		rotateGhost = true,
+		health = 150,
+		collision = [0, 0, 0, 4, 6, 12],
+		iconD = 6,
+		iconV = 1,
+		bufferElectricity = true,
+		bufferElectricityState = true,
+		bufferDischargeRate = MW(1),
+		bufferChargeRate = MW(1),
+		bufferCapacity = MJ(100),
+		materials = {
+			"steel-frame" = 50,
+			"electric-motor" = 50,
+			"gear-wheel" = 50,
+			"copper-wire" = 50,
+		},
+		states = states,
+		parts = [
+			{
+				color = colors.industrialGreen,
+				gloss = 2,
+				rotate = [up,-90],
+				translate = [0,-3.0+0.5,0],
+				lods = [
+					["models/flywheel-base-hd.stl", high, shadow],
+					["models/flywheel-base-ld.stl", medium, shadow],
+					["models/flywheel-base-ld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xB0C4DEff,
+				gloss = 2,
+				rotate = [up,-90],
+				translate = [0,-3.0+1.0,0],
+				lods = [
+					["models/flywheel-rim-hd.stl", high, shadow],
+					["models/flywheel-rim-ld.stl", medium, shadow],
+					["models/flywheel-rim-ld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xda8a67ff,
+				gloss = 2,
+				rotate = [up,-90],
+				translate = [0,-3.0+1.0,0],
+				lods = [
+					["models/flywheel-axel-hd.stl", high, shadow],
+					["models/flywheel-axel-ld.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end()
+

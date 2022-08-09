@@ -1,0 +1,1284 @@
+
+function reverse(vec)
+	i = 0
+	j = #vec-1
+	while i < j
+		a = vec[i]
+		vec[i] = vec[j]
+		vec[j] = a
+		i = i+1
+		j = j-1
+	end
+end
+
+function conveyorTier(tier, maxTier, steps, color, chevronColor)
+
+	names = {
+		conveyor = "conveyor-$(tier)"
+		conveyorLeft = "conveyor-left-$(tier)"
+		conveyorRight = "conveyor-right-$(tier)"
+		unveyorEntry = "unveyor-entry-$(tier)"
+		unveyorExit = "unveyor-exit-$(tier)"
+		loader = "loader-$(tier)"
+		unloader = "unloader-$(tier)"
+		balancer = "balancer-$(tier)"
+		tubeSmall = "tube-small-$(tier)"
+		tubeSmallAlt = "tube-small-alt-$(tier)"
+		tubeMedium = "tube-medium-$(tier)"
+		tubeMediumAlt = "tube-medium-alt-$(tier)"
+		tubeLarge = "tube-large-$(tier)"
+		tubeLargeAlt = "tube-large-alt-$(tier)"
+		conveyorUpgrade = nil
+		conveyorLeftUpgrade = nil
+		conveyorRightUpgrade = nil
+		unveyorEntryUpgrade = nil
+		unveyorExitUpgrade = nil
+		loaderUpgrade = nil
+		unloaderUpgrade = nil
+		balancerUpgrade = nil
+		tubeSmallUpgrade = nil
+		tubeSmallAltUpgrade = nil
+		tubeMediumUpgrade = nil
+		tubeMediumAltUpgrade = nil
+		tubeLargeUpgrade = nil
+		tubeLargeAltUpgrade = nil
+	}
+
+	if tier < maxTier
+		next = tier+1
+		names.conveyorUpgrade = "conveyor-$(next)"
+		names.conveyorLeftUpgrade = "conveyor-left-$(next)"
+		names.conveyorRightUpgrade = "conveyor-right-$(next)"
+		names.unveyorEntryUpgrade = "unveyor-entry-$(next)"
+		names.unveyorExitUpgrade = "unveyor-exit-$(next)"
+		names.loaderUpgrade = "loader-$(next)"
+		names.unloaderUpgrade = "unloader-$(next)"
+		names.balancerUpgrade = "balancer-$(next)"
+		names.tubeSmallUpgrade = "tube-small-$(next)"
+		names.tubeSmallAltUpgrade = "tube-small-alt-$(next)"
+		names.tubeMediumUpgrade = "tube-medium-$(next)"
+		names.tubeMediumAltUpgrade = "tube-medium-alt-$(next)"
+		names.tubeLargeUpgrade = "tube-large-$(next)"
+		names.tubeLargeAltUpgrade = "tube-large-alt-$(next)"
+	end
+
+	upgradeCascade = [
+		names.conveyor,
+		names.conveyorLeft,
+		names.conveyorRight,
+		names.balancer,
+		names.loader,
+		names.unloader,
+		names.tubeSmall,
+		names.tubeSmallAlt,
+		names.tubeMedium,
+		names.tubeMediumAlt,
+		names.tubeLarge,
+		names.tubeLargeAlt,
+	]
+
+	surfaceColor = 0x444455ff
+	ridgeColor = 0x888888ff
+	pillarColor = color
+
+	fixedPillar = {
+		color = pillarColor,
+		translate = [0,-1.25,0],
+		scale = [0.4,1,0.4],
+		lods = [
+			["models/belt-pillar-ld.stl", high, shadow],
+			["models/belt-pillar-ld.stl", medium, noshadow],
+		],
+	}
+
+	repeatingPillar = {
+		gridRepeat = 5,
+		color = pillarColor,
+		translate = [0,-1.25,0],
+		scale = [0.4,1,0.4],
+		lods = [
+			["models/belt-pillar-ld.stl", high, shadow],
+			["models/belt-pillar-ld.stl", medium, noshadow],
+		],
+	}
+
+	materials = {
+		"steel-sheet" = 1,
+	}
+
+	if tier >= 2
+		materials["plastic-bar"] = 1
+	end
+
+	chevronSR = matrix_rotate(east, 90.0) * matrix_rotate(up, -90.0) * matrix_scale(1,0.1,1)
+
+	function() // conveyor
+		conveyorTransformsLeft = []
+		function()
+			base = south*0.5 + east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = south*0.5 + west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = south * 0.5
+			step = north * (1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		add_spec({
+			name = names.conveyor,
+			upgrade = names.conveyorUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.conveyorLeft,
+			downward = names.unveyorEntry,
+			upward = names.balancer,
+			build = true,
+			title = if tier > 1 "Belt (Fast)" else "Belt" end,
+			toolbar = "a-b-$(tier)",
+			collision = [0, 0, 0, 1, 2, 1],
+			selection = [0, -0.5, 0, 1, 1, 1],
+			iconD = 1.0,
+			iconV = 0.5,
+			rotateGhost = true,
+			rotateExtant = true,
+			conveyor = true,
+			conveyorInput = north*0.5,
+			conveyorOutput = south*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorEnergyDrain = W(120*tier),
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			health = 150,
+			snapAlign = true,
+			materials = materials,
+			parts = [
+				repeatingPillar,
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, shadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	function() // conveyorLeft
+		conveyorTransformsLeft = []
+		function()
+			entry = east*0.71
+			offset = south*0.5 + west*0.5
+			osteps = steps+(steps/2)
+			step = 90.0/osteps
+			for i in osteps
+				r = matrix_invert(matrix_rotate(up, step*(i+1) - 90.0))
+				p = point_transform(entry, r) + offset
+				d = point_transform(south, r)
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_rotation(d) * matrix_translation(p)
+			end
+			reverse(conveyorTransformsLeft)
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			entry = east*0.29
+			offset = south*0.5 + west*0.5
+			isteps = steps/2
+			step = 90.0/isteps
+			for i in isteps
+				r = matrix_invert(matrix_rotate(up, step*(i+1) - 90.0))
+				p = point_transform(entry, r) + offset
+				d = point_transform(south, r)
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_rotation(d) * matrix_translation(p)
+			end
+			reverse(conveyorTransformsRight)
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = north*0.5
+			a = matrix_translation(south*0.5 + west*0.5)
+			step = 90.0/steps
+			for i in steps
+				j = steps-1-i
+				r = matrix_invert(matrix_rotate(up, step*(j+1)))
+				t = matrix_translation(point_transform(base, r * a))
+				d = matrix_invert(matrix_rotate(up, -step * i))
+				ridgeTransforms[#ridgeTransforms] = d * t
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		add_spec({
+			name = names.conveyorLeft,
+			upgrade = names.conveyorLeftUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.conveyorRight,
+			followConveyor = names.conveyor,
+			statsGroup = names.conveyor,
+			upward = names.balancer,
+			downward = names.unveyorEntry,
+			build = false,
+			title = if tier > 1 "Belt (Left, Fast)" else "Belt (Left)" end,
+			toolbar = "a-b-$(tier)",
+			collision = [0, 0, 0, 1, 2, 1],
+			selection = [0, -0.5, 0, 1, 1, 1],
+			iconD = 1.0,
+			iconV = 0.5,
+			rotateGhost = true,
+			rotateExtant = true,
+			conveyor = true,
+			conveyorInput = west*0.5,
+			conveyorOutput = south*0.5,
+			conveyorSlotsLeft = 3,
+			conveyorSlotsRight = 1,
+			conveyorEnergyDrain = W(120*tier),
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			health = 150,
+			materials = materials,
+			parts = [
+				repeatingPillar,
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-left-base-hd.stl", high, shadow],
+						["models/belt-left-base-ld.stl", medium, shadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-left-surface-hd.stl", high, noshadow],
+						["models/belt-left-surface-ld.stl", medium, noshadow],
+						["models/belt-left-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	function() // conveyorRight
+		conveyorTransformsLeft = []
+		function()
+			entry = west*0.29
+			offset = south*0.5 + east*0.5
+			isteps = steps/2
+			step = -90.0/isteps
+			for i in isteps
+				r = matrix_invert(matrix_rotate(up, step*(i+1) + 90.0))
+				p = point_transform(entry, r) + offset
+				d = point_transform(south, r)
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_rotation(d) * matrix_translation(p)
+			end
+			reverse(conveyorTransformsLeft)
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			entry = west*0.71
+			offset = south*0.5 + east*0.5
+			osteps = steps+(steps/2)
+			step = -90.0/osteps
+			for i in osteps
+				r = matrix_invert(matrix_rotate(up, step*(i+1) + 90.0))
+				p = point_transform(entry, r) + offset
+				d = point_transform(south, r)
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_rotation(d) * matrix_translation(p)
+			end
+			reverse(conveyorTransformsRight)
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = north*0.5
+			a = matrix_translation(south*0.5 + east*0.5)
+			step = -90.0/steps
+			for i in steps
+				j = steps-1-i
+				r = matrix_invert(matrix_rotate(up, step*(j+1)))
+				t = matrix_translation(point_transform(base, r * a))
+				d = matrix_invert(matrix_rotate(up, -step * i))
+				ridgeTransforms[#ridgeTransforms] = d * t
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		add_spec({
+			name = names.conveyorRight,
+			upgrade = names.conveyorRightUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.conveyor,
+			followConveyor = names.conveyor,
+			statsGroup = names.conveyor,
+			upward = names.balancer,
+			downward = names.unveyorEntry,
+			build = false,
+			title = if tier > 1 "Belt (Right, Fast)" else "Belt (Right)" end,
+			toolbar = "a-b-$(tier)",
+			collision = [0, 0, 0, 1, 2, 1],
+			selection = [0, -0.5, 0, 1, 1, 1],
+			iconD = 1.0,
+			iconV = 0.5,
+			rotateGhost = true,
+			rotateExtant = true,
+			conveyor = true,
+			conveyorInput = east*0.5,
+			conveyorOutput = south*0.5,
+			conveyorSlotsLeft = 1,
+			conveyorSlotsRight = 3,
+			conveyorEnergyDrain = W(120*tier),
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			health = 150,
+			materials = materials,
+			parts = [
+				repeatingPillar,
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-right-base-hd.stl", high, shadow],
+						["models/belt-right-base-ld.stl", medium, shadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-right-surface-hd.stl", high, noshadow],
+						["models/belt-right-surface-ld.stl", medium, noshadow],
+						["models/belt-right-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	materials = {
+		"steel-sheet" = 1,
+		"steel-frame" = 1,
+	}
+
+	if tier >= 2
+		materials["gear-wheel"] = 1
+		materials["plastic-bar"] = 1
+	end
+
+	iconD = 1.5
+	iconV = 0.2
+
+	function() // unveyor entry
+		conveyorTransformsLeft = []
+		function()
+			base = east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = origin
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		chevronT = matrix_translate(0,0.5,-0.5)
+
+		add_spec({
+			name = names.unveyorEntry,
+			upgrade = names.unveyorEntryUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.unveyorExit,
+			upward = names.conveyor,
+			follow = names.unveyorExit,
+			build = true,
+			title = if tier > 1 "Belt (Underground, Fast)" else "Belt (Underground)" end,
+			toolbar = "a-c-$(tier)",
+			collision = [0, 0, 0, 1, 2, 2],
+			selection = [0, -0.25, 0, 1, 1.5, 2],
+			iconD = iconD,
+			iconV = iconV,
+			rotateGhost = true,
+			conveyor = true,
+			conveyorInput = north,
+			conveyorOutput = origin,
+			conveyorCentroid = south*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			unveyor = true,
+			unveyorEntry = true,
+			unveyorRange = 15*tier,
+			unveyorPartner = names.unveyorExit,
+			health = 150,
+			materials = materials,
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/unveyor-base-hd.stl", high, shadow],
+						["models/unveyor-base-ld.stl", medium, shadow],
+						["models/unveyor-base-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = color,
+					translate = [0,-1.25,-0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, noshadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,-0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+				{
+					color = chevronColor,
+					transform = chevronSR * chevronT,
+					lods = [
+						["models/pipe-chevron-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	function() // unveyor exit
+		conveyorTransformsLeft = []
+		function()
+			base = south + east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = south + west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = south
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		chevronT = matrix_translate(0,0.5,0.35)
+
+		add_spec({
+			name = names.unveyorExit,
+			upgrade = names.unveyorExitUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.unveyorEntry,
+			upward = names.conveyor,
+			follow = names.conveyor,
+			statsGroup = names.unveyorEntry,
+			build = false,
+			title = if tier > 1 "Belt (Underground, Fast)" else "Belt (Underground)" end,
+			toolbar = "a-c-$(tier)",
+			collision = [0, 0, 0, 1, 2, 2],
+			selection = [0, -0.25, 0, 1, 1.5, 2],
+			iconD = iconD,
+			iconV = iconV,
+			rotateGhost = true,
+			conveyor = true,
+			conveyorInput = origin,
+			conveyorOutput = south,
+			conveyorCentroid = north*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+//			conveyorEnergyDrain = kW(2*tier),
+			unveyor = true,
+			unveyorEntry = false,
+			unveyorRange = 15*tier,
+			unveyorPartner = names.unveyorEntry,
+			health = 150,
+			materials = materials,
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					rotate = [up, 180],
+					lods = [
+						["models/unveyor-base-hd.stl", high, shadow],
+						["models/unveyor-base-ld.stl", medium, shadow],
+						["models/unveyor-base-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = color,
+					translate = [0,-1.25,0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, noshadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+				{
+					color = chevronColor,
+					transform = chevronSR * chevronT,
+					lods = [
+						["models/pipe-chevron-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	materials = {
+		"steel-sheet" = 1*tier,
+		"steel-frame" = 1*tier,
+		"circuit-board" = 1*tier,
+	}
+
+	if tier >= 2
+		materials["gear-wheel"] = 1*tier
+		materials["plastic-bar"] = 1*tier
+	end
+
+	function() // loader
+		conveyorTransformsLeft = []
+		function()
+			base = east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = origin
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		chevronT = matrix_translate(0,0.5,-0.5)
+
+		add_spec({
+			name = names.loader,
+			upgrade = names.loaderUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.unloader,
+			cycleReverseDirection = true,
+			downward = names.balancer,
+			build = true,
+			title = if tier > 1 "Loader (Fast)" else "Loader" end,
+			toolbar = "a-d-$(tier)",
+			collision = [0, 0, 0, 1, 2, 2],
+			selection = [0, -0.25, 0, 1, 1.5, 2],
+			iconD = iconD,
+			iconV = iconV,
+			rotateGhost = true,
+			conveyor = true,
+			conveyorInput = north,
+			conveyorOutput = origin,
+			conveyorCentroid = south*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			loader = true,
+			loaderUnload = false,
+			loaderPoint = south*1.5,
+			consumeElectricity = true,
+			energyConsume = kW(60*tier),
+			networker = true,
+			networkInterfaces = 1,
+			networkWifi = [0,0.5,0],
+			status = true,
+			beacon = [0,0.5,0.5],
+			enable = true,
+			health = 150,
+			materials = materials,
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1,0],
+					scale = 0.001,
+					lods = [
+						["models/loader-base-hd.stl", high, shadow],
+						["models/loader-base-ld.stl", medium, shadow],
+						["models/loader-base-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = color,
+					translate = [0,-1.25,-0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, noshadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,-0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+				{
+					color = chevronColor,
+					transform = chevronSR * chevronT,
+					lods = [
+						["models/pipe-chevron-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	function() // unloader
+		conveyorTransformsLeft = []
+		function()
+			base = south + east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = south + west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = south
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		chevronT = matrix_translate(0,0.5,0.35)
+
+		add_spec({
+			name = names.unloader,
+			upgrade = names.unloaderUpgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = names.loader,
+			cycleReverseDirection = true,
+			downward = names.balancer,
+			statsGroup = names.loader,
+			build = true,
+			title = if tier > 1 "Unloader (Fast)" else "Unloader" end,
+			toolbar = "a-d-$(tier)",
+			collision = [0, 0, 0, 1, 2, 2],
+			selection = [0, -0.25, 0, 1, 1.5, 2],
+			iconD = iconD,
+			iconV = iconV,
+			rotateGhost = true,
+			conveyor = true,
+			conveyorInput = origin,
+			conveyorOutput = south,
+			conveyorCentroid = north*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			loader = true,
+			loaderUnload = true,
+			loaderPoint = north*1.5,
+			consumeElectricity = true,
+			energyConsume = kW(60*tier),
+			networker = true,
+			networkInterfaces = 1,
+			networkWifi = [0,0.5,0],
+			status = true,
+			beacon = [0,0.5,-0.5],
+			enable = true,
+			health = 150,
+			materials = materials,
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1,0],
+					scale = 0.001,
+					rotate = [up, 180],
+					lods = [
+						["models/loader-base-hd.stl", high, shadow],
+						["models/loader-base-ld.stl", medium, shadow],
+						["models/loader-base-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = color,
+					translate = [0,-1.25,0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, noshadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0.5],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+				{
+					color = chevronColor,
+					transform = chevronSR * chevronT,
+					lods = [
+						["models/pipe-chevron-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	materials = {
+		"steel-sheet" = 1*tier,
+		"circuit-board" = 1*tier,
+	}
+
+	if tier >= 2
+		materials["gear-wheel"] = 1*tier
+		materials["plastic-bar"] = 1*tier
+	end
+
+	function() // balancer
+		conveyorTransformsLeft = []
+		function()
+			base = south*0.5 + east*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(base + step*i)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = south*0.5 + west*0.21
+			step = north*(1.0/steps)
+			for i in steps
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(base + step*i)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = south*0.5
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		chevronT = matrix_translate(0,0.25,-0.075)
+
+		add_spec({
+			name = names.balancer,
+			upgrade = names.balancerUpgrade,
+			upgradeCascade = upgradeCascade,
+			upward = names.loader,
+			downward = names.conveyor,
+			build = true,
+			title = if tier > 1 "Balancer (Fast)" else "Balancer" end,
+			toolbar = "a-e-$(tier)",
+			collision = [0, 0, 0, 1, 2, 1],
+			selection = [0, -0.35, 0, 1, 1.3, 1],
+			iconD = 1.0,
+			iconV = 0.3,
+			rotateGhost = true,
+			rotateExtant = true,
+			balancer = true,
+			conveyor = true,
+			conveyorInput = north*0.5,
+			conveyorOutput = south*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			health = 150,
+			materials = materials,
+			parts = [
+				fixedPillar,
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/balancer-base-hd.stl", high, shadow],
+						["models/balancer-base-ld.stl", medium, shadow],
+						["models/balancer-base-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,-1.25,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,-1.25,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+				{
+					color = chevronColor,
+					transform = chevronSR * chevronT,
+					lods = [
+						["models/pipe-chevron-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+	end()
+
+	tubeGlass = {
+		color = 0xAAAAAAFF,
+		gloss = gloss.shiny,
+		lods = [
+			["models/tube-conduit-glass-hd.stl", high, noshadow],
+			["models/tube-conduit-glass-ld.stl", medium, noshadow],
+		],
+	}
+
+	tubeRing = {
+		color = 0x444444FF,
+		gloss = gloss.shiny,
+		lods = [
+			["models/tube-conduit-ring-hd.stl", high, noshadow],
+			["models/tube-conduit-ring-ld.stl", medium, noshadow],
+		],
+	}
+
+	tubeChevron = {
+		color = color,
+		scale = 0.6,
+		translate = up * 0.41,
+		lods = [
+			["models/chevron-hd.stl", high, noshadow],
+			["models/chevron-ld.stl", high, noshadow],
+		],
+	}
+
+	materials = {
+		"steel-frame" = 2*tier,
+		"copper-sheet" = 2*tier,
+		"brick" = 5*tier,
+		"electric-motor" = 1*tier,
+	}
+
+	if tier >= 2
+		materials["gear-wheel"] = 2*tier
+		materials["plastic-bar"] = 2*tier
+	end
+
+	function tube(height, fields)
+		belt = (height/2.0 + 0.25)*-1
+
+		conveyorTransformsLeft = []
+		function()
+			base = south*0.5 + east*0.21
+			step = north*(1.0/steps)
+			drop = down * ((height-2.0)/2.0)
+			for i in steps
+				p = base + step*i + drop
+				conveyorTransformsLeft[#conveyorTransformsLeft] = matrix_translate(p)
+			end
+		end()
+
+		conveyorTransformsRight = []
+		function()
+			base = south*0.5 + west*0.21
+			step = north*(1.0/steps)
+			drop = down * ((height-2.0)/2.0)
+			for i in steps
+				p = base + step*i + drop
+				conveyorTransformsRight[#conveyorTransformsRight] = matrix_translate(p)
+			end
+		end()
+
+		ridgeTransforms = []
+		function()
+			base = south*0.5
+			step = north*(1.0/steps)
+			for i in steps
+				ridgeTransforms[#ridgeTransforms] = matrix_translate(base + step*i)
+			end
+			reverse(ridgeTransforms)
+		end()
+
+		add_spec({
+			name = fields.name,
+			upgrade = fields.upgrade,
+			upgradeCascade = upgradeCascade,
+			cycle = fields.nameAlt,
+			upward = fields.upward,
+			downward = fields.downward,
+			build = fields.build,
+			statsGroup = names.tubeSmall,
+			title = if tier > 1 "Tube (Fast)" else "Tube" end,
+			toolbar = "a-f-$(tier)",
+			collision = [0, 0, 0, 1, height, 1],
+			rotateGhost = true,
+			rotateExtant = true,
+			tube = true,
+			tubeOrigin = height/2.0,
+			tubeSpeed = lib.ceil(1000.0/(0.5*steps)), // mm/s
+			tubeSpan = 30*tier*1000, // mm
+			conveyor = true,
+			conveyorInput = down * ((height-2.0)/2.0) + north*0.5,
+			conveyorOutput = down * ((height-2.0)/2.0) + south*0.5,
+			conveyorSlotsLeft = 2,
+			conveyorSlotsRight = 2,
+			conveyorTransformsLeft = conveyorTransformsLeft,
+			conveyorTransformsRight = conveyorTransformsRight,
+			consumeElectricity = true,
+			energyConsume = kW(30*tier),
+			health = 150,
+			materials = materials,
+			tubeGlass = tubeGlass,
+			tubeRing = tubeRing,
+			tubeChevron = tubeChevron,
+			iconD = height*0.7,
+			iconV = -height*0.1,
+			icon = [0,height/2+1.25,0],
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-height/2.0,0],
+					lods = [
+						["models/tube-frame-$(fields.size)-hd.stl", high, shadow],
+						["models/tube-frame-$(fields.size)-ld.stl", medium, shadow],
+						["models/tube-frame-$(fields.size)-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = 0x444444ff,
+					gloss = gloss.shiny,
+					translate = [0,height/2.0,0],
+					lods = [
+						["models/tube-cowling-hd.stl", high, shadow],
+						["models/tube-cowling-ld.stl", medium, shadow],
+					],
+				},
+				{
+					spinner = [up,tier*2],
+					color = colors.steel,
+					gloss = gloss.shiny,
+					translate = [0,height/2.0,0],
+					lods = [
+						["models/tube-fan-hd.stl", high, noshadow],
+						["models/tube-fan-ld.stl", medium, noshadow],
+					],
+				},
+				{
+					color = color,
+					translate = [0,belt,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-base-hd.stl", high, shadow],
+						["models/belt-base-ld.stl", medium, shadow],
+					],
+				},
+				{
+					color = surfaceColor,
+					translate = [0,belt,0],
+					scale = 0.001,
+					lods = [
+						["models/belt-surface-hd.stl", high, noshadow],
+						["models/belt-surface-ld.stl", medium, noshadow],
+						["models/belt-surface-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = ridgeColor,
+					translate = [0,belt,0],
+					cycler = ridgeTransforms,
+					lods = [
+						["models/belt-ridge-hd.stl", high, noshadow],
+					],
+				},
+			],
+		})
+
+		add_spec({
+			name = fields.nameAlt,
+			upgrade = fields.upgradeAlt,
+			upgradeCascade = upgradeCascade,
+			cycle = fields.name,
+			upward = fields.upwardAlt,
+			downward = fields.downwardAlt,
+			build = false,
+			statsGroup = names.tubeSmall,
+			title = if tier > 1 "Tube (Fast)" else "Tube" end,
+			toolbar = "a-f-$(tier)",
+			collision = [0, 0, 0, 1, height, 1],
+			rotateGhost = true,
+			rotateExtant = true,
+			tube = true,
+			tubeOrigin = height/2.0,
+			tubeSpeed = lib.ceil(1000.0/(0.5*steps)), // mm/s
+			tubeSpan = 30*tier*1000, // mm
+			consumeElectricity = true,
+			energyConsume = kW(30*tier),
+			health = 150,
+			icon = [0,height/2+1.25,0],
+			place = [placement.land, placement.hill],
+			placeOnHill = true,
+			placeOnHillPlatform = 1,
+			materials = materials,
+			tubeGlass = tubeGlass,
+			tubeRing = tubeRing,
+			tubeChevron = tubeChevron,
+			parts = [
+				{
+					color = color,
+					filter = filter.powdercoat,
+					translate = [0,-height/2.0,0],
+					lods = [
+						["models/tube-frame-$(fields.size)-alt-hd.stl", high, shadow],
+						["models/tube-frame-$(fields.size)-alt-ld.stl", medium, shadow],
+						["models/tube-frame-$(fields.size)-alt-vld.stl", verylow, noshadow],
+					],
+				},
+				{
+					color = 0x444444ff,
+					gloss = gloss.shiny,
+					translate = [0,height/2.0,0],
+					lods = [
+						["models/tube-cowling-hd.stl", high, shadow],
+						["models/tube-cowling-ld.stl", medium, shadow],
+					],
+				},
+				{
+					spinner = [up,tier*2],
+					color = colors.steel,
+					gloss = gloss.shiny,
+					translate = [0,height/2.0,0],
+					lods = [
+						["models/tube-fan-hd.stl", high, noshadow],
+						["models/tube-fan-ld.stl", medium, noshadow],
+					],
+				},
+			],
+		})
+	end
+
+	tube(3.0, {
+		build = true,
+		size = "small",
+		name = names.tubeSmall,
+		upward = names.tubeMedium,
+		nameAlt = names.tubeSmallAlt,
+		upwardAlt = names.tubeMediumAlt,
+		upgrade = names.tubeSmallUpgrade,
+		upgradeAlt = names.tubeSmallAltUpgrade,
+	})
+
+	tube(5.0, {
+		build = false,
+		size = "medium",
+		name = names.tubeMedium,
+		upward = names.tubeLarge,
+		downward = names.tubeSmall,
+		nameAlt = names.tubeMediumAlt,
+		upwardAlt = names.tubeLargeAlt,
+		downwardAlt = names.tubeSmallAlt,
+		upgrade = names.tubeMediumUpgrade,
+		upgradeAlt = names.tubeMediumAltUpgrade,
+	})
+
+	tube(7.0, {
+		build = false,
+		size = "large",
+		name = names.tubeLarge,
+		downward = names.tubeMedium,
+		nameAlt = names.tubeLargeAlt,
+		downwardAlt = names.tubeMediumAlt,
+		upgrade = names.tubeLargeUpgrade,
+		upgradeAlt = names.tubeLargeAltUpgrade,
+	})
+
+end
+
+conveyorTier(1, 2, 24, 0xFFDD00ff, 0xDDBB00ff)
+conveyorTier(2, 2, 12, 0x2E8B57ff, 0x0e6b37ff)
+

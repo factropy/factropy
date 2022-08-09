@@ -1,0 +1,190 @@
+function()
+	states = []
+	statesShow = []
+
+	for i in 10
+		fi = 0.0+i
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_scale(0.1*fi, 0.1*fi, 0.1*fi),
+			identity,
+		]
+		statesShow[#statesShow] = [
+			true,
+			true,
+			true,
+			true,
+			true,
+			i > 0,
+			i > 0,
+		]
+	end
+
+	for i in 80
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+		]
+		statesShow[#statesShow] = [
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		]
+	end
+
+	for i in 10
+		fi = 9.0-i
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_scale(0.1*fi, 0.1*fi, 0.1*fi),
+			identity,
+		]
+		statesShow[#statesShow] = [
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		]
+	end
+
+	add_spec({
+		name = "oil-refinery",
+		title = "Oil Refinery",
+		store = true,
+		capacity = kg(100),
+		priority = 10,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterProgress = true,
+		enable = true,
+		status = true,
+		beacon = down*1.1 + south*1.6,
+		recipeTags = ["refining"],
+		consumeElectricity = true,
+		energyConsume = kW(600),
+		energyDrain = kW(18),
+		collision = [0, 0, 0, 6, 8, 6],
+		iconD = 5,
+		iconV = 0.75,
+		health = 150,
+		pipeHints = true,
+		pipeInputConnections = [
+			point_rotate([1.5, -3.5, 3.0], up, -0.0),
+			point_rotate([1.5, -3.5, 3.0], up, -90.0),
+			point_rotate([1.5, -3.5, 3.0], up, -180.0),
+			point_rotate([1.5, -3.5, 3.0], up, -270.0),
+		],
+		pipeOutputConnections = [
+			point_rotate([1.5, -3.5, -3.0], up, -0.0),
+			point_rotate([1.5, -3.5, -3.0], up, -90.0),
+			point_rotate([1.5, -3.5, -3.0], up, -180.0),
+			point_rotate([1.5, -3.5, -3.0], up, -270.0),
+		],
+		materials = {
+			"copper-sheet" = 5,
+			"brick" = 5,
+			"steel-frame" = 5,
+			"circuit-board" = 5,
+		},
+		states = states,
+		statesShow = statesShow,
+		parts = [
+			{
+				color = 0x999999ff,
+				gloss = 32,
+				translate = up*-4,
+				lods = [
+					["models/refinery-base-hd.stl", high, shadow],
+					["models/refinery-base-ld.stl", medium, shadow],
+					["models/refinery-base-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xB0C4DEff,
+				gloss = 16,
+				translate = up*-4,
+				lods = [
+					["models/refinery-stack-hd.stl", high, shadow],
+					["models/refinery-stack-ld.stl", medium, shadow],
+					["models/refinery-stack-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xffffffFF,
+				gloss = 8,
+				translate = up*-4,
+				lods = [
+					["models/refinery-tank-hd.stl", high, shadow],
+					["models/refinery-tank-ld.stl", medium, shadow],
+					["models/refinery-tank-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				spinner = [up,1],
+				color = 0x666666ff,
+				gloss = 16,
+				rotate = [south,90.0],
+				translate = [2.5,-2.15,1.5],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x666666ff,
+				gloss = 16,
+				rotate = [south,-90.0],
+				translate = [-2.5,-2.15,1.5],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x111111ff,
+				smoke = {
+					direction = up,
+					particlesMax = 1200,
+					particlesPerTick = 10,
+					particleRadius = 0.01,
+					emitRadius = 0.25,
+					spreadFactor = 0.01,
+					tickRadiusFactor = 0.005,
+					tickDirectionFactor = 0.05,
+					tickDecayFactor = 0.99,
+					tickLifeLower = 60,
+					tickLifeUpper = 180,
+				},
+				translate = [1.6,4,-1.6],
+			},
+			{
+				flame = true,
+				scale = [1.1,1.5,1.1],
+				translate = [1.6,4.25,-1.6],
+			},
+		]
+	})
+end()
+

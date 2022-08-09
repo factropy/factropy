@@ -1,0 +1,23 @@
+
+function sheet(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = color,
+				gloss = gloss.metallic,
+				lods = [
+					["models/sheet-hd.stl", high, shadow],
+					["models/sheet-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		mass = kg(0.5),
+		armV = 0.125,
+	})
+end
+
+sheet("copper-sheet", "Copper Sheet", colors.copper)
+sheet("steel-sheet", "Steel Sheet", colors.steel)
+

@@ -1,0 +1,160 @@
+function furnace(name, title, toolbar, energy, materials)
+
+	states = [
+		[identity, identity, identity, identity, identity, identity, identity],
+	]
+
+	states_show = [
+		[true, true, false, true, false, false, false],
+	]
+
+	fire = matrix_translate(0,0,-0.5)
+
+	// turn on, fade in smoke
+	for i in 10
+		states[#states] = [
+			identity,
+			identity,
+			fire,
+			identity,
+			identity,
+			matrix_scale(0.1*(i+1)),
+			identity,
+		]
+		states_show[#states_show] = [
+			true, false, true, false, true, i > 0, i > 0
+		]
+	end
+
+	// normal running, full smoke
+	for i in 80
+		states[#states] = [
+			identity,
+			identity,
+			fire,
+			identity,
+			identity,
+			identity,
+			identity,
+		]
+		states_show[#states_show] = [
+			true, false, true, false, true, true, true,
+		]
+	end
+
+	// turn off, fade out smoke
+	for i in 10
+		states[#states] = [
+			identity,
+			identity,
+			fire,
+			identity,
+			identity,
+			matrix_scale(0.1*(9-i)),
+			identity,
+		]
+		states_show[#states_show] = [
+			true, false, true, false, true, true, true,
+		]
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		health = 150,
+		store = true,
+		capacity = kg(100),
+		priority = 10,
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterProgress = true,
+		recipeTags = ["smelting"],
+		consumeFuel = true,
+		burnerState = true,
+		consumeFuelType = "chemical",
+		energyConsume = energy,
+		collision = [0, 0, 0, 4, 4, 4],
+		iconD = 3.5,
+		iconV = 0.25,
+		enemyTarget = true,
+		wiki = "https://github.com/factropy/community/wiki/Furnace",
+		materials = materials,
+		states = states,
+		statesShow = states_show,
+		parts = [
+			{
+				color = 0xDAA520FF,
+				filter = filter.powdercoat,
+				lods = [
+					["models/furnace-hd.stl", high, shadow],
+					["models/furnace-ld.stl", medium, shadow],
+					["models/furnace-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x000000FF,
+				glow = true,
+				lods = [
+					["models/furnace-fire-hd.stl", high, noshadow],
+					["models/furnace-fire-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xf73718FF,
+				glow = true,
+				translate = south*0.01,
+				lods = [
+					["models/furnace-fire-hd.stl", high, noshadow],
+					["models/furnace-fire-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x000000FF,
+				lods = [
+					["models/furnace-smoke-hd.stl", high, noshadow],
+					["models/furnace-smoke-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xf73718FF,
+				translate = up*0.01
+				lods = [
+					["models/furnace-smoke-hd.stl", high, noshadow],
+					["models/furnace-smoke-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x111111ff,
+				smoke = {
+					direction = up,
+					particlesMax = 2400,
+					particlesPerTick = 20,
+					particleRadius = 0.02,
+					emitRadius = 0.5,
+					spreadFactor = 0.01,
+					tickRadiusFactor = 0.005,
+					tickDirectionFactor = 0.1,
+					tickDecayFactor = 0.99,
+					tickLifeLower = 60,
+					tickLifeUpper = 180,
+				},
+				translate = up*2.0,
+			},
+			{
+				flame = true,
+				translate = south*1.2 + down*0.5,
+				scale = [2,1.2,2],
+			}
+		],
+	})
+end
+
+furnace("furnace", "Furnace", "$(toolbar.mining)-c", kW(100), {
+	"copper-sheet" = 5,
+	"brick" = 10,
+})
+

@@ -1,0 +1,9 @@
+
+add_recipe({
+	name = "incinerate-log",
+	title = "Incinerate Logs",
+	energy = kJ(100),
+	tags = ["incineration"],
+	input = { "log" = 1 },
+})
+

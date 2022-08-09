@@ -1,0 +1,19 @@
+
+add_recipe({
+	name = "hydrazine",
+	title = "Hydrazine",
+	energy = MJ(1),
+	tags = tags.chemistry,
+	input = { "log" = 1, "water" = L(100) },
+	output = { "hydrazine" = 100 },
+	fluid = "hydrazine",
+})
+
+add_recipe({
+	name = "electrolysis",
+	title = "Electrolysis",
+	energy = MJ(20),
+	tags = tags.electrolysis,
+	input = { "water" = L(1000) },
+	output = { "hydrogen" = L(600), "oxygen" = L(300) },
+})

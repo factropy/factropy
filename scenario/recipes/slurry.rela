@@ -1,0 +1,18 @@
+
+add_recipe({
+	name = "slurry-stone-crushed",
+	title = "Stone Slurry",
+	energy = kJ(300),
+	tags = tags.chemistry,
+	input = { "stone-crushed" = 5, "water" = L(100) },
+	output = { "slurry" = L(100) },
+})
+
+add_recipe({
+	name = "slurry-clarification",
+	title = "Slurry Clarification",
+	energy = kJ(600),
+	tags = ["clarifying"],
+	input = { "slurry" = L(100) },
+})
+

@@ -160,15 +160,3 @@ smelting = {
 		energy = 0+(0.75*energy.smelting),
 	},
 }
-
-function reverse(vec)
-	i = 0
-	j = #vec-1
-	while i < j
-		a = vec[i]
-		vec[i] = vec[j]
-		vec[j] = a
-		i = i+1
-		j = j-1
-	end
-end

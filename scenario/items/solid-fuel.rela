@@ -1,0 +1,22 @@
+
+function solidFuel(name, title, color, energy, type)
+	add_item({
+		name = name,
+		title = title,
+		fuel = [ type, energy ],
+		parts = [{
+			color = color,
+			scale = 0.48,
+			translate = [0,0.24,0],
+			lods = [
+				["unitCube", high, shadow],
+				["unitCube", medium, noshadow],
+			],
+		}],
+		armV = 0.15,
+	})
+end
+
+solidFuel("solid-fuel", "Solid Fuel", 0x666666ff, MJ(40), "chemical")
+solidFuel("nuclear-fuel", "Nuclear Fuel", 0x66cc66ff, GJ(8), "nuclear")
+

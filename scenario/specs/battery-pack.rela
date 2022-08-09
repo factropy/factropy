@@ -1,0 +1,84 @@
+function batteryPack(name, title, upgrade, speed, materials)
+
+	function battery(tra)
+		return {
+			color = 0xcc6600ff,
+			translate = tra,
+			lods = [
+				["models/battery-body-hd.stl", high, shadow],
+				["models/battery-body-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x888888ff,
+			translate = tra,
+			lods = [
+				["models/battery-cap-hd.stl", high, noshadow],
+				["models/battery-cap-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x660000ff,
+			translate = [tra[0],tra[1],tra[2]-0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		},
+		{
+			color = 0x004400ff,
+			translate = [tra[0],tra[1],tra[2]+0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		}
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		upgrade = upgrade,
+		health = 150,
+		rotateGhost = true,
+		rotateExtant = true,
+		effector = true,
+		effectorElectricity = speed,
+		effectorCharge = speed,
+		effectorEnergyDrain = kW(10),
+		consumeElectricity = true,
+		collision = [0, 0, 0, 1, 2, 1],
+		iconD = 1.5,
+		iconV = 0,
+		materials = materials,
+		parts = [
+			{
+				color = colors.steel,
+				lods = [
+					["models/battery-rack-hd.stl", high, shadow],
+					["models/battery-rack-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.chevron,
+				translate = [0,1,0],
+				lods = [
+					["models/chevron-hd.stl", high, noshadow],
+					["models/chevron-ld.stl", medium, noshadow],
+				],
+			},
+			battery([ 0.25, 0.05, 0.0]),
+			battery([-0.25, 0.05, 0.0]),
+			battery([ 0.25,-0.95, 0.0]),
+			battery([-0.25,-0.95, 0.0]),
+		],
+	})
+end
+
+batteryPack("battery-pack", "Battery Pack", nil, 0.2, {
+	"mother-board" = 1,
+	"steel-frame" = 1,
+	"copper-wire" = 2,
+	"plastic-bar" = 3,
+	"battery" = 5,
+})
+

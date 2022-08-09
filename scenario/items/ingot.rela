@@ -1,0 +1,25 @@
+
+function ingot(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			gloss = gloss.metallic,
+			lods = [
+				["models/ingot-hd.stl", high, shadow],
+				["models/ingot-ld.stl", medium, noshadow],
+			]
+		}],
+		armV = 0.25,
+	})
+end
+
+ingot("copper-ingot", "Copper Ingot", colors.copper)
+ingot("steel-ingot", "Steel Ingot", colors.steel)
+ingot("tin-ingot", "Tin Ingot", 0x238E68ff)
+ingot("aluminium-ingot", "Aluminium Ingot", 0xDCDCDCff)
+ingot("gold-ingot", "Gold Ingot", 0xFFD700ff)
+ingot("silicon-ingot", "Silicon Ingot", 0xFFF8DCff)
+ingot("lead-ingot", "Lead Ingot", 0x666666ff)
+

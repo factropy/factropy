@@ -1,0 +1,36 @@
+
+function tree(name, scale, color)
+	add_spec({
+		name = name,
+		title = "Tree",
+		build = false,
+		collision = [0, 0, 0, 2, 5.0*scale, 2],
+		junk = true,
+		health = 150,
+		parts = [{
+			color = color,
+			translate = [0,-2.5*scale,0],
+			scale = scale,
+			tree = true,
+			lods = [
+				["models/tree-canopy-hd.stl", high, shadow],
+				["models/tree-canopy-ld.stl", medium, shadow],
+				["models/tree-canopy-ld2.stl", low, noshadow],
+				["models/tree-canopy-vld.stl", verylow, noshadow],
+			],
+		}],
+		materials = {
+			"log" = 1,
+		},
+	})
+end
+
+for i in 2
+	tree("treeAA$i", 1.0 + (0.1*i), 0xCBA109FF)
+	tree("treeAB$i", 1.0 + (0.1*i), 0xBF7407FF)
+end
+
+for i in 2
+	tree("treeBA$i", 1.5 + (0.1*i), 0x228B22FF)
+	tree("treeBB$i", 1.5 + (0.1*i), 0x556B2FFF)
+end

@@ -1,0 +1,55 @@
+
+add_recipe({
+	name = "uranium-enrichment",
+	title = "Uranium Enrichment",
+	energy = MJ(500),
+	tags = tags.centrifuging,
+	input = { "uranium-crushed" = 1000, "hydrofluoric-acid" = L(1000) },
+	output = { "uranium-238" = 99, "uranium-235" = 1 },
+})
+
+add_recipe({
+	name = "nuclear-fuel",
+	title = "Nuclear Fuel (Uranium)",
+	energy = kJ(1500),
+	tags = tags.crafting,
+	input = { "uranium-235" = 1, "uranium-238" = 19, "lead-ingot" = 1 },
+	output = { "nuclear-fuel" = 10 },
+})
+
+add_recipe({
+	name = "reacting",
+	title = "Nuclear Fission",
+	energy = MJ(300),
+	tags = tags.reacting,
+	input = { "water" = L(10000) },
+	output = { "steam" = L(10000) },
+})
+
+add_recipe({
+	name = "plutonium-breeding",
+	title = "Nuclear Breeding",
+	energy = MJ(300),
+	tags = tags.reacting,
+	input = { "water" = 10000 },
+	output = { "fissile-product" = 1, "steam" = 10000 },
+})
+
+add_recipe({
+	name = "plutonium-separation",
+	title = "Plutonium Separation",
+	energy = MJ(500),
+	tags = tags.centrifuging,
+	input = { "fissile-product" = 185, "naphtha" = 100 },
+	output = { "plutonium-239" = 1 },
+})
+
+add_recipe({
+	name = "plutonium-fuel",
+	title = "Nuclear Fuel (Plutonium)",
+	energy = kJ(1500),
+	tags = tags.crafting,
+	input = { "plutonium-239" = 1, "uranium-238" = 19, "lead-ingot" = 1 },
+	output = { "nuclear-fuel" = 10 },
+})
+

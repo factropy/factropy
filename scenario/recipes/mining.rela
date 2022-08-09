@@ -1,0 +1,11 @@
+
+for item,data in mining
+	add_recipe({
+		name = "mine-$(data.ore)",
+		title = "$(data.title) Mining",
+		mine = data.ore,
+		energy = energy.mining,
+		tags = tags.mining,
+	})
+end
+

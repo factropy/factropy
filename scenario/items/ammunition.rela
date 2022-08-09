@@ -1,0 +1,22 @@
+
+function ammo(name, title, color, damage)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			lods = [
+				["models/ammo-hd.stl", high, shadow],
+				["models/ammo-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.2,
+		ammoDamage = damage,
+		ammoRounds = 50,
+	})
+end
+
+ammo("ammo1", "Ammunition", 0x556B2Fff, 5)
+ammo("ammo2", "Ammunition (Polymer)", 0x758B4Fff, 10)
+ammo("ammo3", "Ammunition (Uranium)", 0x556B2Fff, 20)
+

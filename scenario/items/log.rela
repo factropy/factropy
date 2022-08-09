@@ -1,0 +1,13 @@
+
+add_item({
+	name = "log",
+	title = "Log",
+	fuel = [ "chemical", MJ(10) ],
+	show = true,
+	parts = [{
+		color = colors.wood,
+		scale = 0.5,
+		lods = [["models/wood.stl", high, shadow]],
+	}],
+})
+

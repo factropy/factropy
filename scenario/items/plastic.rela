@@ -1,0 +1,16 @@
+
+add_item({
+	name = "plastic-bar",
+	title = "Plastic Bar",
+	parts = [{
+		color = colors.plastic,
+		gloss = 16,
+		lods = [
+			["models/plastic-bar-hd.stl", high, shadow],
+			["models/plastic-bar-ld.stl", medium, shadow],
+		],
+	}],
+	armV = 0.2,
+	mass = kg(0.5),
+})
+

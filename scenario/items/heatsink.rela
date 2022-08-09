@@ -1,0 +1,25 @@
+
+add_item({
+	name = "heatsink",
+	title = "Heat Sink",
+	parts = [
+		{
+			color = colors.aluminium,
+			gloss = gloss.metallic,
+			lods = [
+				["models/heatsink-fins-hd.stl", high, shadow],
+				["models/heatsink-fins-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.copper,
+			gloss = gloss.metallic,
+			lods = [
+				["models/heatsink-base-hd.stl", high, noshadow],
+				["models/heatsink-base-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.1,
+})
+

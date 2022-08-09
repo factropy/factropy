@@ -1,0 +1,49 @@
+add_spec({
+	name = "router",
+	title = "Wifi Router",
+	health = 150,
+	rotateGhost = true,
+	rotateExtant = true,
+	router = true,
+	consumeElectricity = true,
+	energyDrain = W(50),
+	collision = [0, 0, 0, 1, 1, 1],
+	iconD = 1.5,
+	iconV = 0,
+	enable = true,
+	networker = true,
+	networkInterfaces = 2,
+	networkWifi = up*0.5,
+	status = true,
+	beacon = up*0.5,
+	router = true,
+	parts = [
+		{
+			color = 0x3d4849ff,
+			filter = filter.powdercoat,
+			gloss = gloss.metallic,
+			translate = down*0.5,
+			lods = [
+				["models/router-chassis-hd.stl", high, shadow],
+				["models/router-chassis-ld.stl", medium, shadow],
+				["models/router-chassis-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			gloss = gloss.metallic,
+			translate = down*0.5,
+			lods = [
+				["models/router-inset-hd.stl", medium, noshadow],
+			],
+		},
+	],
+	materials = {
+		"steel-frame" = 1,
+		"copper-wire" = 5,
+		"solder" = 2,
+		"mother-board" = 1,
+		"battery" = 1,
+	},
+})
+

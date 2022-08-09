@@ -12,12 +12,12 @@ public:
 
 	struct {
 		int common = 0;
-		int items = 0;
-		int recipes = 0;
-		int specs = 0;
 		int goals = 0;
 		int messages = 0;
 		int create = 0;
+		std::vector<int> items;
+		std::vector<int> recipes;
+		std::vector<int> specs;
 	} modules;
 
 	typedef void (RelaMod::*callback)(void);
@@ -88,20 +88,35 @@ public:
 		};
 
 		auto common   = slurp("scenario/common.rela");
-		auto items    = slurp("scenario/items.rela");
-		auto recipes  = slurp("scenario/recipes.rela");
-		auto specs    = slurp("scenario/specs.rela");
 		auto goals    = slurp("scenario/goals.rela");
 		auto messages = slurp("scenario/messages.rela");
 		auto create   = slurp("scenario/create.rela");
 
 		modules.common   = module(common.c_str());
-		modules.items    = module(items.c_str());
-		modules.recipes  = module(recipes.c_str());
-		modules.specs    = module(specs.c_str());
-		modules.goals    = module(goals.c_str());
-		modules.messages = module(messages.c_str());
 		modules.create   = module(create.c_str());
+		modules.goals    = module(fmtc("function()\n%s\nend()\n", goals));
+		modules.messages = module(fmtc("function()\n%s\nend()\n", messages));
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/items/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.items.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/recipes/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.recipes.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/specs/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.specs.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
 
 		funcs.sentinelA.id = 0;
 		funcs.sentinelB.id = &funcs.sentinelB - &funcs.sentinelA;
@@ -2101,6 +2116,12 @@ void ScenarioBase::init() {
 	world.scenario.size = std::max(Config::mode.world, 4096);
 }
 
+void ScenarioBase::run(const std::vector<int>& mset) {
+	std::vector<int> rset = {rela->modules.common};
+	rset.insert(rset.end(), mset.begin(), mset.end());
+	rela->run(rset);
+}
+
 void ScenarioBase::create() {
 	generate();
 	rela->run({rela->modules.common, rela->modules.create});
@@ -2128,7 +2149,7 @@ void ScenarioBase::items() {
 	meshes["oreLD"] = new MeshSphere(0.6f);
 	meshes["unitCube"] = scene.unit.mesh.cube;
 	meshes["unitSphere"] = scene.unit.mesh.sphere;
-	rela->run({rela->modules.common, rela->modules.items});
+	run(rela->modules.items);
 }
 
 void ScenarioBase::fluids() {
@@ -2195,11 +2216,11 @@ void ScenarioBase::messages() {
 }
 
 void ScenarioBase::recipes() {
-	rela->run({rela->modules.common, rela->modules.recipes});
+	run(rela->modules.recipes);
 }
 
 void ScenarioBase::specifications() {
-	rela->run({rela->modules.common, rela->modules.specs});
+	run(rela->modules.specs);
 
 	for (auto [spec,upgrade]: specUpgrades) {
 		spec->upgrade = Spec::byName(upgrade);

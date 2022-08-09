@@ -1,0 +1,22 @@
+
+function frame(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			gloss = gloss.metallic,
+			translate = [0,0.3,0],
+			lods = [
+				["models/frame-hd.stl", high, shadow],
+				["models/frame-ld.stl", medium, noshadow],
+			],
+		}],
+		armV = 0.1,
+		mass = kg(0.5),
+	})
+end
+
+frame("steel-frame", "Steel Frame", colors.steel)
+frame("aluminium-frame", "Aluminium Frame", colors.aluminium)
+

@@ -1,0 +1,14 @@
+
+add_item({
+	name = "brick",
+	title = "Brick",
+	parts = [{
+		color = 0xb69062ff,
+		lods = [
+			["models/brick-hd.stl", high, shadow],
+			["models/brick-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.25,
+})
+

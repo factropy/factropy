@@ -1,0 +1,40 @@
+
+function wire(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = color,
+				gloss = gloss.metallic,
+				translate = [0,0.25,0],
+				lods = [
+					["models/copper-wire-roll-hd.stl", high, shadow],
+					["models/copper-wire-roll-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444444ff,
+				translate = [0,0.5,0],
+				lods = [
+					["models/copper-wire-end-hd.stl", high, noshadow],
+					["models/copper-wire-end-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444444ff,
+				lods = [
+					["models/copper-wire-end-hd.stl", high, noshadow],
+					["models/copper-wire-end-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		mass = kg(0.5),
+		beltV = 0.01,
+		armV = 0.15,
+	})
+end
+
+wire("copper-wire", "Copper Wire", colors.copper)
+wire("solder", "Solder", 0x033f63ff)
+

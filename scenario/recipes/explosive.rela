@@ -1,0 +1,20 @@
+
+add_recipe({
+	name = "explosive",
+	title = "Explosive",
+	energy = MJ(3),
+	tags = tags.chemistry,
+	input = { "sulfur" = 10, "solid-fuel" = 10, "steel-sheet" = 5, "water" = 100 },
+	output = { "explosive" = 1 },
+	fluid = "water",
+})
+
+add_recipe({
+	name = "explosive-atomic",
+	title = "Explosive (Atomic)",
+	energy = MJ(50),
+	tags = tags.crafting,
+	input = { "explosive" = 50, "plutonium-239" = 1 },
+	output = { "explosive-atomic" = 10 },
+})
+

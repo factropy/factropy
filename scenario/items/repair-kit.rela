@@ -1,0 +1,24 @@
+
+function repairKit(name, title, color, repair)
+	add_item({
+		name = name,
+		title = title,
+		parts = [{
+			color = color,
+			scale = 0.48,
+			translate = [0,0.24,0],
+			lods = [
+				["unitCube", high, shadow],
+				["unitCube", medium, noshadow],
+			],
+		}],
+		armV = 0.15,
+		mass = kg(0.5),
+		repair = repair,
+	})
+end
+
+repairKit("repair-kit", "Repair Kit mk1", 0x990000FF, 100)
+repairKit("repair-kit2", "Repair Kit mk2", 0x009900FF, 200)
+repairKit("repair-kit3", "Repair Kit mk3", 0x000099FF, 300)
+

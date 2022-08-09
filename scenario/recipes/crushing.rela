@@ -1,0 +1,48 @@
+
+for item,title in crushing
+	add_recipe({
+		name = "$item-crushing",
+		title = "$title Crushing",
+		input = { "$item-ore" = 5 },
+		output = { "$item-crushed" = 5, "stone-crushed" = 2 },
+		energy = energy.crushing,
+		tags = tags.crushing,
+	})
+end
+
+add_recipe({
+	name = "silica-crushing",
+	title = "Silica Extraction",
+	input = { "stone-crushed" = 5 },
+	output = { "silica-sand" = 3 },
+	energy = energy.crushing,
+	tags = tags.crushing,
+})
+
+add_recipe({
+	name = "stone-crushing",
+	title = "Stone Crushing",
+	input = { "stone" = 5 },
+	output = { "stone-crushed" = 5 },
+	energy = energy.crushing,
+	tags = tags.crushing,
+})
+
+add_recipe({
+	name = "uranium-crushing",
+	title = "Uranium Crushing",
+	energy = kJ(1500),
+	tags = tags.crushing_with_fluid,
+	input = { "uranium-ore" = 5, "sulfuric-acid" = 5 },
+	output = { "uranium-crushed" = 3, "stone-crushed" = 2 },
+})
+
+add_recipe({
+	name = "aluminium-crushing",
+	title = "Aluminium Crushing",
+	energy = kJ(1500),
+	tags = tags.crushing_with_fluid,
+	input = { "aluminium-ore" = 5, "water" = L(5) },
+	output = { "alumina-powder" = 5, "stone-crushed" = 2 },
+})
+

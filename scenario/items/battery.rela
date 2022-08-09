@@ -1,0 +1,37 @@
+
+add_item({
+	name = "battery",
+	title = "Battery",
+	parts = [
+		{
+			color = 0xcc6600ff,
+			lods = [
+				["models/battery-body-hd.stl", high, shadow],
+				["models/battery-body-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x888888ff,
+			lods = [
+				["models/battery-cap-hd.stl", high, noshadow],
+				["models/battery-cap-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x660000ff,
+			translate = [0,0,-0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		},
+		{
+			color = 0x004400ff,
+			translate = [0,0,0.1],
+			lods = [
+				["models/battery-terminal-hd.stl", high, noshadow],
+			],
+		},
+	],
+	armV = 0.15,
+})
+

@@ -1,0 +1,77 @@
+
+function miner(name, title, toolbar, upgrade, color, energy, materials)
+
+	states = []
+	for i in 180
+		states[#states] = [identity,matrix_rotate(up, i)]
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		upgrade = upgrade,
+		store = true,
+		capacity = kg(10),
+		rotateGhost = true,
+		footings = [
+			[placement.hill, [0,-3,0] ],
+			[placement.land, [0,-3,7] ],
+		],
+		crafter = true,
+		crafterRate = 1.0,
+		crafterState = true,
+		crafterOutput = true,
+		crafterOutputPos = [0,-2,8],
+		networker = true,
+		networkInterfaces = 1,
+		networkWifi = [0,2.5,5],
+		crafterTransmitResources = true,
+		enable = true,
+		status = true,
+		beacon = [0,2.5,5],
+		icon = [0,3.5,5],
+		recipeTags = ["mining"],
+		consumeElectricity = true,
+		energyConsume = energy,
+		energyDrain = 0+(0.03*energy),
+		collision = [0, 0, 0, 5, 5, 15],
+		health = 150,
+		iconD = 6.5,
+		iconV = 0.7,
+		enemyTarget = true,
+		wiki = "https://github.com/factropy/community/wiki/Miner",
+		materials = materials,
+		states = states,
+		parts = [
+			{
+				color = color,
+				filter = filter.powdercoat,
+				lods = [
+					["models/miner-chassis-ld.stl", high, shadow],
+					["models/miner-chassis-ld.stl", medium, shadow],
+					["models/miner-chassis-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				scale = [3,7,3],
+				rotate = [east,90],
+				translate = [0,0,5.75],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end
+
+miner("miner", "Miner", "$(toolbar.mining)-a", nil, 0xCD853Fff, kW(400), {
+	"steel-sheet" = 3,
+	"steel-frame" = 3,
+	"gear-wheel" = 3,
+	"circuit-board" = 3,
+})
+

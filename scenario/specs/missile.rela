@@ -1,0 +1,42 @@
+add_spec({
+	name = "missile-explosion1",
+	title = "missile-explosion1",
+	align = false,
+	build = false,
+	select = false,
+	explosion = true,
+	explosionDamage = 100,
+	explosionRadius = 10,
+	explosionRate = 0.5,
+})
+
+add_spec({
+	name = "missile",
+	title = "Missile",
+	build = false,
+	missile = true,
+	missileSpeed = 0.4,
+	explodes = true,
+	explosionSpec = "missile-explosion1",
+	align = false,
+	enemy = true,
+	select = false,
+	health = 50,
+	collision = [0, 0, 0, 1, 1, 2],
+	parts = [
+		{
+			color = 0x660000ff,
+			lods = [
+				["models/missile-chassis.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0xff9900ff,
+			translucent = true,
+			lods = [
+				["models/missile-plume.stl", medium, noshadow],
+			],
+		},
+	],
+})
+
