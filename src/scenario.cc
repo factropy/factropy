@@ -2259,13 +2259,6 @@ void ScenarioBase::specifications() {
 
 	Spec::byName("container-provider")->upgrade = Spec::byName("container-buffer");
 
-	meshes["assemblerPiston"] = new Mesh("models/assembler-piston-hd.stl");
-	meshes["assemblerPistonLD"] = new Mesh("models/assembler-piston-ld.stl");
-
-	meshes["assemblerChassis"] = new Mesh("models/assembler-chassis-hd.stl");
-	meshes["assemblerChassisLD"] = new Mesh("models/assembler-chassis-ld.stl");
-	meshes["assemblerChassisVLD"] = new Mesh("models/assembler-chassis-vld.stl");
-
 	meshes["windTurbineTower"] = new Mesh("models/wind-turbine-tower-hd.stl");
 	meshes["windTurbineTowerLD"] = new Mesh("models/wind-turbine-tower-ld.stl");
 	meshes["windTurbineTowerVLD"] = new Mesh("models/wind-turbine-tower-vld.stl");
@@ -2345,31 +2338,6 @@ void ScenarioBase::specifications() {
 	meshes["pipeGroundLD"] = new Mesh("models/pipe-ground-ld.stl");
 	meshes["pipeGroundVLD"] = new Mesh("models/pipe-ground-vld.stl");
 
-//	spec = new Spec("pipe-underground");
-//	spec->title = "Pipe (Underground)";
-//	spec->pipe = true;
-//	spec->pipeCapacity = Liquid::l(500);
-//	spec->pipeUnderground = true;
-//	spec->pipeUndergroundRange = 10.0f;
-//	spec->collision = {0, 0, 0, 1, 1, 1};
-//	spec->selection = spec->collision;
-//	spec->rotateGhost = true;
-//	spec->rotateExtant = true;
-//	spec->pipeConnections = {Point::North*0.5f};
-//	spec->health = 150;
-//
-//	spec->parts = {
-//		(new Part(0xffa500ff))
-//			->lod(mesh("pipeGround"), Part::HD, Part::SHADOW)
-//			->lod(mesh("pipeGroundLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("pipeGroundVLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(-90.0f))),
-//	};
-//
-//	spec->materials = {
-//		{ Item::byName("pipe")->id, 5 },
-//	};
-
 	auto rockVLD = new Mesh("models/rock-vld.stl");
 
 	for (int i = 1; i < 4; i++) {
@@ -2440,8 +2408,6 @@ void ScenarioBase::specifications() {
 	spec->droneSpeed = 0.2f;
 	spec->droneCargoSize = 5;
 	spec->collideBuild = false;
-
-//	Spec::byName("crawler")->depotDroneSpec = Spec::byName("drone");
 
 	meshes["armBase"] = new Mesh("models/arm-base-hd.stl");
 	meshes["armBaseLD"] = new Mesh("models/arm-base-ld.stl");
@@ -4267,142 +4233,6 @@ void ScenarioBase::specifications() {
 	}
 
 	blimpTier(1);
-//
-//	meshes["heavylifterBody"] = new Mesh("models/heavylifter-body-hd.stl");
-//	meshes["heavylifterBodyLD"] = new Mesh("models/heavylifter-body-ld.stl");
-//	meshes["heavylifterBodyVLD"] = new Mesh("models/heavylifter-body-vld.stl");
-//	meshes["heavylifterArm"] = new Mesh("models/heavylifter-arm-hd.stl");
-//	meshes["heavylifterEngineCowling"] = new Mesh("models/heavylifter-engine-cowling-hd.stl");
-//	meshes["heavylifterEngineCowlingLD"] = new Mesh("models/heavylifter-engine-cowling-ld.stl");
-//	meshes["heavylifterEngineShaft"] = new Mesh("models/heavylifter-engine-shaft-hd.stl");
-//	meshes["heavylifterFrame"] = new Mesh("models/heavylifter-frame-hd.stl");
-//	meshes["heavylifterMainWing"] = new Mesh("models/heavylifter-mainwing-hd.stl");
-//	meshes["heavylifterMainWingLD"] = new Mesh("models/heavylifter-mainwing-ld.stl");
-//	meshes["heavylifterTailWing"] = new Mesh("models/heavylifter-tailwing-hd.stl");
-//	meshes["heavylifterTailWingLD"] = new Mesh("models/heavylifter-tailwing-ld.stl");
-//	meshes["heavylifterTailFin"] = new Mesh("models/heavylifter-tailfin-hd.stl");
-//	meshes["heavylifterTailFinLD"] = new Mesh("models/heavylifter-tailfin-ld.stl");
-//
-//	spec = new Spec("heavylifter");
-//	spec->title = "Heavy Lifter";
-//	spec->collision = {0, 0, 0, 3, 3, 7};
-//	spec->selection = spec->collision;
-//	spec->place = Spec::Land;
-//
-//	spec->health = 500;
-//	spec->align = false;
-//	spec->forceDelete = true;
-//	spec->rotateGhost = true;
-//	spec->plan = false;
-//	spec->flightPath = true;
-//	spec->flightPathClearance = 20.0f;
-//	spec->flightPathSpeed = 0.5f;
-//	spec->flightLogistic = true;
-//
-//	spec->energyConsume = Energy::kW(250);
-//	spec->consumeCharge = true;
-//	spec->consumeChargeBuffer = Energy::MJ(10);
-//	spec->consumeChargeRate = Energy::kW(250);
-//	spec->store = true;
-//	spec->storeAnything = true;
-//	spec->tipStorage = true;
-//	spec->capacity = Mass::kg(5000);
-//	spec->forceDelete = true;
-//	spec->rotateGhost = true;
-//	spec->plan = false;
-//
-//	float up = 2.1;
-//
-//	spec->parts = {
-//		(new Part(0x444444ff))
-//			->lod(mesh("models/container-small-hd.stl"), Part::HD, Part::SHADOW)
-//			->lod(mesh("models/container-small-ld.stl"), Part::MD, Part::SHADOW)
-//			->lod(mesh("models/container-small-vld.stl"), Part::VLD, Part::NOSHADOW),
-//
-//		(new Part(0xffffffff))
-//			->lod(mesh("heavylifterBody"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterBodyLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterBodyVLD"), Part::VLD, Part::SHADOW)
-//			->transform(Mat4::translate(0,up,0)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterMainWing"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterMainWingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterMainWingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.9,0)),
-//
-//		(new Part(0x444444ff))
-// 			->lod(mesh("heavylifterTailWing"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailWingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailWingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.3,-4)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterTailFin"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailFinLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailFinLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.3,-1.75)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(3,up+0.4,0)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::translate(3,up+0.4,0)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(-3,up+0.4,0)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::translate(-3,up+0.4,0)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(-1.5,up+0.3,-4)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(-1.5,up+0.3,-4)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(1.5,up+0.3,-4)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(1.5,up+0.3,-4)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterFrame"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::translate(0,up-0.55,0)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(0.0f)) * Mat4::translate(1.6,up-0.55,-2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(180.0f)) * Mat4::translate(-1.6,up-0.55,-2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(0.0f)) * Mat4::translate(1.6,up-0.55,2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(180.0f)) * Mat4::translate(-1.6,up-0.55,2)),
-//	};
 }
 
 void ScenarioBase::blimpTier(int tier) {
