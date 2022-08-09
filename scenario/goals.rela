@@ -274,6 +274,8 @@ add_goal({
 		"container-buffer",
 		"container-overflow",
 		"drone-depot1",
+		"wifi-tower",
+		"router",
 	],
 	recipes = [
 		"mother-board",
@@ -303,8 +305,6 @@ add_goal({
 		"monorail-stop",
 		"monocar",
 		"container-shipping",
-		"wifi-tower",
-		"router",
 	],
 	recipes = [
 		"electrolysis",
