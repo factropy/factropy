@@ -3756,6 +3756,9 @@ void ScenarioBase::specifications() {
 	spec->capacity = Mass::kg(1000);
 	spec->rotateGhost = true;
 	spec->rotateExtant = true;
+	spec->networker = true;
+	spec->networkInterfaces = 1;
+	spec->networkWifi = {5.5,-11,5.5};
 	spec->launcher = true;
 	spec->launcherFuel = {
 		{Fluid::byName("hydrazine")->id,5000},
