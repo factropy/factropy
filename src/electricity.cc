@@ -37,7 +37,7 @@ void ElectricityProducer::connect() {
 	if (en->isGhost()) ensure(!connected());
 	if (en->isGhost()) return;
 	if (connected()) return;
-	auto pole = PowerPole::covering(en->box());
+	auto pole = en->spec->powerpole ? &en->powerpole(): PowerPole::covering(en->box());
 	if (pole && pole->network) pole->network->add(*this);
 }
 
@@ -168,7 +168,7 @@ void ElectricityConsumer::connect() {
 	if (en->isGhost()) ensure(!connected());
 	if (en->isGhost()) return;
 	if (connected()) return;
-	auto pole = PowerPole::covering(en->box());
+	auto pole = en->spec->powerpole ? &en->powerpole(): PowerPole::covering(en->box());
 	if (pole && pole->network) pole->network->add(*this);
 }
 
@@ -218,7 +218,7 @@ void ElectricityBuffer::connect() {
 	if (en->isGhost()) ensure(!connected());
 	if (en->isGhost()) return;
 	if (connected()) return;
-	auto pole = PowerPole::covering(en->box());
+	auto pole = en->spec->powerpole ? &en->powerpole(): PowerPole::covering(en->box());
 	if (pole && pole->network) pole->network->add(*this);
 }
 
