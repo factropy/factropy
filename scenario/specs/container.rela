@@ -32,32 +32,6 @@ function containerSmall(fields)
 	add_spec(spec)
 end
 
-function containerLarge(fields)
-	spec = {
-		health = 150,
-		collision = [0, 0, 0, 4, 4, 11],
-		rotateGhost = true,
-		rotations = [south,east],
-		store = true,
-		capacity = kg(25000),
-		tipStorage = true,
-		parts = [{
-			color = fields.color,
-			gloss = gloss.metallic,
-			lods = [
-				["models/container-large-hd.stl", high, shadow],
-				["models/container-large-ld.stl", medium, shadow],
-				["models/container-large-vld.stl", verylow, noshadow],
-			],
-		}],
-	}
-
-	for k,v in fields spec[k] = v end
-	spec.color = nil
-
-	add_spec(spec)
-end
-
 function containerSmallNetworker(fields)
 	fields.networker = true
 	fields.networkInterfaces = 1
@@ -115,6 +89,8 @@ containerSmall({
 	logistic = true,
 	storeSetUpper = true,
 	storeUpgradePreserve = true,
+	storeAnything = true,
+	storeAnythingDefault = true,
 	cycle = "container-requester",
 	wiki = "https://github.com/factropy/community/wiki/Container",
 	materials = {
@@ -176,17 +152,3 @@ containerSmallNetworker({
 	},
 })
 
-containerLarge({
-	name = "container-large",
-	title = "Container (Large)",
-	toolbar = "$(toolbar.storage)-e",
-	color = 0x888888FF,
-	logistic = true,
-	storeSetUpper = true,
-	storeUpgradePreserve = true,
-	materials = {
-		"steel-sheet" = 8,
-		"steel-frame" = 4,
-		"plastic-bar" = 4,
-	},
-})

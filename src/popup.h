@@ -28,6 +28,7 @@ struct Popup {
 	void center();
 	void topRight();
 	void bottomLeft();
+	void picker();
 	float relativeWidth(float w);
 	static void tip(const std::string& s);
 	static std::string wrap(uint line, std::string text);

@@ -12,6 +12,7 @@ public:
 
 	struct {
 		int common = 0;
+		int init = 0;
 		int goals = 0;
 		int messages = 0;
 		int create = 0;
@@ -46,6 +47,7 @@ public:
 		func liquid_ML          = { .name = "ML",                 .cb = &RelaMod::liquid_ML          };
 		func mass_kg            = { .name = "kg",                 .cb = &RelaMod::mass_kg            };
 		func add_item           = { .name = "add_item",           .cb = &RelaMod::add_item           };
+		func add_item_category  = { .name = "add_item_category",  .cb = &RelaMod::add_item_category  };
 		func add_recipe         = { .name = "add_recipe",         .cb = &RelaMod::add_recipe         };
 		func add_spec           = { .name = "add_spec",           .cb = &RelaMod::add_spec           };
 		func add_goal           = { .name = "add_goal",           .cb = &RelaMod::add_goal           };
@@ -88,11 +90,13 @@ public:
 		};
 
 		auto common   = slurp("scenario/common.rela");
+		auto init     = slurp("scenario/init.rela");
 		auto goals    = slurp("scenario/goals.rela");
 		auto messages = slurp("scenario/messages.rela");
 		auto create   = slurp("scenario/create.rela");
 
 		modules.common   = module(common.c_str());
+		modules.init     = module(init.c_str());
 		modules.create   = module(create.c_str());
 		modules.goals    = module(goals.c_str());
 		modules.messages = module(messages.c_str());
@@ -366,6 +370,27 @@ public:
 		return part;
 	}
 
+	void add_item_category() {
+		auto data = stack_pop();
+
+		auto name = to_string(map_get_named(data, "name"));
+		ensuref(!Item::categories.count(name), "duplicate item category: %s", name);
+
+		auto title = to_string(map_get_named(data, "title"));
+		auto order = to_string(map_get_named(data, "order"));
+
+		Item::categories[name] = {title, order};
+		auto& category = Item::categories[name];
+
+		auto groups = map_get_named(data, "groups");
+		for (int i = 0, l = item_count(groups); i < l; i++) {
+			auto group = vector_get(groups, i);
+			auto name = to_string(map_get_named(group, "name"));
+			auto order = to_string(map_get_named(group, "order"));
+			category.groups[name] = {order};
+		}
+	}
+
 	void add_item() {
 		auto data = stack_pop();
 
@@ -382,6 +407,25 @@ public:
 
 		auto item = Item::create(Item::next(), strField("name"));
 		item->title = strField("title");
+
+		auto category = field("category");
+		if (is_string(category)) {
+			auto name = to_string(category);
+			ensuref(Item::categories.count(name), "unknown item category: %s", name);
+			item->category = &Item::categories[name];
+		}
+
+		auto group = field("group");
+		if (is_string(group)) {
+			auto name = to_string(group);
+			ensuref(item->category->groups.count(name), "unknown item group: %s", name);
+			item->group = &item->category->groups[name];
+		}
+
+		auto order = field("order");
+		if (is_string(order)) {
+				item->order = to_string(order);
+		}
 
 		auto fuel = field("fuel");
 		if (is_vector(fuel) && item_count(fuel) == 2) {
@@ -2154,6 +2198,7 @@ void ScenarioBase::items() {
 	meshes["oreLD"] = new MeshSphere(0.6f);
 	meshes["unitCube"] = scene.unit.mesh.cube;
 	meshes["unitSphere"] = scene.unit.mesh.sphere;
+	rela->run({rela->modules.common, rela->modules.init});
 	run(rela->modules.items);
 }
 

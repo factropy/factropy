@@ -1,0 +1,17 @@
+
+add_item_category({
+	name = "resources",
+	title = "Resources",
+	order = "a",
+	groups = [
+		{
+			name = "ore",
+			order = "a",
+		},
+		{
+			name = "crushed",
+			order = "b",
+		},
+	],
+})
+

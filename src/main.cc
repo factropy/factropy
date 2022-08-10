@@ -292,6 +292,44 @@ int main(int argc, char* argv[]) {
 			for (auto [_,goal]: Goal::all)
 				if (!goal->title.size()) goal->title = fmt("(%s)", goal->name);
 
+			Item::categories["other"] = {"Other","zzz"};
+			Item::categories["other"].groups = {{"other",{"zzz"}}};
+
+			for (auto [_,item]: Item::names) {
+				if (!item->category || !item->group) {
+					item->category = &Item::categories["other"];
+					item->group = &item->category->groups["other"];
+				}
+			}
+
+			std::set<Item::Category*> categories;
+			for (auto& [_,category]: Item::categories) categories.insert(&category);
+
+			Item::display = {categories.begin(), categories.end()};
+			std::sort(Item::display.begin(), Item::display.end(), [](const auto a, const auto b) {
+				return a->order < b->order;
+			});
+
+			for (auto& [_,category]: Item::categories) {
+				std::set<Item::Group*> groups;
+				for (auto& [_,group]: category.groups) groups.insert(&group);
+
+				category.display = {groups.begin(), groups.end()};
+				std::sort(category.display.begin(), category.display.end(), [](const auto a, const auto b) {
+					return a->order < b->order;
+				});
+
+				for (auto& [_,group]: category.groups) {
+					std::set<Item*> items;
+					for (auto [_,item]: Item::names) if (item->group == &group) items.insert(item);
+
+					group.display = {items.begin(), items.end()};
+					std::sort(group.display.begin(), group.display.end(), [](const auto a, const auto b) {
+						return a->order < b->order;
+					});
+				}
+			}
+
 			if (Config::mode.load && !Config::saveNameFree(Config::mode.saveName)) {
 				try {
 					auto cam = Sim::load(Config::savePath(Config::mode.saveName).c_str());
@@ -378,7 +416,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (readyScenario)
-				readyIcons = !scene.renderIcon();
+				readyIcons = !scene.renderSpecIcon() && !scene.renderItemIcon();
 
 			std::this_thread::sleep_for(1ms);
 		}

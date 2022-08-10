@@ -89,6 +89,24 @@ void Popup::center() {
 	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
+void Popup::picker() {
+
+	h = (float)Config::height(0.375f);
+	w = h;
+
+	const ImVec2 size = {
+		(float)w,(float)h
+	};
+
+	const ImVec2 pos = {
+		((float)Config::window.width-size.x)/2.0f,
+		((float)Config::window.height-size.y)/2.0f
+	};
+
+	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+}
+
 void Popup::topRight() {
 
 	const ImVec2 size = {
@@ -1077,7 +1095,9 @@ void EntityPopup2::draw() {
 				optionItems.push_back({item->id, item->title.c_str()});
 		}
 
-		reorder(optionItems);
+		std::sort(optionItems.begin(), optionItems.end(), [](const auto& a, const auto& b) {
+			return Item::get(a.id)->title < Item::get(b.id)->title;
+		});
 
 		std::vector<Option> optionFluids;
 
@@ -1086,7 +1106,9 @@ void EntityPopup2::draw() {
 				optionFluids.push_back({fluid->id, fluid->title.c_str()});
 		}
 
-		reorder(optionFluids);
+		std::sort(optionFluids.begin(), optionFluids.end(), [](const auto& a, const auto& b) {
+			return Fluid::get(a.id)->title < Fluid::get(b.id)->title;
+		});
 
 		bool operableStore = en.spec->store && (en.spec->storeSetLower || en.spec->storeSetUpper);
 
@@ -1310,14 +1332,83 @@ void EntityPopup2::draw() {
 					Mass usage = store.usage();
 					Mass limit = store.limit();
 
-					LevelBar(usage.portion(limit));
+					SpacingV();
+					SmallBar(usage.portion(limit));
 
 					float width = GetContentRegionAvail().x;
 
+					SpacingV();
+					if (Button("Limit item")) {
+						OpenPopup("##store-limit-item");
+					}
+
+					picker();
+					if (BeginPopup("##store-limit-item")) {
+						int iconSize = Config::toolbar.icon.size;
+						float iconPix = Config::toolbar.icon.sizes[iconSize];
+
+						if (BeginTabBar("##store-limit-item-categories", ImGuiTabBarFlags_None)) {
+							for (auto category: Item::display) {
+								if (BeginTabItem(category->title.c_str())) {
+									BeginTable(fmtc("##store-limit-%u", id++), 10);
+									for (auto group: category->display) {
+										TableNextRow();
+										for (auto item: group->display) {
+											if (item->show || item->raw || item->manufacturable()) {
+												TableNextColumn();
+												if (ImageButton((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
+													store.levelSet(item->id, 0, 0);
+													CloseCurrentPopup();
+												}
+												if (IsItemHovered()) {
+													tip(item->title.c_str());
+												}
+											}
+										}
+									}
+									EndTable();
+									EndTabItem();
+								}
+							}
+							if (BeginTabItem("QoL")) {
+								if (Button("Construction materials")) {
+									std::set<Item*> items;
+									for (auto [_,spec]: Spec::all) {
+										if (!spec->licensed) continue;
+										if (spec->junk) continue;
+										for (auto [iid,_]: spec->materials) {
+											items.insert(Item::get(iid));
+										}
+									}
+									for (auto item: items) {
+										if (store.level(item->id)) continue;
+										store.levelSet(item->id, 0, 0);
+									}
+								}
+								EndTabItem();
+							}
+							EndTabBar();
+						}
+						EndPopup();
+					}
+
+					if (en.spec->storeAnything) {
+						SameLine();
+						Checkbox("Allow anything", &store.anything);
+						if (IsItemHovered()) tip(
+							"Store any item without limits."
+						);
+					}
+
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
 
-					BeginTable("levels", en.spec->crafter ? 9: 8);
+					int iconSize = Config::toolbar.icon.size;
+//					float iconPix = Config::toolbar.icon.sizes[iconSize];
 
+					SpacingV();
+					BeginTable(fmtc("##store-levels-%u", id++), en.spec->crafter ? 10: 9);
+
+					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, GetFontSize());
 					TableSetupColumn("Item", ImGuiTableColumnFlags_WidthStretch);
 					TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, width*0.1f);
 					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
@@ -1328,6 +1419,9 @@ void EntityPopup2::draw() {
 					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
 
 					TableNextRow(ImGuiTableRowFlags_Headers);
+					TableNextColumn();
+					TableHeader("");
+
 					TableNextColumn();
 					TableHeader("Item");
 					if (IsItemClicked()) store.sortAlpha();
@@ -1356,6 +1450,9 @@ void EntityPopup2::draw() {
 
 						int limit = (int)std::max(level.upper, (uint)store.limit().value/item->mass.value);
 						int step  = (int)std::max(1U, (uint)limit/100);
+
+						TableNextColumn();
+						Image((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
 
 						TableNextColumn();
 						Print(fmtc("%s", item->title));
@@ -1422,6 +1519,9 @@ void EntityPopup2::draw() {
 						TableNextRow();
 
 						TableNextColumn();
+						Image((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
+
+						TableNextColumn();
 						Print(fmtc("%s", item->title));
 
 						TableNextColumn();
@@ -1435,6 +1535,9 @@ void EntityPopup2::draw() {
 							uint size = stack.size%step ? stack.size+step-(stack.size%step): stack.size;
 							store.levelSet(stack.iid, 0, size);
 						}
+						if (IsItemHovered()) tip(
+							"Limit item"
+						);
 
 						TableNextColumn();
 						TableNextColumn();
@@ -1447,43 +1550,6 @@ void EntityPopup2::draw() {
 
 					EndTable();
 					PopStyleVar();
-
-					SetNextItemWidth(relativeWidth(0.25f));
-					if (BeginCombo(fmtc("Allow item##%d", id++), nullptr)) {
-						for (auto& option: optionItems) {
-							if (!store.level(option.id) && !store.count(option.id) && Selectable(option.title, false)) {
-								store.levelSet(option.id, 0, 0);
-							}
-						}
-						EndCombo();
-					}
-					if (IsItemHovered()) tip(
-						"Stores allow only specified items to be "
-						"inserted by arms and loaders. Set a lower "
-						"limit to act as a logistic requester, and "
-						"a higher upper limit to act as a passive "
-						"provider. If the count exceeds the upper "
-						"the store will switch to active provider. "
-					);
-
-					if (Button("Allow construction materials")) {
-						std::set<Item*> items;
-						for (auto [_,spec]: Spec::all) {
-							if (!spec->licensed) continue;
-							if (spec->junk) continue;
-							for (auto [iid,_]: spec->materials) {
-								items.insert(Item::get(iid));
-							}
-						}
-						for (auto item: items) {
-							if (store.level(item->id)) continue;
-							store.levelSet(item->id, 0, 0);
-						}
-					}
-
-					if (en.spec->storeAnything) {
-						Checkbox("Allow anything", &store.anything);
-					}
 
 					if (clear) {
 						store.levelClear(clear);
@@ -3672,7 +3738,7 @@ void RecipePopup::drawSpec(Spec* spec) {
 			if (!s->build) iconSpecs.push(s);
 		}
 		for (auto s: iconSpecs) {
-			Image((ImTextureID)scene.iconTextures[s][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
+			Image((ImTextureID)scene.specIconTextures[s][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
 			if (IsItemHovered() && iconSpecs.size() > 1) tip("Use [C] to cycle ghost variants");
 			SameLine();
 		}
@@ -4572,7 +4638,7 @@ void ZeppelinPopup::draw() {
 			TableNextColumn();
 			int iconSize = Config::toolbar.icon.size;
 			float iconPix = Config::toolbar.icon.sizes[iconSize];
-			Image((ImTextureID)scene.iconTextures[en.spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
+			Image((ImTextureID)scene.specIconTextures[en.spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
 
 			TableNextColumn();
 			Print(en.name().c_str());

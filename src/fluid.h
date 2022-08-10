@@ -37,6 +37,7 @@ struct Fluid {
 	TimeSeriesSum production;
 	TimeSeriesSum consumption;
 	bool raw;
+	std::string order;
 
 	Fluid();
 	Fluid(uint id, std::string name);

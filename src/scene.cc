@@ -2047,10 +2047,10 @@ void Scene::renderLoading() {
 	glEnable(GL_CULL_FACE);
 }
 
-bool Scene::renderIcon() {
+bool Scene::renderSpecIcon() {
 	Spec* spec = nullptr;
 	for (auto [_,s]: Spec::all) {
-		if (!iconTextures.count(s)) {
+		if (!specIconTextures.count(s)) {
 			spec = s;
 			break;
 		}
@@ -2191,7 +2191,164 @@ bool Scene::renderIcon() {
 		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		iconTextures[spec].push_back(iconTexture);
+		specIconTextures[spec].push_back(iconTexture);
+
+		glDeleteFramebuffers(1, &iconFrameBuffer);
+	}
+
+	glDeleteRenderbuffers(1, &iconDepthBufferMS);
+	glDeleteFramebuffers(1, &iconFrameBufferMS);
+	glDeleteTextures(1, &iconTextureMS);
+
+	position = savePosition;
+	direction = saveDirection;
+	return true;
+}
+
+bool Scene::renderItemIcon() {
+	Item* item = nullptr;
+	for (auto [_,i]: Item::names) {
+		if (!itemIconTextures.count(i->id)) {
+			item = i;
+			break;
+		}
+	}
+
+	if (!item) return false;
+
+	Mesh::resetAll();
+	Part::resetAll();
+
+	Point savePosition = position;
+	Point saveDirection = direction;
+
+	position = Point(0.5,1,1).normalize() * 0.6;
+
+	direction = (-position).normalize();
+
+	offset = Point::Zero;
+
+	aspect = 1.0f;
+	fovy = 45.0f;
+
+	camera = (position - groundTarget());
+	viewCamera = glm::lookAt(glm::vec3(camera), glm::vec3(glm::origin), glm::vec3(glm::up));
+	viewWorld = glm::lookAt(glm::dvec3(position), glm::dvec3(groundTarget()), glm::up);
+	range = camera.length();
+
+	float top = range;
+	float right = top*aspect;
+
+	perspective = glm::ortho<float>(-right,right,-top,top,0.0f,range*100);
+
+	glm::vec3 sunDir = glm::normalize(glm::point(3,4,0));
+	glm::vec3 sun = sunDir * range;
+
+	glm::mat4 sunView = glm::lookAt(sun, glm::vec3(glm::origin), glm::vec3(glm::up));
+	glm::mat4 orthographic = glm::ortho<float>(-right,right,-top,top,0.0f,range*2);
+
+	float distance = Point::Zero.distance(position);
+	auto trx = Point::South.rotation() * (Point(0,item->armV-0.4,0) + offset).translation();
+
+	for (uint i = 0, l = item->parts.size(); i < l; i++) {
+		auto part = item->parts[i];
+		if (!part->show(Point::Zero, Point::South)) continue;
+		GLuint group = scene.shader.part.id();
+		part->instance(group, distance, trx);
+	}
+
+	Mesh::prepareAll();
+
+	int pixels = 128;
+
+	GLuint iconFrameBufferMS = 0;
+	GLuint iconDepthBufferMS = 0;
+	GLuint iconTextureMS = 0;
+	GLuint iconFrameBuffer = 0;
+	GLuint iconTexture = 0;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+	glViewport(0, 0, 4096, 4096);
+	glDrawBuffer(GL_NONE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glGenTextures(1, &iconTextureMS);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+	glGenRenderbuffers(1, &iconDepthBufferMS);
+	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+
+	glGenFramebuffers(1, &iconFrameBufferMS);
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+
+	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glViewport(0, 0, pixels, pixels);
+	glClearColor(0,0,0,0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_MULTISAMPLE);
+
+	glm::mat4 p = perspective;
+	glm::mat4 v = viewCamera;
+	glm::mat4 l = orthographic * sunView;
+	glm::vec3 c = camera;
+	Color sunColor = 0xffffffff;
+	float fogOffset = (float)Config::window.fog;
+
+	glUseProgram(shader.part.id());
+
+	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+
+	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+
+	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+
+	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
+		glGenTextures(1, &iconTexture);
+		glBindTexture(GL_TEXTURE_2D, iconTexture);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+		glGenFramebuffers(1, &iconFrameBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, iconTexture, 0);
+
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, iconFrameBufferMS);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, iconFrameBuffer);
+
+		glDrawBuffer(GL_BACK);
+		glBlitFramebuffer(0, 0, pixels, pixels, 0, 0, pixels, pixels, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		itemIconTextures[item->id].push_back(iconTexture);
 
 		glDeleteFramebuffers(1, &iconFrameBuffer);
 	}

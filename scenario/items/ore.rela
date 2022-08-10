@@ -3,6 +3,9 @@ add_item({
 	name = "iron-ore",
 	title = "Iron Ore",
 	ore = "Iron",
+	category = "resources",
+	group = "ore",
+	order = order.iron,
 	mining = 1.0,
 	parts = [{
 		color = colors.ironOre,
@@ -23,6 +26,9 @@ add_item({
 	name = "copper-ore",
 	title = "Copper Ore",
 	ore = "Copper",
+	category = "resources",
+	group = "ore",
+	order = order.copper,
 	raw = true,
 	parts = [{
 		color = colors.copperOre,
@@ -40,9 +46,58 @@ add_item({
 })
 
 add_item({
+	name = "tin-ore",
+	title = "Tin Ore",
+	ore = "Tin",
+	category = "resources",
+	group = "ore",
+	order = order.tin,
+	raw = true,
+	parts = [{
+		color = colors.tinOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [-0.1,0,0],
+		lods = [
+			["models/iron-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.8,
+})
+
+add_item({
+	name = "lead-ore",
+	title = "Lead Ore",
+	ore = "Lead",
+	category = "resources",
+	group = "ore",
+	order = order.lead,
+	raw = true,
+	parts = [{
+		color = colors.leadOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		translate = [0.05,0,0],
+		lods = [
+			["models/copper-ore.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.8,
+})
+
+add_item({
 	name = "coal",
 	title = "Coal",
 	ore = "Coal",
+	category = "resources",
+	group = "ore",
+	order = order.coal,
 	raw = true,
 	fuel = [ "chemical", MJ(20) ],
 	parts = [{
@@ -64,6 +119,9 @@ add_item({
 	name = "stone",
 	title = "Stone",
 	ore = "Stone",
+	category = "resources",
+	group = "ore",
+	order = order.stone,
 	raw = true,
 	show = true,
 	parts = [{
@@ -80,68 +138,12 @@ add_item({
 })
 
 add_item({
-	name = "uranium-ore",
-	title = "Uranium Ore",
-	ore = "Uranium",
-	raw = true,
-	parts = [{
-		color = colors.uraniumOre,
-		gloss = gloss.metallicOre,
-		scale = 0.6,
-		lods = [
-			["models/stone.stl", high, shadow],
-			["oreLD", medium, noshadow],
-		],
-	}],
-	armV = 0.3,
-	tubeV = 0.1,
-	mining = 0.7,
-})
-
-add_item({
-	name = "tin-ore",
-	title = "Tin Ore",
-	ore = "Tin",
-	raw = true,
-	parts = [{
-		color = colors.tinOre,
-		gloss = gloss.metallicOre,
-		scale = 0.6,
-		translate = [-0.1,0,0],
-		lods = [
-			["models/iron-ore.stl", high, shadow],
-			["oreLD", medium, noshadow],
-		],
-	}],
-	armV = 0.3,
-	tubeV = 0.1,
-	mining = 0.8,
-})
-
-add_item({
-	name = "lead-ore",
-	title = "Lead Ore",
-	ore = "Lead",
-	raw = true,
-	parts = [{
-		color = colors.leadOre,
-		gloss = gloss.metallicOre,
-		scale = 0.6,
-		translate = [0.05,0,0],
-		lods = [
-			["models/copper-ore.stl", high, shadow],
-			["oreLD", medium, noshadow],
-		],
-	}],
-	armV = 0.3,
-	tubeV = 0.1,
-	mining = 0.8,
-})
-
-add_item({
 	name = "aluminium-ore",
 	title = "Aluminium Ore",
 	ore = "Aluminium",
+	category = "resources",
+	group = "ore",
+	order = order.aluminium,
 	raw = true,
 	parts = [{
 		color = colors.aluminiumOre,
@@ -161,6 +163,9 @@ add_item({
 	name = "gold-ore",
 	title = "Gold Ore",
 	ore = "Gold",
+	category = "resources",
+	group = "ore",
+	order = order.gold,
 	raw = true,
 	parts = [{
 		color = colors.gold,
@@ -175,10 +180,37 @@ add_item({
 	mining = 0.7,
 })
 
-function crushedOre(name, title, color, gloss)
+add_item({
+	name = "uranium-ore",
+	title = "Uranium Ore",
+	ore = "Uranium",
+	category = "resources",
+	group = "ore",
+	order = order.uranium,
+	raw = true,
+	parts = [{
+		color = colors.uraniumOre,
+		gloss = gloss.metallicOre,
+		scale = 0.6,
+		lods = [
+			["models/stone.stl", high, shadow],
+			["oreLD", medium, noshadow],
+		],
+	}],
+	armV = 0.3,
+	tubeV = 0.1,
+	mining = 0.7,
+})
+
+slot = 0
+
+function crushedOre(name, title, color, gloss, order)
 	add_item({
 		name = name,
 		title = title,
+		category = "resources",
+		group = "crushed",
+		order = order,
 		parts = [
 			{
 				color = color,
@@ -202,19 +234,19 @@ function crushedOre(name, title, color, gloss)
 	})
 end
 
-crushedOre("iron-crushed", "Crushed Iron", colors.ironOre, gloss.metallicOre)
-crushedOre("copper-crushed", "Crushed Copper", colors.copperOre, gloss.metallicOre)
-crushedOre("coal-crushed", "Crushed Coal", colors.coal, gloss.none)
-crushedOre("stone-crushed", "Crushed Stone", 0x999999ff, gloss.none)
-crushedOre("silica-sand", "Silica Sand", 0xFFF8DCff, gloss.metallicOre)
-crushedOre("uranium-crushed", "Crushed Uranium", colors.uraniumOre, gloss.metallicOre)
-crushedOre("tin-crushed", "Crushed Tin", colors.tinOre, gloss.metallicOre)
-crushedOre("lead-crushed", "Crushed Lead", colors.leadOre, gloss.metallicOre)
-crushedOre("gold-powder", "Gold Powder", colors.gold, gloss.metallicOre)
-crushedOre("sulfur", "Sulfur", 0xffff00ff, gloss.metallicOre)
-crushedOre("alumina-powder", "Alumina Powder", colors.aluminium, gloss.metallicOre)
-crushedOre("uranium-238", "Uranium 238", 0x12AD12ff, gloss.metallicOre)
-crushedOre("uranium-235", "Uranium 235", 0x52ED52ff, gloss.metallicOre)
-crushedOre("fissile-product", "Fissile Product", 0xc0c0e0ff, gloss.metallicOre)
-crushedOre("plutonium-239", "Plutonium 239", 0xff6600ff, gloss.metallicOre)
+crushedOre("iron-crushed", "Crushed Iron", colors.ironOre, gloss.metallicOre, order.iron)
+crushedOre("copper-crushed", "Crushed Copper", colors.copperOre, gloss.metallicOre, order.copper)
+crushedOre("coal-crushed", "Crushed Coal", colors.coal, gloss.none, order.coal)
+crushedOre("stone-crushed", "Crushed Stone", 0x999999ff, gloss.none, order.stone)
+crushedOre("silica-sand", "Silica Sand", 0xFFF8DCff, gloss.metallicOre, order.silica)
+crushedOre("uranium-crushed", "Crushed Uranium", colors.uraniumOre, gloss.metallicOre, order.uranium)
+crushedOre("tin-crushed", "Crushed Tin", colors.tinOre, gloss.metallicOre, order.tin)
+crushedOre("lead-crushed", "Crushed Lead", colors.leadOre, gloss.metallicOre, order.lead)
+crushedOre("gold-powder", "Gold Powder", colors.gold, gloss.metallicOre, order.gold)
+crushedOre("sulfur", "Sulfur", 0xffff00ff, gloss.metallicOre, order.sulfur)
+crushedOre("alumina-powder", "Alumina Powder", colors.aluminium, gloss.metallicOre, order.aluminium)
+crushedOre("uranium-238", "Uranium 238", 0x12AD12ff, gloss.metallicOre, "$(order.uranium)-a")
+crushedOre("uranium-235", "Uranium 235", 0x52ED52ff, gloss.metallicOre, "$(order.uranium)-b")
+crushedOre("fissile-product", "Fissile Product", 0xc0c0e0ff, gloss.metallicOre, "$(order.uranium)-c")
+crushedOre("plutonium-239", "Plutonium 239", 0xff6600ff, gloss.metallicOre, "$(order.uranium)-d")
 

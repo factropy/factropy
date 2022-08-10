@@ -68,6 +68,25 @@ struct Item {
 	TimeSeriesSum consumption;
 	TimeSeriesSum supplies;
 
+	struct Group {
+		std::string order;
+		std::vector<Item*> display;
+	};
+
+	struct Category {
+		std::string title;
+		std::string order;
+		std::map<std::string,Group> groups;
+		std::vector<Group*> display;
+	};
+
+	static inline std::map<std::string,Category> categories;
+	static inline std::vector<Category*> display;
+
+	Category* category = nullptr;
+	Group* group = nullptr;
+	std::string order;
+
 	struct Shipment {
 		uint64_t tick = 0;
 		uint count = 0;

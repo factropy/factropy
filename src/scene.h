@@ -187,7 +187,8 @@ struct Scene {
 
 	std::array<float,1024> packets;
 
-	std::map<Spec*,std::vector<uint64_t>> iconTextures;
+	std::map<Spec*,std::vector<uint64_t>> specIconTextures;
+	std::map<uint,std::vector<uint64_t>> itemIconTextures;
 
 	struct {
 		TimeSeries update;
@@ -246,7 +247,8 @@ struct Scene {
 	void advance();
 	void render();
 	void renderLoading();
-	bool renderIcon();
+	bool renderSpecIcon();
+	bool renderItemIcon();
 	void build(Spec* spec, Point dir = Point::South);
 	void saveFramebuffer();
 	void print(std::string m);

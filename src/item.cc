@@ -118,4 +118,3 @@ bool Item::hasLOD(float distance) {
 	return false;
 }
 
-

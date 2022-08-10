@@ -165,3 +165,17 @@ smelting = {
 		energy = 0+(0.75*energy.smelting),
 	},
 }
+
+order = {
+	iron = "a",
+	copper = "b",
+	tin = "c",
+	lead = "d",
+	aluminium = "e",
+	gold = "f",
+	uranium = "g",
+	coal = "h",
+	stone = "i",
+	sulfur = "j",
+	silica = "k",
+}
