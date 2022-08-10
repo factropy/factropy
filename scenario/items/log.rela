@@ -4,6 +4,7 @@ add_item({
 	title = "Log",
 	fuel = [ "chemical", MJ(10) ],
 	show = true,
+	free = true,
 	parts = [{
 		color = colors.wood,
 		scale = 0.5,

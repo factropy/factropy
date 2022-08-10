@@ -84,12 +84,12 @@ uint Item::bestAmmo() {
 }
 
 bool Item::manufacturable() {
+	if (free) return true;
+	if (mining.count(id)) return true;
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
 		if (recipe->mine == id) return true;
-		for (auto [iid,_]: recipe->outputItems) {
-			if (iid == id) return true;
-		}
+		if (recipe->outputItems.count(id)) return true;
 	}
 	for (auto& [_,spec]: Spec::all) {
 		if (spec->licensed && spec->source && spec->sourceItem == this) return true;

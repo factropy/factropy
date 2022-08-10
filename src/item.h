@@ -78,6 +78,7 @@ struct Item {
 	uint ammoRounds;
 	Health ammoDamage;
 	bool raw;
+	bool free;
 	bool show;
 
 	Item();

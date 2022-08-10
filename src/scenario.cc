@@ -431,6 +431,11 @@ public:
 			item->raw = to_bool(raw);
 		}
 
+		auto free = field("free");
+		if (is_bool(free)) {
+			item->free = to_bool(free);
+		}
+
 		auto show = field("show");
 		if (is_bool(show)) {
 			item->show = to_bool(show);

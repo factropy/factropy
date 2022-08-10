@@ -41,11 +41,10 @@ Fluid* Fluid::get(uint id) {
 }
 
 bool Fluid::manufacturable() {
+	if (drilling.count(id)) return true;
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
-		for (auto [fid,_]: recipe->outputFluids) {
-			if (fid == id) return true;
-		}
+		if (recipe->outputFluids.count(id)) return true;
 	}
 	for (auto& [_,spec]: Spec::all) {
 		if (spec->licensed && spec->source && spec->sourceFluid == this) return true;
