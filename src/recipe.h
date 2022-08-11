@@ -33,7 +33,6 @@ struct Recipe {
 	bool delivery;
 	std::string name;
 	std::string title;
-	std::vector<Part*> parts;
 
 	std::set<std::string> tags;
 

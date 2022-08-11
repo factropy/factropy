@@ -10,6 +10,7 @@ struct Stack;
 #include "part.h"
 #include "mass.h"
 #include "energy.h"
+#include "recipe.h"
 #include "slabarray.h"
 #include "time-series.h"
 #include <map>
@@ -108,4 +109,5 @@ struct Item {
 	void consume(int count);
 	void supply(int count);
 	bool hasLOD(float distance);
+	miniset<Recipe*> recipes();
 };

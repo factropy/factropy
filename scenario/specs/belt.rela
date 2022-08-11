@@ -821,7 +821,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			cycleReverseDirection = true,
 			downward = names.balancer,
 			statsGroup = names.loader,
-			build = true,
+			build = false,
 			title = if tier > 1 "Unloader (Fast)" else "Unloader" end,
 			toolbar = "a-d-$(tier)",
 			collision = [0, 0, 0, 1, 2, 2],

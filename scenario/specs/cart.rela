@@ -1,6 +1,6 @@
 add_spec({
 	name = "cart-stop",
-	title = "Vehicle Stop",
+	title = "Cart Stop",
 	cycle = "cart-waypoint",
 	health = 150,
 	collision = [0, 0, 0, 2, 0.05, 2],
@@ -32,7 +32,7 @@ add_spec({
 
 add_spec({
 	name = "cart-waypoint",
-	title = "Vehicle Waypoint",
+	title = "Cart Waypoint",
 	cycle = "cart-stop",
 	health = 150,
 	collision = [0, 0, 0, 2, 0.05, 2],

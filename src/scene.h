@@ -177,6 +177,7 @@ struct Scene {
 		Mesh* pipeConnector;
 		Mesh* chevron;
 		Mesh* flame;
+		Mesh* droplet;
 	} bits;
 
 	struct {
@@ -189,6 +190,7 @@ struct Scene {
 
 	std::map<Spec*,std::vector<uint64_t>> specIconTextures;
 	std::map<uint,std::vector<uint64_t>> itemIconTextures;
+	std::map<uint,std::vector<uint64_t>> fluidIconTextures;
 
 	struct {
 		TimeSeries update;
@@ -249,6 +251,7 @@ struct Scene {
 	void renderLoading();
 	bool renderSpecIcon();
 	bool renderItemIcon();
+	bool renderFluidIcon();
 	void build(Spec* spec, Point dir = Point::South);
 	void saveFramebuffer();
 	void print(std::string m);

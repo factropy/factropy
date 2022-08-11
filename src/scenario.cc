@@ -2643,6 +2643,7 @@ void ScenarioBase::specifications() {
 	spec->networkWifi = {0,-0.8,0};
 	spec->status = true;
 	spec->beacon = {0,-0.8,0};
+	spec->build = false;
 	spec->parts = {
 		(new Part(0xFF4500ff))
 			->lod(mesh("armBase"), Part::HD, Part::SHADOW)

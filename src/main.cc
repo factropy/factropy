@@ -421,7 +421,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (readyScenario)
-				readyIcons = !scene.renderSpecIcon() && !scene.renderItemIcon();
+				readyIcons = !scene.renderSpecIcon() && !scene.renderItemIcon() && !scene.renderFluidIcon();
 
 			std::this_thread::sleep_for(1ms);
 		}

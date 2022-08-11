@@ -29,12 +29,30 @@ struct Popup {
 	void center();
 	void topRight();
 	void bottomLeft();
+
 	uint itemPicked = 0;
 	uint itemPicker(bool open = false, std::function<bool(Item*)> show = nullptr);
-	static int iconSize(float pix = 0);
+	static int iconTier(float pix = 0);
+	static ImTextureID itemIconChoose(Item* item, float pix = 0);
 	static void itemIcon(Item* item, float pix = 0);
 	static bool itemIconButton(Item* item, float pix = 0);
+	static ImTextureID fluidIconChoose(Fluid* fluid, float pix = 0);
+	static void fluidIcon(Fluid* fluid, float pix = 0);
+	static bool fluidIconButton(Fluid* fluid, float pix = 0);
+	static ImTextureID recipeIconChoose(Recipe* recipe, float pix = 0);
+	static void recipeIcon(Recipe* recipe, float pix = 0);
+	static bool recipeIconButton(Recipe* recipe, float pix = 0);
+	static ImTextureID specIconChoose(Spec* spec, float pix = 0);
+	static void specIcon(Spec* spec, float pix = 0);
+	static bool specIconButton(Spec* spec, float pix = 0);
+
+	Recipe* recipePicked = nullptr;
+	Recipe* recipePicker(bool open = false, std::function<bool(Recipe*)> show = nullptr);
+
 	float relativeWidth(float w);
+
+	static bool tipBegin();
+	static void tipEnd();
 	static void tip(const std::string& s);
 	static std::string wrap(uint line, std::string text);
 

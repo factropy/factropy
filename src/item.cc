@@ -1,7 +1,6 @@
 #include "common.h"
 #include "sim.h"
 #include "item.h"
-#include "recipe.h"
 
 Fuel::Fuel() {
 	energy = 0;
@@ -81,6 +80,16 @@ uint Item::bestAmmo() {
 		}
 	}
 	return ammoId;
+}
+
+miniset<Recipe*> Item::recipes() {
+	miniset<Recipe*> out;
+	for (auto& [_,recipe]: Recipe::names) {
+		if (!recipe->licensed) continue;
+		if (recipe->mine == id) out.insert(recipe);
+		if (recipe->outputItems.count(id)) out.insert(recipe);
+	}
+	return out;
 }
 
 bool Item::manufacturable() {

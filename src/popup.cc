@@ -89,7 +89,7 @@ void Popup::center() {
 	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
-int Popup::iconSize(float pix) {
+int Popup::iconTier(float pix) {
 	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 
@@ -102,22 +102,182 @@ int Popup::iconSize(float pix) {
 	return iconSize;
 }
 
+ImTextureID Popup::itemIconChoose(Item* item, float pix) {
+	return (ImTextureID)scene.itemIconTextures[item->id][iconTier(pix)];
+}
+
 void Popup::itemIcon(Item* item, float pix) {
 	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
-
-	Image((ImTextureID)scene.itemIconTextures[item->id][iconSize(pix)],
-		ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0)
-	);
+	Image(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 bool Popup::itemIconButton(Item* item, float pix) {
 	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	return ImageButton(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
 
-	return ImageButton((ImTextureID)scene.itemIconTextures[item->id][iconSize(pix)],
-		ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0)
-	);
+ImTextureID Popup::fluidIconChoose(Fluid* fluid, float pix) {
+	return (ImTextureID)scene.fluidIconTextures[fluid->id][iconTier(pix)];
+}
+
+void Popup::fluidIcon(Fluid* fluid, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	Image(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
+
+bool Popup::fluidIconButton(Fluid* fluid, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	return ImageButton(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
+
+ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
+	auto chooseItem = [&](auto from) {
+		minivec<Item*> items;
+		for (auto& [iid,_]: from) {
+			items.push(Item::get(iid));
+		}
+		std::sort(items.begin(), items.end(), [](const auto a, const auto b) {
+			return a->category->order < b->category->order
+				|| (a->category->order == b->category->order && b->group->order < b->group->order)
+				|| (a->category->order == b->category->order && b->group->order == b->group->order && a->order < b->order)
+				|| (a->category->order == b->category->order && b->group->order == b->group->order && a->order == b->order && a->title < b->title);
+		});
+		return items.size() ? items.front()->id: 0;
+	};
+
+	auto chooseFluid = [&](auto from) {
+		minivec<Fluid*> fluids;
+		for (auto& [fid,_]: from) {
+			fluids.push(Fluid::get(fid));
+		}
+		std::sort(fluids.begin(), fluids.end(), [](const auto a, const auto b) {
+			return a->title < b->title;
+		});
+		return fluids.size() ? fluids.front()->id: 0;
+	};
+
+	if (recipe->mine) {
+		return itemIconChoose(Item::get(recipe->mine), pix);
+	}
+
+	if (recipe->drill) {
+		return fluidIconChoose(Fluid::get(recipe->drill), pix);
+	}
+
+	if (recipe->fluid) {
+		return fluidIconChoose(Fluid::get(recipe->fluid), pix);
+	}
+
+	if (recipe->outputItems.size() > 0) {
+		return itemIconChoose(Item::get(chooseItem(recipe->outputItems)), pix);
+	}
+
+	if (recipe->outputFluids.size() > 0) {
+		return fluidIconChoose(Fluid::get(chooseFluid(recipe->outputFluids)), pix);
+	}
+
+	if (recipe->inputItems.size() > 0) {
+		return itemIconChoose(Item::get(chooseItem(recipe->inputItems)), pix);
+	}
+
+	if (recipe->inputFluids.size() > 0) {
+		return fluidIconChoose(Fluid::get(chooseFluid(recipe->inputFluids)), pix);
+	}
+
+	ensuref("recipe '%s' has no icon", recipe->title);
+	return 0;
+}
+
+void Popup::recipeIcon(Recipe* recipe, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	Image(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
+
+bool Popup::recipeIconButton(Recipe* recipe, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+
+	auto state = ImageButton(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+
+	if (!state && tipBegin()) {
+		Print(recipe->title.c_str());
+		int i = 0;
+
+		auto item = [&](uint iid, uint count) {
+			if (i++) {
+				Print(" + ");
+				SameLine();
+			}
+			itemIcon(Item::get(iid));
+			SameLine();
+			Print(fmtc("(%u)", count));
+			SameLine();
+		};
+
+		auto fluid = [&](uint fid, uint count) {
+			if (i++) {
+				Print(" + ");
+				SameLine();
+			}
+			fluidIcon(Fluid::get(fid));
+			SameLine();
+			Print(fmtc("(%u)", count));
+			SameLine();
+		};
+
+		i = 0;
+		for (auto& [iid,count]: recipe->inputItems) {
+			item(iid, count);
+		}
+		for (auto& [fid,count]: recipe->inputFluids) {
+			fluid(fid, count);
+		}
+
+		if (i) NewLine();
+		Indent();
+		Print("= ");
+		SameLine();
+
+		i = 0;
+		if (recipe->mine) {
+			item(recipe->mine, 1);
+		}
+		if (recipe->drill) {
+			fluid(recipe->drill, 100);
+		}
+		for (auto& [iid,count]: recipe->outputItems) {
+			item(iid, count);
+		}
+		for (auto& [fid,count]: recipe->outputFluids) {
+			fluid(fid, count);
+		}
+
+		Unindent();
+		tipEnd();
+	}
+
+	return state;
+}
+
+ImTextureID Popup::specIconChoose(Spec* spec, float pix) {
+	return (ImTextureID)scene.specIconTextures[spec][iconTier(pix)];
+}
+
+void Popup::specIcon(Spec* spec, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	Image(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
+
+bool Popup::specIconButton(Spec* spec, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+	return ImageButton(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
@@ -129,8 +289,8 @@ uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
 		return item->manufacturable();
 	};
 
-	h = (float)Config::height(0.375f);
-	w = h;
+	w = (float)Config::height(0.375f);
+	h = w*0.6;
 
 	const ImVec2 size = {
 		(float)w,(float)h
@@ -142,41 +302,103 @@ uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
 	};
 
 	SetNextWindowSize(size, ImGuiCond_Always);
-	SetNextWindowPos(pos, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Appearing);
 
 	itemPicked = 0;
 
 	if (BeginPopup("##item-picker")) {
-		if (BeginTabBar("##item-picker-categories", ImGuiTabBarFlags_None)) {
+		if (!open && scene.keyReleased(SDLK_ESCAPE)) CloseCurrentPopup();
 
-			for (auto category: Item::display) {
-				if (!BeginTabItem(fmtc("%s##item-picker-tab-%s", category->title, category->title))) continue;
-				BeginTable(fmtc("##item-picker-table-%s", category->title), 10);
+		PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(GetStyle().ItemSpacing.x, GetStyle().ItemSpacing.x));
 
-				for (auto group: category->display) {
-					TableNextRow();
+		float cell = (GetContentRegionAvail().x - (GetStyle().ItemSpacing.x*19)) / 10;
+		int row = 0;
+		int col = 0;
 
-					for (auto item: group->display) {
-						if (!show(item)) continue;
-						TableNextColumn();
-						if (itemIconButton(item, GetFontSize()*2)) {
-							itemPicked = item->id;
-							CloseCurrentPopup();
-						}
-						if (IsItemHovered()) {
-							tip(item->title.c_str());
-						}
-					}
+		for (auto category: Item::display) {
+			for (auto group: category->display) {
+				if (row++ > 0 && col > 0) {
+					NewLine();
+					col = 0;
 				}
-				EndTable();
-				EndTabItem();
+				for (auto item: group->display) {
+					if (!show(item)) continue;
+					if (col++ == 10) {
+						NewLine();
+						col = 1;
+					}
+					if (itemIconButton(item, cell)) {
+						itemPicked = item->id;
+						CloseCurrentPopup();
+					}
+					if (IsItemHovered()) {
+						tip(item->title.c_str());
+					}
+					SameLine();
+				}
 			}
-			EndTabBar();
 		}
+
+		PopStyleVar(1);
 		EndPopup();
 	}
 
 	return itemPicked;
+}
+
+Recipe* Popup::recipePicker(bool open, std::function<bool(Recipe*)> show) {
+	using namespace ImGui;
+
+	if (open) OpenPopup("##recipe-picker");
+
+	if (!show) show = [](Recipe* recipe) {
+		return recipe->manufacturable();
+	};
+
+	w = (float)Config::height(0.375f);
+	h = w*0.6;
+
+	const ImVec2 size = {
+		(float)w,(float)h
+	};
+
+	const ImVec2 pos = {
+		((float)Config::window.width-size.x)/2.0f,
+		((float)Config::window.height-size.y)/2.0f
+	};
+
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Appearing);
+
+	recipePicked = 0;
+
+	if (BeginPopup("##recipe-picker")) {
+		if (!open && scene.keyReleased(SDLK_ESCAPE)) CloseCurrentPopup();
+
+		PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(GetStyle().ItemSpacing.x, GetStyle().ItemSpacing.x));
+
+		float cell = (GetContentRegionAvail().x - (GetStyle().ItemSpacing.x*19)) / 10;
+//		int row = 0;
+		int col = 0;
+
+		for (auto [_,recipe]: Recipe::names) {
+			if (!show(recipe)) continue;
+			if (col++ == 10) {
+				NewLine();
+				col = 1;
+			}
+			if (recipeIconButton(recipe, cell)) {
+				recipePicked = recipe;
+				CloseCurrentPopup();
+			}
+			SameLine();
+		}
+
+		PopStyleVar(1);
+		EndPopup();
+	}
+
+	return recipePicked;
 }
 
 void Popup::topRight() {
@@ -239,18 +461,30 @@ std::string Popup::wrap(uint line, std::string text) {
 	return text;
 }
 
+bool Popup::tipBegin() {
+	using namespace ImGui;
+	if (IsItemHovered()) {
+		auto& style = GetStyle();
+		ImVec2 tooltip_pos = GetMousePos();
+		tooltip_pos.x += (Config::window.hdpi/96.0) * 16;
+		tooltip_pos.y += (Config::window.vdpi/96.0) * 16;
+		SetNextWindowPos(tooltip_pos);
+		SetNextWindowBgAlpha(style.Colors[ImGuiCol_PopupBg].w * 1.0f);
+	    ImGuiWindowFlags flags = ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
+		Begin("##popup-tip", nullptr, flags);
+		return true;
+	}
+	return false;
+}
+
+void Popup::tipEnd() {
+	using namespace ImGui;
+	End();
+}
+
 void Popup::tip(const std::string& s) {
 	using namespace ImGui;
-
-	auto& style = GetStyle();
-	ImVec2 tooltip_pos = GetMousePos();
-	tooltip_pos.x += (Config::window.hdpi/96.0) * 16;
-	tooltip_pos.y += (Config::window.vdpi/96.0) * 16;
-	SetNextWindowPos(tooltip_pos);
-	SetNextWindowBgAlpha(style.Colors[ImGuiCol_PopupBg].w * 1.0f);
-
-    ImGuiWindowFlags flags = ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize;
-	Begin("##popup-tip", nullptr, flags);
+	tipBegin();
 	PushFont(Config::sidebar.font.imgui);
 	PushTextWrapPos((float)Config::window.width*0.1f);
 	PushStyleColor(ImGuiCol_Text, ImColorSRGB(0xffffccff));
@@ -258,7 +492,7 @@ void Popup::tip(const std::string& s) {
 	PopStyleColor(1);
 	PopTextWrapPos();
 	PopFont();
-	End();
+	tipEnd();
 }
 
 void Popup::crafterNotice(Crafter& crafter) {
@@ -913,6 +1147,8 @@ void StatsPopup2::draw() {
 	}
 
 	mouseOver = ImGui::IsWindowHovered();
+	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+
 	ImGui::End();
 	if (visible) show(showing);
 }
@@ -1389,19 +1625,18 @@ void EntityPopup2::draw() {
 
 					float width = GetContentRegionAvail().x;
 					SpacingV();
-					if (itemPicker(Button("Limit item"))) {
+
+					auto pick = Button(" + Item ");
+					if (IsItemHovered()) tip(
+						"Accept an item with limits."
+					);
+
+					if (itemPicker(pick)) {
 						store.levelSet(Item::get(itemPicked)->id, 0, 0);
 					}
 
-					if (en.spec->storeAnything) {
-						SameLine();
-						Checkbox("Allow anything", &store.anything);
-						if (IsItemHovered()) tip(
-							"Store any item without limits."
-						);
-					}
-
-					if (Button("Construction materials")) {
+					SameLine();
+					if (Button(" + Construction ")) {
 						std::set<Item*> items;
 						for (auto [_,spec]: Spec::all) {
 							if (!spec->licensed) continue;
@@ -1415,11 +1650,19 @@ void EntityPopup2::draw() {
 							store.levelSet(item->id, 0, 0);
 						}
 					}
+					if (IsItemHovered()) tip(
+						"Accept all construction materials with limits."
+					);
+
+					if (en.spec->storeAnything) {
+						SameLine();
+						Checkbox("Anything", &store.anything);
+						if (IsItemHovered()) tip(
+							"Accept any item unless explicitly limited."
+						);
+					}
 
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
-
-					int iconSize = Config::toolbar.icon.size;
-//					float iconPix = Config::toolbar.icon.sizes[iconSize];
 
 					SpacingV();
 					BeginTable(fmtc("##store-levels-%u", id++), en.spec->crafter ? 10: 9);
@@ -1468,7 +1711,7 @@ void EntityPopup2::draw() {
 						int step  = (int)std::max(1U, (uint)limit/100);
 
 						TableNextColumn();
-						Image((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
+						itemIcon(item);
 
 						TableNextColumn();
 						Print(fmtc("%s", item->title));
@@ -1535,7 +1778,7 @@ void EntityPopup2::draw() {
 						TableNextRow();
 
 						TableNextColumn();
-						Image((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
+						itemIcon(item);
 
 						TableNextColumn();
 						Print(fmtc("%s", item->title));
@@ -1668,31 +1911,23 @@ void EntityPopup2::draw() {
 				SpacingV();
 				crafterNotice(crafter);
 
-				const char* selected = nullptr;
-				std::vector<const char*> optionTitles;
-				std::vector<Recipe*> optionRecipes;
-
-				for (auto& [_,recipe]: Recipe::names) {
-					if (recipe->licensed && crafter.craftable(recipe)) {
-						optionRecipes.push_back(recipe);
-						optionTitles.push_back(recipe->title.c_str());
-						if (crafter.recipe == recipe) {
-							selected = optionTitles.back();
-						}
-					}
-				}
-
-				if (BeginCombo("Recipe", selected)) {
-					for (uint i = 0; i < optionRecipes.size(); i++) {
-						if (Selectable(optionTitles[i], optionTitles[i] == selected)) {
-							crafter.craft(optionRecipes[i]);
-						}
-					}
-					EndCombo();
-				}
-
-				SpacingV();
 				SmallBar(crafter.progress);
+				SpacingV();
+
+				auto craftable = [&](Recipe* recipe) {
+					return recipe->manufacturable() && crafter.craftable(recipe);
+				};
+
+				if (crafter.recipe) {
+					auto pick = Button(fmtc(" %s ", crafter.recipe->title.c_str()));
+					if (IsItemHovered()) tip("Change recipe");
+					if (recipePicker(pick, craftable)) crafter.craft(recipePicked);
+				}
+				else {
+					if (recipePicker(Button("Set Recipe"), craftable)) {
+						crafter.craft(recipePicked);
+					}
+				}
 
 				if (crafter.recipe) {
 					float width = GetContentRegionAvail().x;
@@ -1700,8 +1935,9 @@ void EntityPopup2::draw() {
 					if (crafter.recipe->inputItems.size() || crafter.recipe->inputFluids.size()) {
 
 						SpacingV();
-						BeginTable("inputs", 3);
+						BeginTable("inputs", 4);
 
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 						TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
 						TableSetupColumn("Consumes", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
 						TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
@@ -1715,7 +1951,8 @@ void EntityPopup2::draw() {
 							else {
 								Print(s.c_str());
 							}
-							if (IsItemHovered()) tip("Resource input buffers allow for 2x recipe consumption."
+							if (IsItemHovered()) tip(
+								"Resource input buffers allow for 2x recipe consumption."
 								" To avoid production stalling keep input buffers full."
 							);
 						};
@@ -1727,6 +1964,9 @@ void EntityPopup2::draw() {
 								std::string& name = Item::get(stack.iid)->title;
 								int consume = crafter.recipe->inputItems[stack.iid];
 								int have = stack.size;
+
+								TableNextColumn();
+								itemIcon(Item::get(stack.iid));
 
 								TableNextColumn();
 								Print(name.c_str());
@@ -1748,6 +1988,9 @@ void EntityPopup2::draw() {
 								int have = amount.size;
 
 								TableNextColumn();
+								fluidIcon(Fluid::get(amount.fid));
+
+								TableNextColumn();
 								Print(name.c_str());
 
 								TableNextColumn();
@@ -1764,8 +2007,9 @@ void EntityPopup2::draw() {
 					if (crafter.recipe->outputItems.size() || crafter.recipe->outputFluids.size() || crafter.recipe->mine || crafter.recipe->drill) {
 
 						SpacingV();
-						BeginTable("outputs", 3);
+						BeginTable("outputs", 4);
 
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 						TableSetupColumn("Product", ImGuiTableColumnFlags_WidthStretch);
 						TableSetupColumn("Produces", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
 						TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
@@ -1788,6 +2032,9 @@ void EntityPopup2::draw() {
 								std::string& name = Item::get(stack.iid)->title;
 								int produce = crafter.recipe->outputItems[stack.iid];
 								int have = stack.size;
+
+								TableNextColumn();
+								itemIcon(Item::get(stack.iid));
 
 								TableNextColumn();
 								Print(name.c_str());
@@ -1815,6 +2062,9 @@ void EntityPopup2::draw() {
 							int limit = en.store().limit().items(crafter.recipe->mine);
 
 							TableNextColumn();
+							itemIcon(Item::get(crafter.recipe->mine));
+
+							TableNextColumn();
 							Print(name.c_str());
 
 							TableNextColumn();
@@ -1836,6 +2086,9 @@ void EntityPopup2::draw() {
 								std::string& name = Fluid::get(amount.fid)->title;
 								int produce = crafter.recipe->outputFluids[amount.fid];
 								int have = amount.size;
+
+								TableNextColumn();
+								fluidIcon(Fluid::get(amount.fid));
 
 								TableNextColumn();
 								Print(name.c_str());
@@ -1863,6 +2116,9 @@ void EntityPopup2::draw() {
 							for (auto& amount: crafter.exportFluids) {
 								if (amount.fid == crafter.recipe->drill) have = amount.size;
 							}
+
+							TableNextColumn();
+							fluidIcon(Fluid::get(crafter.recipe->drill));
 
 							TableNextColumn();
 							Print(name.c_str());
@@ -3330,8 +3586,16 @@ void RecipePopup::drawItem(Item* item) {
 	}
 
 	SetNextItemOpen(expanded.item[item]);
-	expanded.item[item] = CollapsingHeader(fmtc("%s##item-%d", item->title, item->id));
+	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+	expanded.item[item] = CollapsingHeader(fmtc("##item-%d", item->id));
 	bool faint = !highlited.item[item] && !IsItemHovered();
+	PopStyleColor(1);
+
+	SameLine();
+	itemIcon(item);
+
+	SameLine();
+	Print(item->title.c_str());
 
 	SameLine();
 	if (faint) PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -3455,7 +3719,15 @@ void RecipePopup::drawFluid(Fluid* fluid) {
 	}
 
 	SetNextItemOpen(expanded.fluid[fluid]);
-	expanded.fluid[fluid] = CollapsingHeader(fmtc("%s##fluid-%d", fluid->title, fluid->id));
+	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+	expanded.fluid[fluid] = CollapsingHeader(fmtc("##fluid-%d", fluid->id));
+	PopStyleColor(1);
+
+	SameLine();
+	fluidIcon(fluid);
+
+	SameLine();
+	Print(fluid->title.c_str());
 
 	if (expanded.fluid[fluid]) {
 
@@ -3532,8 +3804,16 @@ void RecipePopup::drawRecipe(Recipe* recipe) {
 	}
 
 	SetNextItemOpen(expanded.recipe[recipe]);
-	expanded.recipe[recipe] = CollapsingHeader(fmtc("%s##recipe-%s", recipe->title, recipe->name));
+	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+	expanded.recipe[recipe] = CollapsingHeader(fmtc("##recipe-%s", recipe->name));
 	bool faint = !highlited.recipe[recipe] && !IsItemHovered();
+	PopStyleColor(1);
+
+	SameLine();
+	recipeIcon(recipe);
+
+	SameLine();
+	Print(recipe->title.c_str());
 
 	SameLine();
 	if (faint) PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -3613,8 +3893,16 @@ void RecipePopup::drawSpec(Spec* spec) {
 	}
 
 	SetNextItemOpen(expanded.spec[spec]);
-	expanded.spec[spec] = CollapsingHeader(fmtc("%s##build-spec-%s", spec->title, spec->name));
+	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+	expanded.spec[spec] = CollapsingHeader(fmtc("##build-spec-%s", spec->name));
 	bool faint = !highlited.spec[spec] && !IsItemHovered();
+	PopStyleColor(1);
+
+	SameLine();
+	specIcon(spec);
+
+	SameLine();
+	Print(spec->title.c_str());
 
 	if (faint) {
 		PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -3742,20 +4030,19 @@ void RecipePopup::drawSpec(Spec* spec) {
 			EndTable();
 		}
 
-		int iconSize = Config::toolbar.icon.size;
-		float iconPix = Config::toolbar.icon.sizes[iconSize];
-
 		minivec<Spec*> iconSpecs;
 		iconSpecs.push(spec);
 		for (Spec* s = spec->cycle; s && s != spec; s = s->cycle) {
 			if (!s->build) iconSpecs.push(s);
 		}
-		for (auto s: iconSpecs) {
-			Image((ImTextureID)scene.specIconTextures[s][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
-			if (IsItemHovered() && iconSpecs.size() > 1) tip("Use [C] to cycle ghost variants");
-			SameLine();
+		if (iconSpecs.size() > 1) {
+			for (auto s: iconSpecs) {
+				specIcon(s);
+				if (IsItemHovered() && iconSpecs.size() > 1) tip("Use [C] to cycle ghost variants");
+				SameLine();
+			}
+			NewLine();
 		}
-		NewLine();
 
 		if (spec->materials.size()) {
 			Section("Construction Materials");
@@ -3805,7 +4092,9 @@ void RecipePopup::drawGoal(Goal* goal) {
 	}
 
 	SetNextItemOpen(expanded.goal[goal]);
+	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
 	expanded.goal[goal] = CollapsingHeader(fmtc("%s##build-goal-%s", goal->title, goal->name));
+	PopStyleColor(1);
 
 	if (goal->met) {
 		SameLine();
