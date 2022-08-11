@@ -48,6 +48,7 @@ public:
 		func mass_kg            = { .name = "kg",                 .cb = &RelaMod::mass_kg            };
 		func add_item           = { .name = "add_item",           .cb = &RelaMod::add_item           };
 		func add_item_category  = { .name = "add_item_category",  .cb = &RelaMod::add_item_category  };
+		func add_item_group     = { .name = "add_item_group",     .cb = &RelaMod::add_item_group     };
 		func add_recipe         = { .name = "add_recipe",         .cb = &RelaMod::add_recipe         };
 		func add_spec           = { .name = "add_spec",           .cb = &RelaMod::add_spec           };
 		func add_goal           = { .name = "add_goal",           .cb = &RelaMod::add_goal           };
@@ -374,21 +375,25 @@ public:
 		auto data = stack_pop();
 
 		auto name = to_string(map_get_named(data, "name"));
-		ensuref(!Item::categories.count(name), "duplicate item category: %s", name);
+		ensuref(!Item::categories.count(name), "duplicate item category '%s'", name);
 
 		auto title = to_string(map_get_named(data, "title"));
 		auto order = to_string(map_get_named(data, "order"));
 
 		Item::categories[name] = {title, order};
-		auto& category = Item::categories[name];
+	}
 
-		auto groups = map_get_named(data, "groups");
-		for (int i = 0, l = item_count(groups); i < l; i++) {
-			auto group = vector_get(groups, i);
-			auto name = to_string(map_get_named(group, "name"));
-			auto order = to_string(map_get_named(group, "order"));
-			category.groups[name] = {order};
-		}
+	void add_item_group() {
+		auto data = stack_pop();
+
+		auto category = to_string(map_get_named(data, "category"));
+		ensuref(Item::categories.count(category), "unknown item category '%s'", category);
+
+		auto name = to_string(map_get_named(data, "name"));
+		auto order = to_string(map_get_named(data, "order"));
+		ensuref(!Item::categories[category].groups.count(name), "duplicate item group '%s' in category '%s'", name, category);
+
+		Item::categories[category].groups[name] = {order};
 	}
 
 	void add_item() {
@@ -411,14 +416,14 @@ public:
 		auto category = field("category");
 		if (is_string(category)) {
 			auto name = to_string(category);
-			ensuref(Item::categories.count(name), "unknown item category: %s", name);
+			ensuref(Item::categories.count(name), "unknown item category '%s'", name);
 			item->category = &Item::categories[name];
 		}
 
 		auto group = field("group");
 		if (is_string(group)) {
 			auto name = to_string(group);
-			ensuref(item->category->groups.count(name), "unknown item group: %s", name);
+			ensuref(item->category->groups.count(name), "unknown item group '%s'", name);
 			item->group = &item->category->groups[name];
 		}
 

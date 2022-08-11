@@ -296,8 +296,13 @@ int main(int argc, char* argv[]) {
 			Item::categories["other"].groups = {{"other",{"zzz"}}};
 
 			for (auto [_,item]: Item::names) {
-				if (!item->category || !item->group) {
+				if (!item->category) {
 					item->category = &Item::categories["other"];
+					item->group = &item->category->groups["other"];
+					continue;
+				}
+				if (!item->group) {
+					item->category->groups["other"] = {"zzz"};
 					item->group = &item->category->groups["other"];
 				}
 			}

@@ -3,6 +3,9 @@ function frame(name, title, color)
 	add_item({
 		name = name,
 		title = title,
+		category = "construction",
+		group = "foundation",
+		order = order,
 		parts = [{
 			color = color,
 			gloss = gloss.metallic,
@@ -17,6 +20,6 @@ function frame(name, title, color)
 	})
 end
 
-frame("steel-frame", "Steel Frame", colors.steel)
-frame("aluminium-frame", "Aluminium Frame", colors.aluminium)
+frame("steel-frame", "Steel Frame", colors.steel, order.iron)
+frame("aluminium-frame", "Aluminium Frame", colors.aluminium, order.aluminium)
 

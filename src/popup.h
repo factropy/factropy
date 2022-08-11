@@ -16,6 +16,7 @@ struct Popup {
 	bool opened = false;
 	bool mouseOver = false;
 	bool inputFocused = false;
+	bool subpopup = false;
 	Popup();
 	virtual ~Popup();
 	virtual void draw();
@@ -28,7 +29,11 @@ struct Popup {
 	void center();
 	void topRight();
 	void bottomLeft();
-	void picker();
+	uint itemPicked = 0;
+	uint itemPicker(bool open = false, std::function<bool(Item*)> show = nullptr);
+	static int iconSize(float pix = 0);
+	static void itemIcon(Item* item, float pix = 0);
+	static bool itemIconButton(Item* item, float pix = 0);
 	float relativeWidth(float w);
 	static void tip(const std::string& s);
 	static std::string wrap(uint line, std::string text);

@@ -1477,13 +1477,20 @@ void GUI::update() {
 
 	if (doEscape) {
 		doEscape = false;
+
+		// imgui child "popup" is visible over our popup
+		if (popup && popup->subpopup) {
+			return;
+		}
+
 		if (popup) {
 			popup->show(false);
 			popup = nullptr;
-		} else {
-			popup = mainMenu;
-			popup->show(true);
+			return;
 		}
+
+		popup = mainMenu;
+		popup->show(true);
 	}
 
 	if (doSave) {

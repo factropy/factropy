@@ -89,7 +89,45 @@ void Popup::center() {
 	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
-void Popup::picker() {
+int Popup::iconSize(float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+
+	int iconSize = 0;
+	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
+		iconSize = i;
+		if ((int)std::floor(Config::toolbar.icon.sizes[i]) >= (int)std::floor(pix)) break;
+	}
+
+	return iconSize;
+}
+
+void Popup::itemIcon(Item* item, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+
+	Image((ImTextureID)scene.itemIconTextures[item->id][iconSize(pix)],
+		ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0)
+	);
+}
+
+bool Popup::itemIconButton(Item* item, float pix) {
+	using namespace ImGui;
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+
+	return ImageButton((ImTextureID)scene.itemIconTextures[item->id][iconSize(pix)],
+		ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0)
+	);
+}
+
+uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
+	using namespace ImGui;
+
+	if (open) OpenPopup("##item-picker");
+
+	if (!show) show = [](Item* item) {
+		return item->manufacturable();
+	};
 
 	h = (float)Config::height(0.375f);
 	w = h;
@@ -103,8 +141,42 @@ void Popup::picker() {
 		((float)Config::window.height-size.y)/2.0f
 	};
 
-	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Always);
+
+	itemPicked = 0;
+
+	if (BeginPopup("##item-picker")) {
+		if (BeginTabBar("##item-picker-categories", ImGuiTabBarFlags_None)) {
+
+			for (auto category: Item::display) {
+				if (!BeginTabItem(fmtc("%s##item-picker-tab-%s", category->title, category->title))) continue;
+				BeginTable(fmtc("##item-picker-table-%s", category->title), 10);
+
+				for (auto group: category->display) {
+					TableNextRow();
+
+					for (auto item: group->display) {
+						if (!show(item)) continue;
+						TableNextColumn();
+						if (itemIconButton(item, GetFontSize()*2)) {
+							itemPicked = item->id;
+							CloseCurrentPopup();
+						}
+						if (IsItemHovered()) {
+							tip(item->title.c_str());
+						}
+					}
+				}
+				EndTable();
+				EndTabItem();
+			}
+			EndTabBar();
+		}
+		EndPopup();
+	}
+
+	return itemPicked;
 }
 
 void Popup::topRight() {
@@ -432,6 +504,7 @@ void LoadingPopup::draw() {
 	SetScrollHereY();
 
 	mouseOver = IsWindowHovered();
+	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 	End();
 
 	if (progress > 0) {
@@ -1088,17 +1161,6 @@ void EntityPopup2::draw() {
 			};
 		};
 
-		std::vector<Option> optionItems;
-
-		for (auto& [_,item]: Item::names) {
-			if (item->show || item->raw || item->manufacturable())
-				optionItems.push_back({item->id, item->title.c_str()});
-		}
-
-		std::sort(optionItems.begin(), optionItems.end(), [](const auto& a, const auto& b) {
-			return Item::get(a.id)->title < Item::get(b.id)->title;
-		});
-
 		std::vector<Option> optionFluids;
 
 		for (auto& [_,fluid]: Fluid::names) {
@@ -1131,13 +1193,8 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (BeginCombo("Allow item##filter-combo", nullptr)) {
-					for (auto& option: optionItems) {
-						if (!arm.filter.has(option.id) && Selectable(option.title, false)) {
-							insert = option.id;
-						}
-					}
-					EndCombo();
+				if (itemPicker(Button("Allow item##filter-item"))) {
+					if (!arm.filter.has(itemPicked)) insert = itemPicked;
 				}
 
 				if (arm.filter.size()) SpacingV();
@@ -1214,13 +1271,8 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (BeginCombo("Allow item##filter-combo", nullptr)) {
-					for (auto& option: optionItems) {
-						if (!loader.filter.has(option.id) && Selectable(option.title, false)) {
-							insert = option.id;
-						}
-					}
-					EndCombo();
+				if (itemPicker(Button("Allow item##filter-item"))) {
+					if (!loader.filter.has(itemPicked)) insert = itemPicked;
 				}
 
 				if (loader.filter.size()) SpacingV();
@@ -1336,60 +1388,9 @@ void EntityPopup2::draw() {
 					SmallBar(usage.portion(limit));
 
 					float width = GetContentRegionAvail().x;
-
 					SpacingV();
-					if (Button("Limit item")) {
-						OpenPopup("##store-limit-item");
-					}
-
-					picker();
-					if (BeginPopup("##store-limit-item")) {
-						int iconSize = Config::toolbar.icon.size;
-						float iconPix = Config::toolbar.icon.sizes[iconSize];
-
-						if (BeginTabBar("##store-limit-item-categories", ImGuiTabBarFlags_None)) {
-							for (auto category: Item::display) {
-								if (BeginTabItem(category->title.c_str())) {
-									BeginTable(fmtc("##store-limit-%u", id++), 10);
-									for (auto group: category->display) {
-										TableNextRow();
-										for (auto item: group->display) {
-											if (item->show || item->raw || item->manufacturable()) {
-												TableNextColumn();
-												if (ImageButton((ImTextureID)scene.itemIconTextures[item->id][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
-													store.levelSet(item->id, 0, 0);
-													CloseCurrentPopup();
-												}
-												if (IsItemHovered()) {
-													tip(item->title.c_str());
-												}
-											}
-										}
-									}
-									EndTable();
-									EndTabItem();
-								}
-							}
-							if (BeginTabItem("QoL")) {
-								if (Button("Construction materials")) {
-									std::set<Item*> items;
-									for (auto [_,spec]: Spec::all) {
-										if (!spec->licensed) continue;
-										if (spec->junk) continue;
-										for (auto [iid,_]: spec->materials) {
-											items.insert(Item::get(iid));
-										}
-									}
-									for (auto item: items) {
-										if (store.level(item->id)) continue;
-										store.levelSet(item->id, 0, 0);
-									}
-								}
-								EndTabItem();
-							}
-							EndTabBar();
-						}
-						EndPopup();
+					if (itemPicker(Button("Limit item"))) {
+						store.levelSet(Item::get(itemPicked)->id, 0, 0);
 					}
 
 					if (en.spec->storeAnything) {
@@ -1398,6 +1399,21 @@ void EntityPopup2::draw() {
 						if (IsItemHovered()) tip(
 							"Store any item without limits."
 						);
+					}
+
+					if (Button("Construction materials")) {
+						std::set<Item*> items;
+						for (auto [_,spec]: Spec::all) {
+							if (!spec->licensed) continue;
+							if (spec->junk) continue;
+							for (auto [iid,_]: spec->materials) {
+								items.insert(Item::get(iid));
+							}
+						}
+						for (auto item: items) {
+							if (store.level(item->id)) continue;
+							store.levelSet(item->id, 0, 0);
+						}
 					}
 
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
@@ -2907,13 +2923,8 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (BeginCombo("Allow item##filter-combo", nullptr)) {
-					for (auto& option: optionItems) {
-						if (!balancer.filter.has(option.id) && Selectable(option.title, false)) {
-							insert = option.id;
-						}
-					}
-					EndCombo();
+				if (itemPicker(Button("Allow item##filter-item"))) {
+					if (!balancer.filter.has(itemPicked)) insert = itemPicked;
 				}
 
 				if (balancer.filter.size()) SpacingV();
@@ -3210,6 +3221,7 @@ void EntityPopup2::draw() {
 		}
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -3289,6 +3301,7 @@ void RecipePopup::draw() {
 		EndTable();
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -3989,6 +4002,7 @@ void UpgradePopup::draw() {
 		EndTable();
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -4118,6 +4132,7 @@ void SignalsPopup::draw() {
 		}
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -4139,6 +4154,7 @@ void PlanPopup::draw() {
 
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -4226,6 +4242,7 @@ void PaintPopup::draw() {
 		EndTable();
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});
@@ -4587,6 +4604,7 @@ void MapPopup::draw() {
 		}
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 
@@ -4665,6 +4683,7 @@ void ZeppelinPopup::draw() {
 		EndTable();
 
 		mouseOver = IsWindowHovered();
+		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 		End();
 		if (visible) show(showing);
 	});

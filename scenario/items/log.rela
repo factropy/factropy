@@ -2,6 +2,8 @@
 add_item({
 	name = "log",
 	title = "Log",
+	category = "resources",
+	order = "a",
 	fuel = [ "chemical", MJ(10) ],
 	show = true,
 	free = true,
