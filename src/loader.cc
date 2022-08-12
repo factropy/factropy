@@ -82,7 +82,7 @@ Stack Loader::transferBeltToStore(Store& dst, Stack stack) {
 		return {stack.iid, std::min(stack.size, dst.countAccepting(stack.iid))};
 	}
 
-	if (ignore && dst.countSpace(stack.iid)) {
+	if ((ignore || !dst.level(stack.iid)) && dst.countSpace(stack.iid)) {
 		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 
@@ -106,7 +106,7 @@ Stack Loader::transferStoreToBelt(Store& src) {
 	for (auto& ss: src.stacks) {
 		if (filter.size() && !filter.count(ss.iid)) continue;
 		if (!ignore && src.hint.providing && src.countProviding(ss.iid)) return {ss.iid,1};
-		if (ignore && src.countLessReserved(ss.iid)) return {ss.iid,1};
+		if ((ignore || !src.level(ss.iid)) && src.countLessReserved(ss.iid)) return {ss.iid,1};
 	}
 
 	return {0,0};

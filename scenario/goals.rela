@@ -247,7 +247,6 @@ add_goal({
 		"slab",
 	],
 	recipes = [
-		"ammo2",
 		"drill-oil",
 		"oil-refining",
 		"plastic-bar",
@@ -279,7 +278,6 @@ add_goal({
 		"mother-board",
 		"battery",
 		"filter",
-		"repair-kit2",
 	],
 	supplies = {
 		"repair-kit" = 500,
@@ -304,6 +302,8 @@ add_goal({
 		"container-shipping",
 	],
 	recipes = [
+		"ammo2",
+		"repair-kit2",
 		"hydrofluoric-acid",
 		"mine-aluminium-ore",
 		"aluminium-crushing",

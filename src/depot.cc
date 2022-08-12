@@ -228,6 +228,22 @@ void Depot::update() {
 		return forceCollect(src, dst);
 	};
 
+	auto recycle = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!src.overflow) return false;
+		if (!dst.hint.accepting) return false;
+		for (auto& stack: src.stacks) {
+			uint have = src.countLessReserved(stack.iid);
+			if (!have) continue;
+			uint space = dst.countAccepting(stack.iid);
+			if (!space) continue;
+			uint move = std::min(cargo,std::min(space,have));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
+		}
+		return false;
+	};
+
 	auto deconstructGhostLocal = [&]() {
 		for (auto& ghost: ghosts) {
 			if (!ghost.en->isDeconstruction()) continue;
@@ -322,6 +338,15 @@ void Depot::update() {
 		return false;
 	};
 
+	auto overflowRecycle = [&](const minivec<EntityStore>& src, const minivec<EntityStore>& dst) {
+		if (!src.size()) return false;
+		if (!dst.size()) return false;
+		for (auto se: src) for (auto de: dst) {
+			if (recycle(*se.store, *de.store)) return true;
+		}
+		return false;
+	};
+
 	if (en->spec->store) {
 		minivec<EntityStore> self = {{.id = id, .en = en, .store = &en->store(), .pos = en->pos()}};
 
@@ -366,6 +391,9 @@ void Depot::update() {
 		// any local provider to any local provider
 		if (providerBalance(stores, stores)) return;
 
+		// any local overflow to any local provider
+		if (overflowRecycle(stores, stores)) return;
+
 		if (network && en->spec->networker) {
 			minivec<EntityStore> networkStores;
 
@@ -396,11 +424,17 @@ void Depot::update() {
 			// any network provider to any local requester
 			if (providerToRequester(networkStores, stores)) return;
 
+			// any local provider to any network provider
+			if (providerBalance(stores, networkStores)) return;
+
 			// any network provider to any local provider
 			if (providerBalance(networkStores, stores)) return;
 
-			// any local provider to any network provider
-			if (providerBalance(stores, networkStores)) return;
+			// any local overflow to any network provider
+			if (overflowRecycle(stores, networkStores)) return;
+
+			// any network overflow to any local provider
+			if (overflowRecycle(networkStores, stores)) return;
 		}
 	}
 

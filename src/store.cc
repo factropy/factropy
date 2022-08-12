@@ -48,7 +48,7 @@ void Store::update() {
 
 	deliveries.clear();
 
-	std::vector<uint> drop;
+	minivec<uint> drop;
 
 	for (uint did: drones) {
 		if (!Entity::exists(did)) {

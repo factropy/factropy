@@ -146,6 +146,7 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 		if (dst.hint.requesting) for (auto& stack: src.stacks) {
 			if (filter.size() && !filter.count(stack.iid)) continue;
 			uint have = stack.size;
+			if (!have) continue;
 			uint need = dst.countRequesting(stack.iid);
 			if (!need) continue;
 			return {stack.iid,1};
