@@ -86,6 +86,7 @@ struct Store {
 	void ghostDestroy();
 	void burnerInit(uint id, uint sid, Mass cap, std::string category);
 	void burnerDestroy();
+	bool strict();
 	Stack insert(Stack stack);
 	Stack remove(Stack stack);
 	Stack removeAny(uint size);

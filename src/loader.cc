@@ -29,7 +29,6 @@ Loader& Loader::create(uint id) {
 	loader.loading = !en.spec->loaderUnload;
 	loader.monitor = Monitor::Store;
 	loader.pause = 0;
-	loader.force = false;
 	loader.cache.point = Point::Zero;
 	loader.cache.refresh = 0;
 	return loader;
@@ -50,7 +49,6 @@ LoaderSettings* Loader::settings() {
 LoaderSettings::LoaderSettings(Loader& loader) {
 	filter = loader.filter;
 	loading = loader.loading;
-	force = loader.force;
 	monitor = loader.monitor;
 	condition = loader.condition;
 }
@@ -58,7 +56,6 @@ LoaderSettings::LoaderSettings(Loader& loader) {
 void Loader::setup(LoaderSettings* settings) {
 	filter = settings->filter;
 	loading = settings->loading;
-	force = settings->force;
 	monitor = settings->monitor;
 	condition = settings->condition;
 }
@@ -68,81 +65,71 @@ Point Loader::point() {
 }
 
 Stack Loader::transferBeltToStore(Store& dst, Stack stack) {
-	Entity& de = Entity::get(dst.id);
+	Entity& de = *dst.en; // Entity::get(dst.id);
 
 	if (de.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		if (filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
+	if (dst.strict()) {
+		if (filter.size()) {
+			if (filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
+				return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+			}
+			return {0,0};
+		}
+
+		if (dst.isAccepting(stack.iid)) {
 			return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
 		}
 		return {0,0};
 	}
 
-	if (dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-	}
-
-	// loaders can override requester containers
-	if (force && !dst.isFull()) {
-		return stack;
+	if (dst.countSpace(stack.iid) && (!filter.size() || filter.count(stack.iid))) {
+		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 
 	return {0,0};
 }
 
 Stack Loader::transferStoreToBelt(Store& src) {
-	Entity& se = Entity::get(src.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
 	if (se.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = {src.wouldRemoveAny(filter),1};
+	if (src.strict()) {
+		if (filter.size()) {
+			Stack stack = {src.wouldRemoveAny(filter),1};
+			if (!stack.iid) {
+				for (Stack& ss: src.stacks) {
+					if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) return {ss.iid, 1};
+				}
+				for (Stack& ss: src.stacks) {
+					if (filter.count(ss.iid) && src.isProviding(ss.iid)) return {ss.iid, 1};
+				}
+			}
+			return stack;
+		}
+
+		Stack stack = {src.wouldRemoveAny(),1};
 		if (!stack.iid) {
 			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
+				if (src.isActiveProviding(ss.iid)) return {ss.iid, 1};
 			}
 			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-			// loaders can override requester containers
-			if (force) for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.countNet(ss.iid)) {
-					return {ss.iid, 1};
-				}
+				if (src.isProviding(ss.iid)) return {ss.iid, 1};
 			}
 		}
 		return stack;
 	}
 
-	Stack stack = {src.wouldRemoveAny(),1};
-	if (!stack.iid) {
-		for (Stack& ss: src.stacks) {
-			if (src.isActiveProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		for (Stack& ss: src.stacks) {
-			if (src.isProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		// loaders can override requester containers
-		if (force) for (Stack& ss: src.stacks) {
-			if (src.countNet(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
+	for (auto& ss: src.stacks) {
+		if (src.countNet(ss.iid) && (!filter.size() || filter.count(ss.iid))) return {ss.iid, 1};
 	}
-	return stack;
+
+	return {0,0};
 }
 
 // check network

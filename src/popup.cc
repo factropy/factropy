@@ -1491,9 +1491,6 @@ void EntityPopup2::draw() {
 				}
 				signalCondition(0, arm.condition, true, [&]() { return arm.checkCondition(); });
 
-				Checkbox("Ignore limits", &arm.force);
-				if (IsItemHovered()) tip("Ignore any storage limits");
-
 				PopID();
 
 				EndTabItem();
@@ -1544,9 +1541,6 @@ void EntityPopup2::draw() {
 					EndCombo();
 				}
 				signalCondition(0, loader.condition, true, [&]() { return loader.checkCondition(); });
-
-				Checkbox("Ignore limits", &loader.force);
-				if (IsItemHovered()) tip("Ignore any storage limits");
 
 				PopID();
 

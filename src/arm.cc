@@ -39,7 +39,6 @@ Arm& Arm::create(uint id) {
 	arm.inputFar = true;
 	arm.outputNear = true;
 	arm.outputFar = true;
-	arm.force = false;
 	return arm;
 }
 
@@ -124,152 +123,149 @@ void Arm::updateProximity() {
 }
 
 Stack Arm::transferStoreToStore(Store& dst, Store& src) {
-	Entity& de = Entity::get(dst.id);
-	Entity& se = Entity::get(src.id);
+	Entity& de = *dst.en; //Entity::get(dst.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
 	if (de.isGhost() || se.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = src.overflowTo(dst, filter);
-		if (!stack.iid) {
-			stack = dst.supplyFrom(src, filter);
+	if (dst.strict() || src.strict()) {
+		if (filter.size()) {
+			Stack stack = src.overflowTo(dst, filter);
+			if (!stack.iid) {
+				stack = dst.supplyFrom(src, filter);
+			}
+			if (!stack.iid) {
+				if (de.spec->priority >= se.spec->priority) {
+					stack = dst.forceSupplyFrom(src, filter);
+				}
+			}
+			if (!stack.iid && !src.fuel) {
+				for (Stack& ss: src.stacks) {
+					bool allow = filter.count(ss.iid) > 0;
+					bool dstOk = dst.isAccepting(ss.iid);
+					bool srcOk = de.spec->priority >= se.spec->priority || src.isProviding(ss.iid) || src.level(ss.iid) == NULL;
+					if (allow && dstOk && srcOk) {
+						stack = {ss.iid,1};
+						break;
+					}
+				}
+			}
+			return stack;
 		}
+
+		Stack stack = src.overflowTo(dst);
+
 		if (!stack.iid) {
-			if (de.spec->priority >= se.spec->priority) {
-				stack = dst.forceSupplyFrom(src, filter);
+			stack = src.overflowDefaultTo(dst);
+		}
+
+		if (!stack.iid) {
+			stack = dst.supplyFrom(src);
+		}
+
+		if (!stack.iid) {
+			if (de.spec->priority >= se.spec->priority || dst.fuel) {
+				stack = dst.forceSupplyFrom(src);
 			}
 		}
+
 		if (!stack.iid && !src.fuel) {
 			for (Stack& ss: src.stacks) {
-				bool allow = filter.count(ss.iid) > 0;
 				bool dstOk = dst.isAccepting(ss.iid);
 				bool srcOk = de.spec->priority >= se.spec->priority || src.isProviding(ss.iid) || src.level(ss.iid) == NULL;
-				if (allow && dstOk && srcOk) {
+				if (dstOk && srcOk) {
 					stack = {ss.iid,1};
 					break;
 				}
 			}
 		}
-		// arms can override requester containers
-		if (force) for (Stack& ss: src.stacks) {
-			if (filter.count(ss.iid) && src.countNet(ss.iid) && dst.countSpace(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
+
 		return stack;
 	}
 
-	Stack stack = src.overflowTo(dst);
-
-	if (!stack.iid) {
-		stack = src.overflowDefaultTo(dst);
+	for (auto& ss: src.stacks) {
+		if (src.countNet(ss.iid) && dst.countSpace(ss.iid) && (!filter.size() || filter.count(ss.iid)))
+			return {ss.iid,1};
 	}
 
-	if (!stack.iid) {
-		stack = dst.supplyFrom(src);
-	}
-
-	if (!stack.iid) {
-		if (de.spec->priority >= se.spec->priority || dst.fuel) {
-			stack = dst.forceSupplyFrom(src);
-		}
-	}
-
-	if (!stack.iid && !src.fuel) {
-		for (Stack& ss: src.stacks) {
-			bool dstOk = dst.isAccepting(ss.iid);
-			bool srcOk = de.spec->priority >= se.spec->priority || src.isProviding(ss.iid) || src.level(ss.iid) == NULL;
-			if (dstOk && srcOk) {
-				stack = {ss.iid,1};
-				break;
-			}
-		}
-	}
-
-	// arms can override requester containers
-	if (force) for (Stack& ss: src.stacks) {
-		if (src.countNet(ss.iid) && dst.countSpace(ss.iid)) {
-			return {ss.iid, 1};
-		}
-	}
-
-	return stack;
+	return {0,0};
 }
 
 Stack Arm::transferStoreToBelt(Store& src) {
-	Entity& se = Entity::get(src.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
 	if (se.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = {src.wouldRemoveAny(filter),1};
+	if (src.strict()) {
+		if (filter.size()) {
+			Stack stack = {src.wouldRemoveAny(filter),1};
+			if (!stack.iid) {
+				for (Stack& ss: src.stacks) {
+					if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) {
+						return {ss.iid, 1};
+					}
+				}
+				for (Stack& ss: src.stacks) {
+					if (filter.count(ss.iid) && src.isProviding(ss.iid)) {
+						return {ss.iid, 1};
+					}
+				}
+			}
+			return stack;
+		}
+
+		Stack stack = {src.wouldRemoveAny(),1};
 		if (!stack.iid) {
 			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) {
+				if (src.isActiveProviding(ss.iid)) {
 					return {ss.iid, 1};
 				}
 			}
 			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isProviding(ss.iid)) {
+				if (src.isProviding(ss.iid)) {
 					return {ss.iid, 1};
 				}
 			}
 		}
-		// arms can override requester containers
-		if (force) for (Stack& ss: src.stacks) {
-			if (filter.count(ss.iid) && src.countNet(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
+
 		return stack;
 	}
 
-	Stack stack = {src.wouldRemoveAny(),1};
-	if (!stack.iid) {
-		for (Stack& ss: src.stacks) {
-			if (src.isActiveProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		for (Stack& ss: src.stacks) {
-			if (src.isProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
+	for (auto& ss: src.stacks) {
+		if (src.countNet(ss.iid) && (!filter.size() || filter.count(ss.iid))) return {ss.iid,1};
 	}
-	// arms can override requester containers
-	if (force) for (Stack& ss: src.stacks) {
-		if (src.countNet(ss.iid)) {
-			return {ss.iid, 1};
-		}
-	}
-	return stack;
+
+	return {0,0};
 }
 
 Stack Arm::transferBeltToStore(Store& dst, Stack stack) {
-	Entity& de = Entity::get(dst.id);
+	Entity& de = *dst.en; //Entity::get(dst.id);
 
 	if (de.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size() && filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-	}
+	if (dst.strict()) {
+		if (filter.size() && filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
+			return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+		}
 
-	if (filter.size() && !filter.count(stack.iid)) {
+		if (filter.size() && !filter.count(stack.iid)) {
+			return {0,0};
+		}
+
+		if (dst.isAccepting(stack.iid)) {
+			return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+		}
+
 		return {0,0};
 	}
 
-	if (dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-	}
-
-	if (force && dst.countSpace(stack.iid)) {
+	if (dst.countSpace(stack.iid) && (!filter.size() || filter.count(stack.iid))) {
 		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 

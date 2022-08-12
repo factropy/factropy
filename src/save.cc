@@ -1320,7 +1320,6 @@ void Arm::saveAll(const char* name) {
 		state["orientation"] = arm.orientation;
 		state["stage"] = arm.stage;
 		state["pause"] = arm.pause;
-		state["force"] = arm.force;
 
 		state["io"][0] = arm.inputNear;
 		state["io"][1] = arm.inputFar;
@@ -1369,10 +1368,6 @@ void Arm::loadAll(const char* name) {
 		arm.orientation = state["orientation"];
 		arm.stage = state["stage"];
 		arm.pause = state["pause"];
-
-		if (state.contains("force")) {
-			arm.force = state["force"];
-		}
 
 		if (state.contains("io")) {
 			arm.inputNear = state["io"][0];
@@ -1901,7 +1896,6 @@ void Loader::saveAll(const char* name) {
 		state["id"] = loader.id;
 		state["storeId"] = loader.storeId;
 		state["pause"] = loader.pause;
-		state["force"] = loader.force;
 
 		int i = 0;
 		for (uint iid: loader.filter) {
@@ -1937,10 +1931,6 @@ void Loader::loadAll(const char* name) {
 		Loader& loader = get(state["id"]);
 		loader.storeId = state["storeId"];
 		loader.pause = state["pause"];
-
-		if (state.contains("force")) {
-			loader.force = state["force"];
-		}
 
 		for (std::string name: state["filter"]) {
 			loader.filter.insert(Item::byName(name)->id);

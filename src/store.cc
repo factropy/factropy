@@ -170,7 +170,7 @@ Store& Store::create(uint id, uint sid, Mass cap) {
 	store.capacity = cap;
 	store.fuel = false;
 	store.ghost = false;
-	auto spec = Entity::get(id).spec;
+	auto spec = store.en->spec;
 	store.anything = spec->storeAnything ? spec->storeAnythingDefault: false;
 	store.magic = spec->storeMagic;
 	store.overflow = spec->overflow;
@@ -188,6 +188,7 @@ Store& Store::create(uint id, uint sid, Mass cap) {
 
 void Store::ghostInit(uint gid, uint gsid) {
 	id = gid;
+	en = &Entity::get(id);
 	sid = gsid;
 	activity = 0;
 	contents = 0;
@@ -195,28 +196,43 @@ void Store::ghostInit(uint gid, uint gsid) {
 	capacity = Mass::Inf;
 	fuel = false;
 	ghost = true;
-	magic = false;
 	anything = false;
+	magic = false;
 	overflow = false;
+	transmit = false;
 	input = true;
 	output = true;
+	hint.checked = 0;
+	hint.iid = 0;
+	hint.requesting = false;
+	hint.accepting = false;
+	hint.providing = false;
+	hint.activeproviding = false;
 }
 
 void Store::burnerInit(uint bid, uint bsid, Mass cap, std::string category) {
 	id = bid;
+	en = &Entity::get(id);
 	sid = bsid;
 	activity = 0;
 	contents = 0;
 	contentsPredict = 0;
 	capacity = cap;
 	fuel = true;
-	ghost = false;
-	magic = false;
-	anything = false;
-	overflow = false;
 	fuelCategory = category;
+	ghost = false;
+	anything = false;
+	magic = false;
+	overflow = false;
+	transmit = false;
 	input = true;
 	output = false;
+	hint.checked = 0;
+	hint.iid = 0;
+	hint.requesting = false;
+	hint.accepting = false;
+	hint.providing = false;
+	hint.activeproviding = false;
 }
 
 Store& Store::get(uint id) {
@@ -258,6 +274,10 @@ void Store::setup(StoreSettings* settings) {
 	}
 	transmit = settings->transmit;
 	anything = Entity::get(id).spec->storeAnything ? settings->anything: false;
+}
+
+bool Store::strict() {
+	return ghost || fuel || en->spec->crafter || en->spec->turret || en->spec->launcher;
 }
 
 Stack Store::insert(Stack istack) {
