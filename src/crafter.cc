@@ -493,7 +493,13 @@ void Crafter::update() {
 
 	if (enabled && en->spec->crafterOutput) {
 		auto& store = en->store();
-		auto iid = store.wouldRemoveAny();
+		uint iid = 0;
+		for (auto& stack: store.stacks) {
+			if (store.countActiveProviding(stack.iid)) {
+				iid = stack.iid;
+				break;
+			}
+		}
 		if (iid) {
 			auto eo = Entity::at(en->pos() + en->spec->crafterOutputPos.transform(en->dir().rotation()));
 			if (eo && !eo->isGhost() && eo->spec->conveyor) {

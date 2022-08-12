@@ -378,7 +378,6 @@ Recipe* Popup::recipePicker(bool open, std::function<bool(Recipe*)> show) {
 		PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(GetStyle().ItemSpacing.x, GetStyle().ItemSpacing.x));
 
 		float cell = (GetContentRegionAvail().x - (GetStyle().ItemSpacing.x*19)) / 10;
-//		int row = 0;
 		int col = 0;
 
 		for (auto [_,recipe]: Recipe::names) {
@@ -1546,6 +1545,9 @@ void EntityPopup2::draw() {
 				}
 				signalCondition(0, loader.condition, true, [&]() { return loader.checkCondition(); });
 
+				Checkbox("Ignore container limits", &loader.ignore);
+				if (IsItemHovered()) tip("Loader will override container item limits.");
+
 				PopID();
 
 				EndTabItem();
@@ -1654,6 +1656,12 @@ void EntityPopup2::draw() {
 					if (IsItemHovered()) tip(
 						"Accept all construction materials with limits."
 					);
+
+					if (en.spec->depot) {
+						SameLine();
+						Checkbox("Purge", &store.purge);
+						if (IsItemHovered()) tip("Drones will move items without limits to overflow containers.");
+					}
 
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
 

@@ -30,6 +30,7 @@ struct Loader {
 	uint64_t pause = 0;
 	miniset<uint> filter;
 	bool loading = false;
+	bool ignore = false;
 
 	struct {
 		Point point = Point::Zero;

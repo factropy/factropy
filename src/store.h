@@ -65,8 +65,7 @@ struct Store {
 	bool magic;
 	bool transmit;
 	bool overflow;
-	bool input;
-	bool output;
+	bool purge;
 
 	struct {
 		uint64_t checked;
@@ -75,6 +74,7 @@ struct Store {
 		bool accepting;
 		bool providing;
 		bool activeproviding;
+		bool repairing;
 	} hint;
 
 	void destroy();
@@ -88,11 +88,7 @@ struct Store {
 	bool strict();
 	Stack insert(Stack stack);
 	Stack remove(Stack stack);
-	Stack removeAny(uint size);
-	uint wouldRemoveAny();
-	uint wouldRemoveAny(miniset<uint>& filter);
 	Stack removeFuel(std::string chemical, uint size);
-	Stack overflowAny(uint size);
 	void promise(Stack stack);
 	void reserve(Stack stack);
 	void levelSet(uint iid, uint lower, uint upper);
@@ -109,34 +105,18 @@ struct Store {
 	uint count(uint iid);
 	uint countNet(uint iid);
 	uint countSpace(uint iid);
-	uint countAvailable(uint iid);
-	uint countExpected(uint iid);
-	uint countProvidable(uint iid, Level* lvl = nullptr);
-	uint countActiveProvidable(uint iid, Level* lvl = nullptr);
-	uint countAcceptable(uint iid, Level* lvl = nullptr);
-	uint countRequired(uint iid, Level* lvl = nullptr);
+	uint countLessReserved(uint iid);
+	uint countPlusPromised(uint iid);
+	uint countAcceptable(uint iid);
 	bool isRequesterSatisfied();
-	bool isRequesting(uint iid, Level* lvl = nullptr);
-	bool isProviding(uint iid, Level* lvl = nullptr);
-	bool isActiveProviding(uint iid, Level* lvl = nullptr);
-	bool isAccepting(uint iid, Level* lvl = nullptr);
-	bool isOverflowDefault(uint iid, Level* lvl = nullptr);
-	uint countProviding(uint iid, Level* lvl = nullptr);
-	uint countActiveProviding(uint iid, Level* lvl = nullptr);
-	uint countAccepting(uint iid, Level* lvl = nullptr);
-	uint countRequesting(uint iid, Level* lvl = nullptr);
-	bool relevant(uint iid);
-	bool intersection(Store& other);
-	Stack forceSupplyFrom(Store& src, uint size = 1);
-	Stack forceSupplyFrom(Store& src, miniset<uint>& filter, uint size = 1);
-	Stack supplyFrom(Store& src, uint size = 1);
-	Stack supplyFrom(Store& src, miniset<uint>& filter, uint size = 1);
-	Stack forceOverflowTo(Store& dst, uint size = 1);
-	Stack forceOverflowTo(Store& dst, miniset<uint>& filter, uint size = 1);
-	Stack overflowTo(Store& dst, uint size = 1);
-	Stack overflowTo(Store& dst, miniset<uint>& filter, uint size = 1);
-	Stack overflowDefaultTo(Store& dst, uint size = 1);
-	Stack overflowBalanceTo(Store& dst, uint size = 1);
+	uint countRequesting(uint iid);
+	bool isRequesting(uint iid);
+	bool isProviding(uint iid);
+	uint countProviding(uint iid);
+	bool isActiveProviding(uint iid);
+	uint countActiveProviding(uint iid);
+	bool isAccepting(uint iid);
+	uint countAccepting(uint iid);
 	minimap<Signal,&Signal::key> signals();
 };
 

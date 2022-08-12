@@ -182,6 +182,7 @@ struct Scene {
 
 	struct {
 		Mesh* triangle;
+		Mesh* tick;
 		Mesh* exclaim;
 		Mesh* electricity;
 	} icon;
@@ -206,6 +207,18 @@ struct Scene {
 		TimeSeries updatePlacing;
 		TimeSeries render;
 	} stats;
+
+	struct Riser {
+		Point start = Point::Zero;
+		Mesh* icon = nullptr;
+		Color color = 0x00ff00ff;
+		uint64_t tick = 0;
+	};
+
+	std::vector<Riser> risers;
+
+	void tick(Point pos);
+	void exclaim(Point pos);
 
 	Scene() = default;
 	void init();

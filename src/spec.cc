@@ -496,3 +496,9 @@ Health Spec::damage(uint ammoId) const {
 			: ((float)(ammoId ? Item::get(ammoId)->ammoDamage: 0) * turretDamage)
 	);
 }
+
+Point Spec::iconPoint(Point pos, Point dir) {
+	Point i = icon == Point::Zero ? Point::Up*(collision.h/2+0.5f) : icon;
+	return i.transform(dir.rotation()) + pos;
+}
+

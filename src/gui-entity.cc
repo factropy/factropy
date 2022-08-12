@@ -1436,18 +1436,13 @@ void GuiEntity::overlayAlignment() {
 }
 
 void GuiEntity::icon() {
-	auto at = [&]() {
-		Point i = spec->icon == Point::Zero ? Point::Up*(spec->collision.h/2+0.5f) : spec->icon;
-		return i.transform(dir().rotation()) + pos();
-	};
-
 	if (flags & ELECTRICITY) {
-		scene.alert(scene.icon.electricity, at());
+		scene.alert(scene.icon.electricity, spec->iconPoint(pos(), dir()));
 		return;
 	}
 
 	if (flags & BLOCKED) {
-		scene.warning(scene.icon.exclaim, at());
+		scene.warning(scene.icon.exclaim, spec->iconPoint(pos(), dir()));
 		return;
 	}
 }
@@ -1581,18 +1576,25 @@ GuiFakeEntity::~GuiFakeEntity() {
 }
 
 GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en) {
-	if (en.spec != spec) return this;
+	if (en.spec != spec) {
+		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
+		return this;
+	}
 	delete settings;
 	settings = en.settings();
 	status = settings->enabled ? Status::None: Status::Warning;
 	color = settings->color;
+	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
 	return this;
 }
 
 GuiFakeEntity* GuiFakeEntity::setConfig(Entity& en) {
-	if (en.spec != spec) return this;
-	if (!settings) return this;
+	if (en.spec != spec || !settings) {
+		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
+		return this;
+	}
 	en.setup(settings);
+	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
 	return this;
 }
 

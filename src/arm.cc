@@ -130,52 +130,50 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 
 	// crafter to crafter, strict respect of levels
 	if (dst.strict() && src.strict()) {
-		for (auto& sl: src.levels) {
-			if (filter.size() && !filter.count(sl.iid)) continue;
-			uint have = src.countProviding(sl.iid, &sl);
-			for (auto& dl: dst.levels) {
-				if (dl.iid != sl.iid) continue;
-				uint need = dst.countRequesting(dl.iid, &dl);
-				if (have && need) return {sl.iid,1};
-			}
+		if (dst.hint.requesting && src.hint.providing) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = src.countProviding(stack.iid);
+			if (!have) continue;
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			return {stack.iid,1};
 		}
 		return {0,0};
 	}
 
 	// container to crafter, strict respect of dst levels
 	if (dst.strict() && !src.strict()) {
-		for (auto& ss: src.stacks) {
-			if (filter.size() && !filter.count(ss.iid)) continue;
-			uint have = ss.size;
-			for (auto& dl: dst.levels) {
-				if (dl.iid != ss.iid) continue;
-				uint need = dst.countRequesting(dl.iid, &dl);
-				if (have && need) return {ss.iid,1};
-			}
+		if (dst.hint.requesting) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = stack.size;
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			return {stack.iid,1};
 		}
 		return {0,0};
 	}
 
 	// crafter to container, strict respect of src levels
 	if (!dst.strict() && src.strict()) {
-		for (auto& sl: src.levels) {
-			if (filter.size() && !filter.count(sl.iid)) continue;
-			uint have = src.countProviding(sl.iid, &sl);
-			auto dl = dst.level(sl.iid);
-			uint space = dl ? dst.countAccepting(dl->iid, dl): dst.countSpace(sl.iid);
-			if (have && space) return {sl.iid,1};
+		if (src.hint.providing) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = src.countProviding(stack.iid);
+			if (!have) continue;
+			uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+			if (!space) continue;
+			return {stack.iid,1};
 		}
 		return {0,0};
 	}
 
-	// container to container, just move stuff
-	for (auto& ss: src.stacks) {
-		if (filter.size() && !filter.count(ss.iid)) continue;
-		auto sl = src.level(ss.iid);
-		uint have = sl ? src.countProviding(sl->iid, sl): src.countNet(ss.iid);
-		auto dl = dst.level(ss.iid);
-		uint space = dl ? dst.countAccepting(dl->iid, dl): dst.countSpace(ss.iid);
-		if (have && space) return {ss.iid,1};
+	// container to container, respect levels if present
+	for (auto& stack: src.stacks) {
+		if (filter.size() && !filter.count(stack.iid)) continue;
+		uint have = src.level(stack.iid) ? src.countProviding(stack.iid): src.countLessReserved(stack.iid);
+		if (!have) continue;
+		uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+		if (!space) continue;
+		return {stack.iid,1};
 	}
 
 	return {0,0};
@@ -187,18 +185,17 @@ Stack Arm::transferStoreToBelt(Store& src) {
 	if (se.isGhost()) return {0,0};
 
 	if (src.strict()) {
-		for (auto& sl: src.levels) {
-			if (filter.size() && !filter.count(sl.iid)) continue;
-			if (src.countProviding(sl.iid, &sl)) return {sl.iid,1};
+		for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			if (src.countProviding(stack.iid)) return {stack.iid,1};
 		}
 		return {0,0};
 	}
 
-	for (auto& ss: src.stacks) {
-		if (filter.size() && !filter.count(ss.iid)) continue;
-		auto sl = src.level(ss.iid);
-		uint have = sl ? src.countProviding(sl->iid, sl): src.countNet(ss.iid);
-		if (have) return {ss.iid,1};
+	for (auto& stack: src.stacks) {
+		if (filter.size() && !filter.count(stack.iid)) continue;
+		uint have = src.level(stack.iid) ? src.countProviding(stack.iid): src.countLessReserved(stack.iid);
+		if (have) return {stack.iid,1};
 	}
 
 	return {0,0};
@@ -216,8 +213,7 @@ Stack Arm::transferBeltToStore(Store& dst, Stack stack) {
 		return {0,0};
 	}
 
-	auto dl = dst.level(stack.iid);
-	uint have = dl ? dst.countAccepting(dl->iid, dl): dst.countSpace(stack.iid);
+	uint have = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
 	if (have) return {stack.iid,1};
 
 	return {0,0};

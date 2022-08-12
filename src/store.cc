@@ -122,8 +122,9 @@ void Store::update() {
 
 	hint.requesting = false;
 	hint.accepting = overflow;
-	hint.providing = false;
+	hint.providing = overflow;
 	hint.activeproviding = false;
+	hint.repairing = false;
 
 	for (Level& lvl: levels) {
 		uint n = count(lvl.iid);
@@ -133,15 +134,11 @@ void Store::update() {
 		hint.activeproviding = hint.activeproviding || (n > lvl.upper);
 	}
 
-	if (!overflow) for (Stack& stk: stacks) {
-		if (!level(stk.iid)) {
-			hint.providing = true;
-			hint.activeproviding = true;
-		}
-	}
-
-	if (overflow) for (Stack& stk: stacks) {
-		if (!level(stk.iid)) hint.providing = true;
+	for (Stack& stk: stacks) {
+		hint.repairing = hint.repairing || Item::get(stk.iid)->repair;
+		if (level(stk.iid)) continue;
+		hint.providing = true;
+		hint.activeproviding = true;
 	}
 
 	if (Sim::tick > 60 && hint.checked < Sim::tick-60) {
@@ -174,8 +171,7 @@ Store& Store::create(uint id, uint sid, Mass cap) {
 	store.magic = spec->storeMagic;
 	store.overflow = spec->overflow;
 	store.transmit = false;
-	store.input = true;
-	store.output = true;
+	store.purge = spec->zeppelin;
 	store.hint.checked = 0;
 	store.hint.iid = 0;
 	store.hint.requesting = false;
@@ -198,8 +194,7 @@ void Store::ghostInit(uint gid, uint gsid) {
 	magic = false;
 	overflow = false;
 	transmit = false;
-	input = true;
-	output = true;
+	purge = false;
 	hint.checked = 0;
 	hint.iid = 0;
 	hint.requesting = false;
@@ -222,8 +217,7 @@ void Store::burnerInit(uint bid, uint bsid, Mass cap, std::string category) {
 	magic = false;
 	overflow = false;
 	transmit = false;
-	input = true;
-	output = false;
+	purge = false;
 	hint.checked = 0;
 	hint.iid = 0;
 	hint.requesting = false;
@@ -318,84 +312,10 @@ Stack Store::remove(Stack rstack) {
 	return rstack;
 }
 
-uint Store::wouldRemoveAny() {
-	for (auto& stack: stacks) {
-		if (isActiveProviding(stack.iid)) {
-			return stack.iid;
-		}
-	}
-	for (auto& stack: stacks) {
-		if (isProviding(stack.iid)) {
-			return stack.iid;
-		}
-	}
-
-	if (!output) return 0;
-
-	for (auto& stack: stacks) {
-		if (fuel && Item::get(stack.iid)->fuel.category == fuelCategory) {
-			continue;
-		}
-		Level *lvl = level(stack.iid);
-		if (!lvl) {
-			return stack.iid;
-		}
-	}
-	return 0;
-}
-
-uint Store::wouldRemoveAny(miniset<uint>& filter) {
-	for (auto& stack: stacks) {
-		if (filter.count(stack.iid) && isActiveProviding(stack.iid)) {
-			return stack.iid;
-		}
-	}
-	for (auto& stack: stacks) {
-		if (filter.count(stack.iid) && isProviding(stack.iid)) {
-			return stack.iid;
-		}
-	}
-
-	if (!output) return 0;
-
-	for (auto& stack: stacks) {
-		if (!filter.count(stack.iid)) {
-			continue;
-		}
-		if (fuel && Item::get(stack.iid)->fuel.category == fuelCategory) {
-			continue;
-		}
-		Level *lvl = level(stack.iid);
-		if (!lvl) {
-			return stack.iid;
-		}
-	}
-	return 0;
-}
-
-Stack Store::removeAny(uint size) {
-	uint iid = wouldRemoveAny();
-	if (iid) {
-		return remove({iid,size});
-	}
-	return {0,0};
-}
-
 Stack Store::removeFuel(std::string category, uint size) {
-//	if (!output) return {0,0};
-
 	for (auto& stack: stacks) {
 		if (Item::get(stack.iid)->fuel.category == category) {
 			return remove({stack.iid, std::min(size, stack.size)});
-		}
-	}
-	return {0,0};
-}
-
-Stack Store::overflowAny(uint size) {
-	for (auto& stack: stacks) {
-		if (isActiveProviding(stack.iid)) {
-			return remove({stack.iid, size});
 		}
 	}
 	return {0,0};
@@ -524,404 +444,93 @@ uint Store::countNet(uint iid) {
 }
 
 // number we have right now that have not been reserved to export
-uint Store::countAvailable(uint iid) {
+uint Store::countLessReserved(uint iid) {
 	uint n = count(iid);
 	Delivery* del = delivery(iid);
 	return del ? n - std::min(n, del->reserved): n;
 }
 
-// number we can fit in right now
-uint Store::countSpace(uint iid) {
-	return (limit() - usagePredict()).items(iid);
-}
-
-// number we have right now over lower limit that have not been reserved to export
-uint Store::countProvidable(uint iid, Level* lvl) {
-	uint n = count(iid);
-	if (!lvl) lvl = level(iid);
-	Delivery* del = delivery(iid);
-	if (del) n -= std::min(n, del->reserved);
-	if (!lvl) return n;
-	if (lvl->lower > n) return 0;
-	return n - lvl->lower;
-}
-
-// number we have right now over upper limit that have not been reserved to export
-uint Store::countActiveProvidable(uint iid, Level* lvl) {
-	uint n = count(iid);
-	if (!lvl) lvl = level(iid);
-	Delivery* del = delivery(iid);
-	if (del) n -= std::min(n, del->reserved);
-	if (!lvl) return n;
-	if (lvl->upper > n) return 0;
-	return n - lvl->upper;
-}
-
-// number we will to have after current imports are complete.
-// does not account for interrim exports
-uint Store::countExpected(uint iid) {
+// number we will to have after current imports are complete
+uint Store::countPlusPromised(uint iid) {
 	uint n = count(iid);
 	Delivery* del = delivery(iid);
 	return del ? n + del->promised: n;
 }
 
-// number we can fit in under an upper limit
-uint Store::countAcceptable(uint iid, Level* lvl) {
-	if (!input) return 0;
-	if (!lvl) lvl = level(iid);
-	uint net = countNet(iid);
-	if (lvl && net >= lvl->upper) return 0;
-	uint max = (limit()-usagePredict()).items(iid);
-	return std::min(max, lvl ? lvl->upper - net: max);
-}
-
-// number we need to meet a lower limit
-uint Store::countRequired(uint iid, Level* lvl) {
-	if (!input) return 0;
-	if (!lvl) lvl = level(iid);
-	uint net = countNet(iid);
-	if (lvl && net >= lvl->lower) return 0;
-	uint max = (limit()-usage()).items(iid);
-	return std::min(max, lvl ? lvl->lower - net: 0);
+// number we can fit in after current imports are complete
+uint Store::countSpace(uint iid) {
+	return (limit() - usagePredict()).items(iid);
 }
 
 // store has all lower limits met (ghost construction)
 bool Store::isRequesterSatisfied() {
-	if (!input) return true;
 	for (Level& lvl: levels) {
-		if (lvl.lower > 0 && count(lvl.iid) < lvl.lower) {
-			return false;
-		}
+		if (lvl.lower > 0 && count(lvl.iid) < lvl.lower) return false;
 	}
 	return true;
 }
 
 // store has a lower limit for item not met, and has space
-bool Store::isRequesting(uint iid, Level* lvl) {
-	if (!input) return false;
-	if (!lvl) lvl = level(iid);
-	if (!countAcceptable(iid, lvl)) return false;
-	return lvl != NULL && lvl->lower > 0 && countExpected(iid) < lvl->lower;
+bool Store::isRequesting(uint iid) {
+	return countRequesting(iid) > 0;
+}
+
+// number under a lower limit that have not been promised to import
+uint Store::countRequesting(uint iid) {
+	auto lvl = level(iid);
+	int n = countPlusPromised(iid);
+	int spaceA = (limit()-usage()).items(iid);
+	int spaceB = (limit()-usagePredict()).items(iid);
+	int space = std::max(0, std::min(spaceA, spaceB));
+	if (fuel && Item::get(iid)->fuel.category == fuelCategory) return space;
+	if (!lvl) return 0;
+	return std::max(0, std::min(space, (int)lvl->lower - n));
 }
 
 // store has a lower limit for item exceeded
-bool Store::isProviding(uint iid, Level* lvl) {
-	if (!output) return false;
-	if (!lvl) lvl = level(iid);
-	uint available = countAvailable(iid);
-	if (!lvl && !fuel && !ghost && available) return true;
-	return lvl != NULL && lvl->upper >= lvl->lower && available > lvl->lower;
+bool Store::isProviding(uint iid) {
+	return countProviding(iid) > 0;
+}
+
+// number right now over lower limit that have not been reserved to export
+uint Store::countProviding(uint iid) {
+	if (fuel) return 0;
+	uint n = countLessReserved(iid);
+	auto lvl = level(iid);
+	if (!lvl) return n;
+	return (n > lvl->lower) ? lvl->lower-n: 0;
 }
 
 // store has an upper limit for item exceeded
-bool Store::isActiveProviding(uint iid, Level* lvl) {
-	if (!output) return false;
-	if (!lvl) lvl = level(iid);
-	uint available = countAvailable(iid);
-	return lvl != NULL && lvl->upper >= lvl->lower && available > lvl->upper;
+bool Store::isActiveProviding(uint iid) {
+	return countActiveProviding(iid) > 0;
+}
+
+// number right now over upper limit that have not been reserved to export
+uint Store::countActiveProviding(uint iid) {
+	if (fuel) return 0;
+	uint n = countLessReserved(iid);
+	auto lvl = level(iid);
+	if (!lvl && purge) return n;
+	if (!lvl) return 0;
+	return (n > lvl->upper) ? lvl->upper-n: 0;
 }
 
 // store has an upper limit for an item not exceeded, and has space
-bool Store::isAccepting(uint iid, Level* lvl) {
-	if (!input) return false;
-	if (!lvl) lvl = level(iid);
-
-	if (isFull() || !countAcceptable(iid, lvl)) {
-		return false;
-	}
-	if (isRequesting(iid, lvl)) {
-		return true;
-	}
-//	if (!lvl && anything) {
-//		return true;
-//	}
-	if (lvl != NULL && countExpected(iid) < lvl->upper) {
-		return true;
-	}
-	if (fuel && Item::get(iid)->fuel.category == fuelCategory) {
-		return true;
-	}
-	return false;
+bool Store::isAccepting(uint iid) {
+	return countAccepting(iid) > 0;
 }
 
-uint Store::countProviding(uint iid, Level* lvl) {
-	return isProviding(iid, lvl) ? countProvidable(iid, lvl): 0;
-}
-
-uint Store::countActiveProviding(uint iid, Level* lvl) {
-	return isActiveProviding(iid, lvl) ? countActiveProvidable(iid, lvl): 0;
-}
-
-uint Store::countAccepting(uint iid, Level* lvl) {
-	return isAccepting(iid, lvl) ? countAcceptable(iid, lvl): 0;
-}
-
-uint Store::countRequesting(uint iid, Level* lvl) {
-	return isRequesting(iid, lvl) ? countRequired(iid, lvl): 0;
-}
-
-bool Store::relevant(uint iid) {
-	for (auto& lvl: levels) if (lvl.iid == iid) return true;
-	for (auto& stk: stacks) if (stk.iid == iid) return true;
-	return false;
-}
-
-bool Store::intersection(Store& other) {
-	for (auto& lvl: levels) if (other.relevant(lvl.iid)) return true;
-	for (auto& stk: stacks) if (other.relevant(stk.iid)) return true;
-	return false;
-}
-
-// requester to another requester
-Stack Store::forceSupplyFrom(Store& src, uint size) {
-	if (!isFull() && !src.isEmpty()) {
-		for (Level& dl: levels) {
-			if (!src.relevant(dl.iid)) continue;
-			uint have = src.countAvailable(dl.iid);
-			uint need = countRequired(dl.iid, &dl);
-			if (need && have && isAccepting(dl.iid, &dl) && isRequesting(dl.iid, &dl)) {
-				return {dl.iid, std::min(size, std::min(need, have))};
-			}
-		}
-		if (fuel) {
-			for (Stack& ss: src.stacks) {
-				if (Item::get(ss.iid)->fuel.category == fuelCategory) {
-					return {ss.iid, 1};
-				}
-			}
-		}
-	}
-	return {0,0};
-}
-
-Stack Store::forceSupplyFrom(Store& src, miniset<uint>& filter, uint size) {
-	if (!isFull() && !src.isEmpty()) {
-		for (Level& dl: levels) {
-			if (!filter.count(dl.iid)) continue;
-			if (!src.relevant(dl.iid)) continue;
-			uint have = src.countAvailable(dl.iid);
-			uint need = countRequired(dl.iid, &dl);
-			if (need && have && isAccepting(dl.iid, &dl) && isRequesting(dl.iid, &dl)) {
-				return {dl.iid, std::min(size, std::min(need, have))};
-			}
-		}
-		if (fuel) {
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && Item::get(ss.iid)->fuel.category == fuelCategory) {
-					return {ss.iid, 1};
-				}
-			}
-		}
-	}
-	return {0,0};
-}
-
-// any provider or overflow to requester
-Stack Store::supplyFrom(Store& src, uint size) {
-	if (!src.output || !input) return {0,0};
-
-	if (!isFull() && !src.isEmpty()) {
-		for (Level& dl: levels) {
-			if (!src.relevant(dl.iid)) continue;
-			uint have = src.countProvidable(dl.iid);
-			uint need = countRequired(dl.iid, &dl);
-			if (need && have && isAccepting(dl.iid, &dl) && isRequesting(dl.iid, &dl) && src.isProviding(dl.iid)) {
-				return {dl.iid, std::min(size, std::min(have, need))};
-			}
-		}
-		if (fuel) {
-			for (Stack& ss: src.stacks) {
-				if (Item::get(ss.iid)->fuel.category == fuelCategory && isAccepting(ss.iid) && src.isProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-		}
-	}
-	return {0,0};
-}
-
-Stack Store::supplyFrom(Store& src, miniset<uint>& filter, uint size) {
-	if (!src.output || !input) return {0,0};
-
-	if (!isFull() && !src.isEmpty()) {
-		for (Level& dl: levels) {
-			if (!filter.count(dl.iid)) continue;
-			if (!src.relevant(dl.iid)) continue;
-			uint have = src.countProvidable(dl.iid);
-			uint need = countRequired(dl.iid, &dl);
-			if (need && have && isAccepting(dl.iid, &dl) && isRequesting(dl.iid, &dl) && src.isProviding(dl.iid)) {
-				return {dl.iid, std::min(size, std::min(have, need))};
-			}
-		}
-		if (fuel) {
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && Item::get(ss.iid)->fuel.category == fuelCategory && isAccepting(ss.iid) && src.isProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-		}
-	}
-	return {0,0};
-}
-
-// active provider to anything
-Stack Store::forceOverflowTo(Store& dst, uint size) {
-	if (!dst.isFull()) {
-		for (Level& sl: levels) {
-//			if (!dst.relevant(sl.iid)) continue;
-			uint excess = countActiveProvidable(sl.iid, &sl);
-			uint accept = dst.countSpace(sl.iid);
-			if (excess && accept && isActiveProviding(sl.iid, &sl)) {
-				return {sl.iid, std::min(size, std::min(accept, excess))};
-			}
-		}
-	}
-	return {0,0};
-}
-
-// active provider to anything
-Stack Store::forceOverflowTo(Store& dst, miniset<uint>& filter, uint size) {
-	if (!dst.isFull()) {
-		for (Level& sl: levels) {
-			if (!filter.count(sl.iid)) continue;
-			uint excess = countActiveProvidable(sl.iid, &sl);
-			uint accept = dst.countSpace(sl.iid);
-			if (excess && accept && isActiveProviding(sl.iid, &sl)) {
-				return {sl.iid, std::min(size, std::min(accept, excess))};
-			}
-		}
-	}
-	return {0,0};
-}
-
-// active provider to overflow with space
-Stack Store::overflowTo(Store& dst, uint size) {
-	if (!dst.input || !output) return {0,0};
-
-	for (Level& sl: levels) {
-		if (!dst.relevant(sl.iid)) continue;
-		uint excess = countActiveProvidable(sl.iid, &sl);
-		uint accept = dst.countAcceptable(sl.iid);
-		if (excess && accept && dst.isAccepting(sl.iid) && isActiveProviding(sl.iid, &sl)) {
-			return {sl.iid, std::min(size, std::min(excess, accept))};
-		}
-	}
-
-//	if (!anything) {
-//		// stacks without levels are implicitly active for overlow
-//		for (Stack& stack: stacks) {
-//			if (!dst.relevant(stack.iid)) continue;
-//			if (level(stack.iid)) continue;
-//			uint excess = stack.size;
-//			uint accept = dst.countAcceptable(stack.iid);
-//			if (excess && accept && dst.isAccepting(stack.iid)) {
-//				return {stack.iid, std::min(size, std::min(excess, accept))};
-//			}
-//		}
-//	}
-	return {0,0};
-}
-
-Stack Store::overflowTo(Store& dst, miniset<uint>& filter, uint size) {
-	if (!dst.input || !output) return {0,0};
-
-	for (Level& sl: levels) {
-		if (!filter.count(sl.iid)) continue;
-		if (!dst.relevant(sl.iid)) continue;
-		uint excess = countActiveProvidable(sl.iid, &sl);
-		uint accept = dst.countAcceptable(sl.iid);
-		if (excess && accept && dst.isAccepting(sl.iid) && isActiveProviding(sl.iid, &sl)) {
-			return {sl.iid, std::min(size, std::min(excess, accept))};
-		}
-	}
-
-//	if (!anything) {
-//		// stacks without levels are implicitly active for overlow
-//		for (Stack& stack: stacks) {
-//			if (!dst.relevant(stack.iid)) continue;
-//			if (level(stack.iid)) continue;
-//			if (!filter.count(stack.iid)) continue;
-//			uint excess = stack.size;
-//			uint accept = dst.countAcceptable(stack.iid);
-//			if (excess && accept && dst.isAccepting(stack.iid)) {
-//				return {stack.iid, std::min(size, std::min(excess, accept))};
-//			}
-//		}
-//	}
-	return {0,0};
-}
-
-// store is a logistic overflow accepting an item
-bool Store::isOverflowDefault(uint iid, Level* lvl) {
-	if (ghost || fuel || !overflow || isFull()) return false;
-	if (!lvl) lvl = level(iid);
-	return lvl ? isAccepting(iid, lvl): true;
-}
-
-// active provider to default overflow
-Stack Store::overflowDefaultTo(Store& dst, uint size) {
-	if (!dst.input || !output) return {0,0};
-
-	if (overflow) {
-		for (Stack& stack: stacks) {
-			uint excess = countActiveProvidable(stack.iid);
-			uint accept = dst.countAcceptable(stack.iid);
-			if (excess && accept && dst.isAccepting(stack.iid) && !dst.isOverflowDefault(stack.iid) && isActiveProviding(stack.iid)) {
-				return {stack.iid, std::min(size, std::min(excess, accept))};
-			}
-		}
-		return {0,0};
-	}
-
-	for (Level& sl: levels) {
-		uint excess = countActiveProvidable(sl.iid);
-		uint accept = dst.countSpace(sl.iid);
-		if (excess && accept && dst.isOverflowDefault(sl.iid) && isActiveProviding(sl.iid, &sl)) {
-			return {sl.iid, std::min(size, std::min(excess, accept))};
-		}
-	}
-
-//	if (!anything) {
-//		// stacks without levels are implicitly active for overlow
-//		for (Stack& stack: stacks) {
-//			if (level(stack.iid)) continue;
-//			uint excess = stack.size;
-//			uint accept = dst.countSpace(stack.iid);
-//			if (excess && accept && dst.isOverflowDefault(stack.iid)) {
-//				return {stack.iid, std::min(size, std::min(excess, accept))};
-//			}
-//		}
-//	}
-	return {0,0};
-}
-
-// special case: rebalance overflow back to provider with space
-Stack Store::overflowBalanceTo(Store& dst, uint size) {
-	if (!dst.input || !output || !overflow || dst.overflow) return {0,0};
-
-	for (Level& sl: levels) {
-		if (!dst.relevant(sl.iid)) continue;
-		uint excess = countProvidable(sl.iid, &sl);
-		uint accept = dst.countAcceptable(sl.iid);
-		if (excess && accept && dst.isAccepting(sl.iid) && isProviding(sl.iid, &sl)) {
-			return {sl.iid, std::min(size, std::min(excess, accept))};
-		}
-	}
-
-//	if (!anything) {
-//		// stacks without levels are implicitly active for overlow
-//		for (auto& stack: stacks) {
-//			if (level(stack.iid)) continue;
-//			if (!dst.relevant(stack.iid)) continue;
-//			uint excess = stack.size;
-//			uint accept = dst.countAcceptable(stack.iid);
-//			if (excess && accept && dst.isAccepting(stack.iid) && isProviding(stack.iid)) {
-//				return {stack.iid, std::min(size, std::min(excess, accept))};
-//			}
-//		}
-//	}
-
-	return {0,0};
+// number we can fit in under an upper limit
+uint Store::countAccepting(uint iid) {
+	auto lvl = level(iid);
+	int n = countPlusPromised(iid);
+	int spaceA = (limit()-usage()).items(iid);
+	int spaceB = (limit()-usagePredict()).items(iid);
+	int space = std::max(0, std::min(spaceA, spaceB));
+	if (fuel && Item::get(iid)->fuel.category == fuelCategory) return space;
+	if (!lvl) return 0;
+	return std::max(0, std::min(space, (int)lvl->upper - n));
 }
 
 minimap<Signal,&Signal::key> Store::signals() {

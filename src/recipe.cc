@@ -293,6 +293,7 @@ std::vector<Amount> Recipe::totalRawFluids(std::vector<Recipe*>* path) {
 }
 
 bool Recipe::manufacturable() {
+	if (!licensed) return false;
 	for (auto& [iid,_]: inputItems) {
 		auto item = Item::get(iid);
 		if (!item->manufacturable()) return false;

@@ -60,6 +60,7 @@ void Scene::init() {
 	));
 
 	icon.triangle = new Mesh("models/icon-triangle.stl");
+	icon.tick = new Mesh("models/icon-tick.stl");
 	icon.exclaim = new Mesh("models/icon-exclaim.stl");
 	icon.electricity = new Mesh("models/icon-electricity.stl");
 
@@ -193,6 +194,14 @@ void Scene::alert(Mesh* symbol, Point pos) {
 	auto trx = (pos + Point::Up*(0.25f*bob) + scene.offset).translation();
 	scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, Color(0xff0000ff), 2.0);
 	symbol->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+}
+
+void Scene::tick(Point pos) {
+	risers.push_back({pos, icon.tick, 0x00ff00ff, Sim::tick});
+}
+
+void Scene::exclaim(Point pos) {
+	risers.push_back({pos, icon.exclaim, 0xff0000ff, Sim::tick});
 }
 
 void Scene::updateMouse() {
@@ -1266,6 +1275,23 @@ void Scene::update(uint w, uint h, float f) {
 	if (routing) {
 		routing->overlayRouting();
 		routing->overlayAlignment();
+	}
+
+	for (auto it = risers.begin(); it != risers.end(); ) {
+		auto& riser = *it;
+
+		if (Sim::tick > riser.tick+60) {
+			it = risers.erase(it);
+			continue;
+		}
+
+		float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+		auto rot = Mat4::rotateY(glm::radians(spin));
+		auto rise = Point::Up * ((float)(Sim::tick-riser.tick) * 0.02);
+		auto trx = (riser.start + rise + scene.offset).translation();
+		scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, riser.color, 2.0);
+		riser.icon->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+		++it;
 	}
 
 	bool showTip = keyDown(SDLK_SPACE) || (Config::mode.autotip && (frame-mouse.moved) > fps);

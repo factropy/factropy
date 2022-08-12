@@ -866,8 +866,10 @@ void Store::saveAll(const char* name) {
 		state["id"] = store.id;
 		state["sid"] = store.sid;
 		state["activity"] = store.activity;
-		state["input"] = store.input;
-		state["output"] = store.output;
+
+		if (store.purge) {
+			state["purge"] = store.purge;
+		}
 
 		int i = 0;
 		for (Stack stack: store.stacks) {
@@ -919,12 +921,8 @@ void Store::loadAll(const char* name) {
 		store.sid = state["sid"];
 		store.activity = state["activity"];
 
-		if (state.contains("input")) {
-			store.input = state["input"];
-		}
-
-		if (state.contains("output")) {
-			store.output = state["output"];
+		if (state.contains("purge")) {
+			store.purge = state["purge"];
 		}
 
 		for (auto stack: state["stacks"]) {
@@ -1891,6 +1889,7 @@ void Loader::saveAll(const char* name) {
 		state["id"] = loader.id;
 		state["storeId"] = loader.storeId;
 		state["pause"] = loader.pause;
+		state["ignore"] = loader.ignore;
 
 		int i = 0;
 		for (uint iid: loader.filter) {
@@ -1926,6 +1925,10 @@ void Loader::loadAll(const char* name) {
 		Loader& loader = get(state["id"]);
 		loader.storeId = state["storeId"];
 		loader.pause = state["pause"];
+
+		if (state.contains("ignore")) {
+			loader.ignore = state["ignore"];
+		}
 
 		for (std::string name: state["filter"]) {
 			loader.filter.insert(Item::byName(name)->id);

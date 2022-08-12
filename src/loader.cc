@@ -29,6 +29,7 @@ Loader& Loader::create(uint id) {
 	loader.loading = !en.spec->loaderUnload;
 	loader.monitor = Monitor::Store;
 	loader.pause = 0;
+	loader.ignore = false;
 	loader.cache.point = Point::Zero;
 	loader.cache.refresh = 0;
 	return loader;
@@ -67,25 +68,21 @@ Point Loader::point() {
 Stack Loader::transferBeltToStore(Store& dst, Stack stack) {
 	Entity& de = *dst.en; // Entity::get(dst.id);
 
-	if (de.isGhost()) {
-		return {0,0};
-	}
+	if (de.isGhost()) return {0,0};
+	if (filter.size() && !filter.count(stack.iid)) return {0,0};
 
 	if (dst.strict()) {
-		if (filter.size()) {
-			if (filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
-				return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-			}
-			return {0,0};
-		}
-
-		if (dst.isAccepting(stack.iid)) {
-			return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+		if (dst.hint.accepting && dst.countAccepting(stack.iid)) {
+			return {stack.iid, std::min(stack.size, dst.countAccepting(stack.iid))};
 		}
 		return {0,0};
 	}
 
-	if (dst.countSpace(stack.iid) && (!filter.size() || filter.count(stack.iid))) {
+	if (!ignore && dst.hint.accepting && dst.countAccepting(stack.iid)) {
+		return {stack.iid, std::min(stack.size, dst.countAccepting(stack.iid))};
+	}
+
+	if (ignore && dst.countSpace(stack.iid)) {
 		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 
@@ -99,34 +96,17 @@ Stack Loader::transferStoreToBelt(Store& src) {
 		return {0,0};
 	}
 
-	if (src.strict()) {
-		if (filter.size()) {
-			Stack stack = {src.wouldRemoveAny(filter),1};
-			if (!stack.iid) {
-				for (Stack& ss: src.stacks) {
-					if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) return {ss.iid, 1};
-				}
-				for (Stack& ss: src.stacks) {
-					if (filter.count(ss.iid) && src.isProviding(ss.iid)) return {ss.iid, 1};
-				}
-			}
-			return stack;
+	if (src.strict() && src.hint.providing) {
+		for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			if (src.countProviding(stack.iid)) return {stack.iid,1};
 		}
-
-		Stack stack = {src.wouldRemoveAny(),1};
-		if (!stack.iid) {
-			for (Stack& ss: src.stacks) {
-				if (src.isActiveProviding(ss.iid)) return {ss.iid, 1};
-			}
-			for (Stack& ss: src.stacks) {
-				if (src.isProviding(ss.iid)) return {ss.iid, 1};
-			}
-		}
-		return stack;
 	}
 
 	for (auto& ss: src.stacks) {
-		if (src.countNet(ss.iid) && (!filter.size() || filter.count(ss.iid))) return {ss.iid, 1};
+		if (filter.size() && !filter.count(ss.iid)) continue;
+		if (!ignore && src.hint.providing && src.countProviding(ss.iid)) return {ss.iid,1};
+		if (ignore && src.countLessReserved(ss.iid)) return {ss.iid,1};
 	}
 
 	return {0,0};

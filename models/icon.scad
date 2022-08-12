@@ -30,6 +30,17 @@ module exclaim($fn=8) {
 	}
 }
 
+module tick($fn=8) {
+	translate([0,0.125,0]) rotate([90,0,0]) scale([0.45,0.45,0.25])
+		linear_extrude(height=1) polygon(points = [
+			[-0.5,-0.15],
+			[0,-0.5],
+			[0.3,0.4],
+			[-0.1,-0.25],
+		]);
+}
+
 //triangle();
 //bolt();
-exclaim();
+//exclaim();
+tick();

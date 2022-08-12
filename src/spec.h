@@ -466,5 +466,7 @@ struct Spec {
 
 	Rail railTo(Point posA, Point dirA, Spec* specB, Point posB, Point dirB);
 	bool railOk(Rail& rail);
+
+	Point iconPoint(Point pos, Point dir);
 };
 
