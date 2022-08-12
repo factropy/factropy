@@ -64,7 +64,6 @@ struct Store {
 	bool ghost;
 	bool magic;
 	bool transmit;
-	bool anything;
 	bool overflow;
 	bool input;
 	bool output;
@@ -122,6 +121,10 @@ struct Store {
 	bool isActiveProviding(uint iid, Level* lvl = nullptr);
 	bool isAccepting(uint iid, Level* lvl = nullptr);
 	bool isOverflowDefault(uint iid, Level* lvl = nullptr);
+	uint countProviding(uint iid, Level* lvl = nullptr);
+	uint countActiveProviding(uint iid, Level* lvl = nullptr);
+	uint countAccepting(uint iid, Level* lvl = nullptr);
+	uint countRequesting(uint iid, Level* lvl = nullptr);
 	bool relevant(uint iid);
 	bool intersection(Store& other);
 	Stack forceSupplyFrom(Store& src, uint size = 1);
@@ -129,6 +132,7 @@ struct Store {
 	Stack supplyFrom(Store& src, uint size = 1);
 	Stack supplyFrom(Store& src, miniset<uint>& filter, uint size = 1);
 	Stack forceOverflowTo(Store& dst, uint size = 1);
+	Stack forceOverflowTo(Store& dst, miniset<uint>& filter, uint size = 1);
 	Stack overflowTo(Store& dst, uint size = 1);
 	Stack overflowTo(Store& dst, miniset<uint>& filter, uint size = 1);
 	Stack overflowDefaultTo(Store& dst, uint size = 1);
@@ -140,6 +144,5 @@ struct StoreSettings {
 	minivec<Store::Level> levels;
 	minivec<Stack> stacks;
 	bool transmit;
-	bool anything;
 	StoreSettings(Store& store);
 };

@@ -31,11 +31,10 @@ struct Launcher {
 	bool activate;
 	uint completed;
 	float progress;
-	minivec<Stack> shipment;
+	uint iid;
 
 	enum class Monitor {
-		Store = 0,
-		Network,
+		Network = 0,
 	};
 
 	Monitor monitor;
@@ -45,6 +44,7 @@ struct Launcher {
 	void destroy();
 	void update();
 	bool fueled();
+	bool ready();
 	minimap<Amount,&Amount::fid> fuelRequired();
 	minimap<Amount,&Amount::fid> fuelAccessable();
 	minivec<uint> pipes();

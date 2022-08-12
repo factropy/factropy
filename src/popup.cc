@@ -576,6 +576,10 @@ void Popup::launcherNotice(Launcher& launcher) {
 			Notice("Launch window scheduled");
 		}
 		else
+		if (!launcher.iid) {
+			Warning("No payload set");
+		}
+		else
 		if (!Entity::get(launcher.id).store().isEmpty()) {
 			Notice("Loading");
 		}
@@ -1651,14 +1655,6 @@ void EntityPopup2::draw() {
 						"Accept all construction materials with limits."
 					);
 
-					if (en.spec->storeAnything) {
-						SameLine();
-						Checkbox("Anything", &store.anything);
-						if (IsItemHovered()) tip(
-							"Accept any item unless explicitly limited."
-						);
-					}
-
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
 
 					SpacingV();
@@ -1855,29 +1851,40 @@ void EntityPopup2::draw() {
 
 				auto colorStore = ImColorSRGB(0x999999ff);
 				PushStyleColor(ImGuiCol_PlotHistogram, colorStore);
-				SmallBar(store.usage().portion(store.limit()));
-				if (IsItemHovered()) tip("Loading progress");
 
 				for (auto& amount: fuelRequired) {
+					SpacingV();
 					auto need = Liquid(amount.size);
 					auto have = Liquid(fuelAccessable.has(amount.fid) ? fuelAccessable[amount.fid].size: (uint)0);
-					SpacingV();
-					SpacingV();
 					Title(Fluid::get(amount.fid)->title.c_str()); SameLine();
 					PrintRight(fmtc("%s / %s", have.format(), need.format()));
 					SmallBar(have.portion(need));
 				}
 
+				SpacingV();
+
+				auto pick = Button(launcher.iid ? Item::get(launcher.iid)->title.c_str(): " Set payload ");
+				if (IsItemHovered()) tip("Change payload");
+				if (itemPicker(pick)) launcher.iid = itemPicked;
+
+				if (launcher.iid) {
+					SameLine();
+					uint have = store.count(launcher.iid);
+					uint need = en.spec->capacity.items(launcher.iid);
+					PrintRight(fmtc("%u / %u", have, need));
+				}
+
+				SpacingV();
+
+				SmallBar(store.usage().portion(store.limit()));
+				if (IsItemHovered()) tip("Loading progress");
+
+				SpacingV();
+
 				PopStyleColor(1);
 
-				SpacingV();
-				SpacingV();
-
 				Section("Launch Rule");
-				if (BeginCombo("Monitor", launcher.monitor == Launcher::Monitor::Store ? "Store": "Network")) {
-					if (Selectable("Store", launcher.monitor == Launcher::Monitor::Store)) {
-						launcher.monitor = Launcher::Monitor::Store;
-					}
+				if (BeginCombo("Monitor", "Network")) {
 					if (launcher.en->spec->networker && Selectable("Network", launcher.monitor == Launcher::Monitor::Network)) {
 						launcher.monitor = Launcher::Monitor::Network;
 					}
@@ -1885,16 +1892,11 @@ void EntityPopup2::draw() {
 				}
 				signalCondition(0, launcher.condition, true, [&]() { return launcher.checkCondition(); });
 
-				SpacingV();
-				SpacingV();
-
-				if (!launcher.activate && !launcher.working && Button("Launch ASAP")) {
-					launcher.activate = true;
-				}
-
-				if (launcher.activate && !launcher.working && Button("Cancel Launch")) {
-					launcher.activate = false;
-				}
+				bool ready = launcher.ready();
+//crash				BeginDisabled(!ready);
+				if (Button(" Launch ") && ready) launcher.activate = true;
+				if (IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) && !ready) tip("Not ready");
+//				EndDisabled();
 
 				PopID();
 

@@ -1188,16 +1188,6 @@ public:
 				spec->storeSetLower = to_bool(storeSetLower);
 			}
 
-			auto storeAnything = field("storeAnything");
-			if (is_bool(storeAnything)) {
-				spec->storeAnything = to_bool(storeAnything);
-			}
-
-			auto storeAnythingDefault = field("storeAnythingDefault");
-			if (is_bool(storeAnythingDefault)) {
-				spec->storeAnythingDefault = to_bool(storeAnythingDefault);
-			}
-
 			auto storeUpgradePreserve = field("storeUpgradePreserve");
 			if (is_bool(storeUpgradePreserve)) {
 				spec->storeUpgradePreserve = to_bool(storeUpgradePreserve);
@@ -3606,8 +3596,6 @@ void ScenarioBase::specifications() {
 	spec->starship = true;
 	spec->health = 150;
 	spec->store = true;
-	spec->storeSetUpper = true;
-	spec->storeAnything = true;
 	spec->tipStorage = true;
 	spec->capacity = Mass::kg(1000);
 	spec->rotateGhost = true;
@@ -4206,7 +4194,6 @@ void ScenarioBase::blimpTier(int tier) {
 		spec->consumeChargeBuffer = Energy::kJ(50*tier);
 		spec->consumeChargeRate = Energy::kW(50*tier);
 		spec->store = true;
-		spec->storeAnything = true;
 		spec->tipStorage = true;
 		spec->capacity = Mass::kg(300*tier);
 		spec->forceDelete = true;
@@ -4360,7 +4347,6 @@ void ScenarioBase::cartTier(int tier) {
 	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
-	spec->storeAnything = true;
 	spec->storeSetUpper = true;
 	spec->capacity = Mass::kg(300*tier);
 
@@ -4547,7 +4533,6 @@ void ScenarioBase::truckTier(int tier) {
 	spec->capacity = Mass::kg(1000*tier);
 	spec->storeSetLower = true;
 	spec->storeSetUpper = true;
-	spec->storeAnything = true;
 
 	spec->materials = {
 		{ Item::byName("electric-motor")->id, 6 },

@@ -868,7 +868,6 @@ void Store::saveAll(const char* name) {
 		state["activity"] = store.activity;
 		state["input"] = store.input;
 		state["output"] = store.output;
-		state["anything"] = store.anything;
 
 		int i = 0;
 		for (Stack stack: store.stacks) {
@@ -956,10 +955,6 @@ void Store::loadAll(const char* name) {
 
 		if (state.contains("transmit")) {
 			store.transmit = state["transmit"];
-		}
-
-		if (state.contains("anything")) {
-			store.anything = state["anything"];
 		}
 	}
 
@@ -2986,9 +2981,9 @@ void Launcher::saveAll(const char* name) {
 		state["activate"] = launcher.activate;
 		state["completed"] = launcher.completed;
 		state["progress"] = launcher.progress;
+		state["iid"] = launcher.iid;
 
 		switch (launcher.monitor) {
-			case Monitor::Store: break;
 			case Monitor::Network: {
 				state["monitor"] = "network";
 				break;
@@ -3016,6 +3011,10 @@ void Launcher::loadAll(const char* name) {
 		launcher.activate = state["activate"];
 		launcher.completed = state["completed"];
 		launcher.progress = state["progress"];
+
+		if (state.contains("iid")) {
+			launcher.iid = state["iid"];
+		}
 
 		if (state.contains("monitor")) {
 			if (state["monitor"] == "network") {

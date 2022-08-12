@@ -126,8 +126,6 @@ struct Spec {
 	bool storeSetLower;
 	bool storeSetUpper;
 	bool storeMagic;
-	bool storeAnything;
-	bool storeAnythingDefault;
 	bool storeUpgradePreserve;
 	std::vector<Stack> supplies;
 	// store drones

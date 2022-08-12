@@ -61,8 +61,6 @@ Spec::Spec(std::string name) {
 	storeSetLower = false;
 	storeSetUpper = false;
 	storeMagic = false;
-	storeAnything = false;
-	storeAnythingDefault = false;
 	storeUpgradePreserve = false;
 	// store drones
 	logistic = false;
