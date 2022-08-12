@@ -39,6 +39,7 @@ Arm& Arm::create(uint id) {
 	arm.inputFar = true;
 	arm.outputNear = true;
 	arm.outputFar = true;
+	arm.force = false;
 	return arm;
 }
 
@@ -151,6 +152,12 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 				}
 			}
 		}
+		// arms can override requester containers
+		if (force) for (Stack& ss: src.stacks) {
+			if (filter.count(ss.iid) && src.countNet(ss.iid) && dst.countSpace(ss.iid)) {
+				return {ss.iid, 1};
+			}
+		}
 		return stack;
 	}
 
@@ -180,6 +187,14 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 			}
 		}
 	}
+
+	// arms can override requester containers
+	if (force) for (Stack& ss: src.stacks) {
+		if (src.countNet(ss.iid) && dst.countSpace(ss.iid)) {
+			return {ss.iid, 1};
+		}
+	}
+
 	return stack;
 }
 
@@ -204,6 +219,12 @@ Stack Arm::transferStoreToBelt(Store& src) {
 				}
 			}
 		}
+		// arms can override requester containers
+		if (force) for (Stack& ss: src.stacks) {
+			if (filter.count(ss.iid) && src.countNet(ss.iid)) {
+				return {ss.iid, 1};
+			}
+		}
 		return stack;
 	}
 
@@ -218,6 +239,12 @@ Stack Arm::transferStoreToBelt(Store& src) {
 			if (src.isProviding(ss.iid)) {
 				return {ss.iid, 1};
 			}
+		}
+	}
+	// arms can override requester containers
+	if (force) for (Stack& ss: src.stacks) {
+		if (src.countNet(ss.iid)) {
+			return {ss.iid, 1};
 		}
 	}
 	return stack;
@@ -240,6 +267,10 @@ Stack Arm::transferBeltToStore(Store& dst, Stack stack) {
 
 	if (dst.isAccepting(stack.iid)) {
 		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+	}
+
+	if (force && dst.countSpace(stack.iid)) {
+		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 
 	return {0,0};

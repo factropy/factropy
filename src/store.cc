@@ -515,7 +515,7 @@ uint Store::countAvailable(uint iid) {
 	return del ? n - std::min(n, del->reserved): n;
 }
 
-// number we have right now that have not been reserved to export
+// number we can fit in right now
 uint Store::countSpace(uint iid) {
 	return (limit() - usagePredict()).items(iid);
 }

@@ -47,6 +47,7 @@ struct Arm {
 	bool inputFar;
 	bool outputNear;
 	bool outputFar;
+	bool force;
 	float orientation;
 	float speed;
 	enum Stage stage;

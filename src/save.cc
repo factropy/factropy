@@ -1320,6 +1320,7 @@ void Arm::saveAll(const char* name) {
 		state["orientation"] = arm.orientation;
 		state["stage"] = arm.stage;
 		state["pause"] = arm.pause;
+		state["force"] = arm.force;
 
 		state["io"][0] = arm.inputNear;
 		state["io"][1] = arm.inputFar;
@@ -1368,6 +1369,10 @@ void Arm::loadAll(const char* name) {
 		arm.orientation = state["orientation"];
 		arm.stage = state["stage"];
 		arm.pause = state["pause"];
+
+		if (state.contains("force")) {
+			arm.force = state["force"];
+		}
 
 		if (state.contains("io")) {
 			arm.inputNear = state["io"][0];
