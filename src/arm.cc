@@ -155,14 +155,21 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 	}
 
 	Stack stack = src.overflowTo(dst);
+
+	if (!stack.iid) {
+		stack = src.overflowDefaultTo(dst);
+	}
+
 	if (!stack.iid) {
 		stack = dst.supplyFrom(src);
 	}
+
 	if (!stack.iid) {
 		if (de.spec->priority >= se.spec->priority || dst.fuel) {
 			stack = dst.forceSupplyFrom(src);
 		}
 	}
+
 	if (!stack.iid && !src.fuel) {
 		for (Stack& ss: src.stacks) {
 			bool dstOk = dst.isAccepting(ss.iid);
