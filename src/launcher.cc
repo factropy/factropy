@@ -22,7 +22,6 @@ Launcher& Launcher::create(uint id) {
 	launcher.activate = false;
 	launcher.progress = 0.0f;
 	launcher.completed = 0;
-	launcher.iid = 0;
 	launcher.monitor = Monitor::Network;
 	launcher.en->state = launcher.en->spec->launcherInitialState;
 	return launcher;
@@ -97,7 +96,7 @@ bool Launcher::fueled() {
 }
 
 bool Launcher::ready() {
-	return fueled() && iid;
+	return fueled() && cargo.size();
 }
 
 // check network
@@ -123,11 +122,9 @@ bool Launcher::checkCondition() {
 void Launcher::update() {
 	if (en->isGhost()) return;
 
-	uint shipment = iid ? en->spec->capacity.items(iid): 0;
-
 	store->levels.clear();
 	for (auto& stack: store->stacks) store->levelSet(stack.iid, 0, 0);
-	if (iid) store->levelSet(iid, shipment, shipment);
+	for (auto& iid: cargo) store->levelSet(iid, en->spec->capacity.items(iid), en->spec->capacity.items(iid));
 
 	// initial landing
 	if (!working && en->state) {
@@ -148,7 +145,7 @@ void Launcher::update() {
 
 	if (!working && ready()) {
 		if (!activate) {
-			activate = condition.valid() ? checkCondition(): store->count(iid) >= shipment;
+			activate = condition.valid() ? checkCondition(): store->isFull();
 		}
 		if (activate) {
 			auto fuelPipes = pipes();
@@ -162,9 +159,12 @@ void Launcher::update() {
 					if (!amount.size) continue;
 				}
 			}
-			auto stack = store->remove({iid,shipment});
-			Item::get(iid)->consume(stack.size);
-			Item::get(iid)->supply(stack.size);
+			for (auto& iid: cargo) {
+				if (!store->count(iid)) continue;
+				auto stack = store->remove({iid,store->count(iid)});
+				Item::get(iid)->consume(stack.size);
+				Item::get(iid)->supply(stack.size);
+			}
 			working = true;
 			en->state = 0;
 			progress = 0.0f;

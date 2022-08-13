@@ -39,6 +39,12 @@ struct Fluid {
 	bool raw;
 	std::string order;
 
+	static inline bool sort(const Fluid* a, const Fluid* b) {
+		return a->order < b->order
+			|| (a->order == b->order && a->title < b->title)
+			|| (a->order == b->order && a->title == b->title && a->name < b->name);
+	}
+
 	Fluid();
 	Fluid(uint id, std::string name);
 	~Fluid();

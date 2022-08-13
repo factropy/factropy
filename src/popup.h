@@ -53,6 +53,8 @@ struct Popup {
 
 	static bool tipBegin();
 	static void tipEnd();
+	static bool tipSmallBegin();
+	static void tipSmallEnd();
 	static void tip(const std::string& s);
 	static std::string wrap(uint line, std::string text);
 
@@ -103,7 +105,9 @@ struct LoadingPopup : Popup {
 };
 
 struct RecipePopup : Popup {
-	bool showUnavailable = false;
+	bool showUnavailableItemsFluids = false;
+	bool showUnavailableRecipes = false;
+	bool showUnavailableSpecs = false;
 
 	struct {
 		Item* item = nullptr;
@@ -141,11 +145,13 @@ struct RecipePopup : Popup {
 	~RecipePopup();
 	void draw() override;
 	void prepare() override;
+	bool showItem(Item* item);
 	void drawItem(Item* item);
 	void drawItemButton(Item* item);
 	void drawItemButtonNoBullet(Item* item);
 	void drawItemButton(Item* item, int count);
 	void drawItemButton(Item* item, int count, int limit);
+	bool showFluid(Fluid* fluid);
 	void drawFluid(Fluid* fluid);
 	void drawFluidButton(Fluid* fluid);
 	void drawFluidButton(Fluid* fluid, int count);

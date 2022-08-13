@@ -26,6 +26,7 @@
 #include <chrono>
 #include <thread>
 #include <filesystem>
+#include <random>
 
 #include <unistd.h>
 #include <csignal>
@@ -240,9 +241,7 @@ int main(int argc, char* argv[]) {
 	bool done = true;
 
 	{
-		uint seed = 0;
-
-		if (!seed) {
+		auto todayMS = []() {
 			auto now = std::chrono::system_clock::now();
 			time_t tnow = std::chrono::system_clock::to_time_t(now);
 			tm *date = std::localtime(&tnow);
@@ -250,8 +249,14 @@ int main(int argc, char* argv[]) {
 			date->tm_min = 0;
 			date->tm_sec = 0;
 			auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
-			seed = std::chrono::duration_cast<std::chrono::milliseconds>(now-midnight).count();
-		}
+			return std::chrono::duration_cast<std::chrono::milliseconds>(now-midnight).count();
+		};
+
+		uint seed = 0;
+
+		if (!seed && Config::mode.randomseed) seed = todayMS();
+		if (!seed && Config::mode.specificseed) seed = Config::mode.specificseed;
+		if (!seed) seed = Config::mode.seeds[todayMS() % Config::mode.seeds.size()];
 
 		bool readyScenario = false;
 		bool readyIcons = false;
@@ -260,6 +265,7 @@ int main(int argc, char* argv[]) {
 
 		Sim::reset();
 		Sim::reseed(seed);
+		notef("Seed: %u", seed);
 
 		crew.job([&]() {
 			trigger done;
@@ -292,18 +298,16 @@ int main(int argc, char* argv[]) {
 			for (auto [_,goal]: Goal::all)
 				if (!goal->title.size()) goal->title = fmt("(%s)", goal->name);
 
-			Item::categories["other"] = {"Other","zzz"};
-			Item::categories["other"].groups = {{"other",{"zzz"}}};
+			Item::categories["_"] = {"Other","zzz"};
+			for (auto& [_,category]: Item::categories) category.groups["_"] = {"zzz"};
 
 			for (auto [_,item]: Item::names) {
 				if (!item->category) {
-					item->category = &Item::categories["other"];
-					item->group = &item->category->groups["other"];
-					continue;
+					item->category = &Item::categories["_"];
+					item->group = &item->category->groups["_"];
 				}
 				if (!item->group) {
-					item->category->groups["other"] = {"zzz"};
-					item->group = &item->category->groups["other"];
+					item->group = &item->category->groups["_"];
 				}
 			}
 
@@ -329,9 +333,7 @@ int main(int argc, char* argv[]) {
 					for (auto [_,item]: Item::names) if (item->group == &group) items.insert(item);
 
 					group.display = {items.begin(), items.end()};
-					std::sort(group.display.begin(), group.display.end(), [](const auto a, const auto b) {
-						return a->order < b->order;
-					});
+					std::sort(group.display.begin(), group.display.end(), Item::sort);
 				}
 			}
 

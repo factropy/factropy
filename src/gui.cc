@@ -1227,248 +1227,248 @@ void GUI::update() {
 
 		switch (action) {
 			case Action::Copy: {
-				infof("Copy");
+				//infof("Copy");
 				if (worldFocused) actionCopy();
 				break;
 			}
 			case Action::Cut: {
-				infof("Cut");
+				//infof("Cut");
 				if (worldFocused) actionCut();
 				break;
 			}
 			case Action::Paste: {
-				infof("Paste");
+				//infof("Paste");
 				if (worldFocused) actionPaste();
 				break;
 			}
 			case Action::CopyConfig: {
-				infof("CopyConfig");
+				//infof("CopyConfig");
 				if (worldFocused) actionCopyConfig();
 				break;
 			}
 			case Action::PasteConfig: {
-				infof("PasteConfig");
+				//infof("PasteConfig");
 				if (worldFocused) actionPasteConfig();
 				break;
 			}
 			case Action::Pipette: {
-				infof("Pipette");
+				//infof("Pipette");
 				if (worldFocused) actionPipette();
 				break;
 			}
 			case Action::Upgrade: {
-				infof("Upgrade");
+				//infof("Upgrade");
 				if (worldFocused) actionUpgrade();
 				break;
 			}
 			case Action::UpgradeCascade: {
-				infof("UpgradeCascade");
+				//infof("UpgradeCascade");
 				if (worldFocused) actionUpgradeCascade();
 				break;
 			}
 			case Action::Rotate: {
-				infof("Rotate");
+				//infof("Rotate");
 				if (worldFocused) actionRotate();
 				break;
 			}
 			case Action::Cycle: {
-				infof("Cycle");
+				//infof("Cycle");
 				if (worldFocused) actionCycle();
 				break;
 			}
 			case Action::Open: {
-				infof("Open");
+				//infof("Open");
 				if (worldFocused) actionOpen();
 				break;
 			}
 			case Action::Direct: {
-				infof("Direct");
+				//infof("Direct");
 				if (worldFocused) actionDirect();
 				break;
 			}
 			case Action::Move: {
-				infof("Move");
+				//infof("Move");
 				if (worldFocused) actionMove();
 				break;
 			}
 			case Action::Link: {
-				infof("Link");
+				//infof("Link");
 				if (worldFocused) actionLink();
 				break;
 			}
 			case Action::Connect: {
-				infof("Connect");
+				//infof("Connect");
 				if (worldFocused) actionConnect();
 				break;
 			}
 			case Action::Disconnect: {
-				infof("Disconnect");
+				//infof("Disconnect");
 				if (worldFocused) actionDisconnect();
 				break;
 			}
 			case Action::RouteRed: {
-				infof("RouteRed");
+				//infof("RouteRed");
 				if (worldFocused) actionRoute(CartWaypoint::Red);
 				break;
 			}
 			case Action::RouteBlue: {
-				infof("RouteBlue");
+				//infof("RouteBlue");
 				if (worldFocused) actionRoute(CartWaypoint::Blue);
 				break;
 			}
 			case Action::RouteGreen: {
-				infof("RouteGreen");
+				//infof("RouteGreen");
 				if (worldFocused) actionRoute(CartWaypoint::Green);
 				break;
 			}
 			case Action::RouteSetNext: {
-				infof("RouteSetNext");
+				//infof("RouteSetNext");
 				if (worldFocused) actionRouteSetNext();
 				break;
 			}
 			case Action::RouteClrNext: {
-				infof("RouteClrNext");
+				//infof("RouteClrNext");
 				if (worldFocused) actionRouteClrNext();
 				break;
 			}
 			case Action::Flush: {
-				infof("Flush");
+				//infof("Flush");
 				if (worldFocused) actionFlush();
 				break;
 			}
 			case Action::Construct: {
-				infof("Construct");
+				//infof("Construct");
 				if (worldFocused) actionConstruct(!force);
 				break;
 			}
 			case Action::ConstructForce: {
-				infof("ConstructForce");
+				//infof("ConstructForce");
 				if (worldFocused) actionConstruct(force);
 				break;
 			}
 			case Action::Deconstruct: {
-				infof("Deconstruct");
+				//infof("Deconstruct");
 				if (worldFocused) actionDeconstruct(!force);
 				break;
 			}
 			case Action::DeconstructForce: {
-				infof("DeconstructForce");
+				//infof("DeconstructForce");
 				if (worldFocused) actionDeconstruct(force);
 				break;
 			}
 			case Action::ToggleConstruct: {
-				infof("ToggleConstruct");
+				//infof("ToggleConstruct");
 				if (worldFocused) actionToggleConstruct();
 				break;
 			}
 			case Action::ToggleGrid: {
-				infof("ToggleGrid");
+				//infof("ToggleGrid");
 				if (worldFocused) actionToggleGrid();
 				break;
 			}
 			case Action::ToggleAlignment: {
-				infof("ToggleAlignment");
+				//infof("ToggleAlignment");
 				if (worldFocused) actionToggleAlignment();
 				break;
 			}
 			case Action::ToggleEnable: {
-				infof("ToggleEnable");
+				//infof("ToggleEnable");
 				if (worldFocused) actionToggleEnable();
 				break;
 			}
 			case Action::ToggleCardinalSnap: {
-				infof("ToggleCardinalSnap");
+				//infof("ToggleCardinalSnap");
 				if (worldFocused) actionToggleCardinalSnap();
 				break;
 			}
 			case Action::SpecUp: {
-				infof("SpecUp");
+				//infof("SpecUp");
 				if (worldFocused) actionSpecUp();
 				break;
 			}
 			case Action::SpecDown: {
-				infof("SpecDown");
+				//infof("SpecDown");
 				if (worldFocused) actionSpecDown();
 				break;
 			}
 			case Action::SelectJunk: {
-				infof("SelectJunk");
+				//infof("SelectJunk");
 				actionSelectJunk();
 				break;
 			}
 			case Action::SelectUnder: {
-				infof("SelectUnder");
+				//infof("SelectUnder");
 				actionSelectUnder();
 				break;
 			}
 			case Action::Plan: {
-				infof("Plan");
+				//infof("Plan");
 				if (worldFocused || popup == planPopup)
 					actionPlan();
 				break;
 			}
 			case Action::Map: {
-				infof("Map");
+				//infof("Map");
 				if (worldFocused || popup == mapPopup)
 					actionMap();
 				break;
 			}
 			case Action::Paint: {
-				infof("Paint");
+				//infof("Paint");
 				if (worldFocused || popup == planPopup)
 					actionPaint();
 				break;
 			}
 			case Action::Zeppelins: {
-				infof("Zeppelins");
+				//infof("Zeppelins");
 				if (worldFocused || popup == zeppelinPopup)
 					actionZeppelins();
 				break;
 			}
 			case Action::Escape: {
-				infof("Escape");
+				//infof("Escape");
 				actionEscape();
 				break;
 			}
 			case Action::Save: {
-				infof("Save");
+				//infof("Save");
 				actionSave();
 				break;
 			}
 			case Action::Build: {
-				infof("Build");
+				//infof("Build");
 				// need better key combo integration with popups
 				if (worldFocused || popup == recipePopup)
 					actionBuild();
 				break;
 			}
 			case Action::Stats: {
-				infof("Stats");
+				//infof("Stats");
 				actionStats();
 				break;
 			}
 			case Action::Log: {
-				infof("Log");
+				//infof("Log");
 				actionLog();
 				break;
 			}
 			case Action::Attack: {
-				infof("Attack");
+				//infof("Attack");
 				actionAttack();
 				break;
 			}
 			case Action::Pause: {
-				infof("Pause");
+				//infof("Pause");
 				actionPause();
 				break;
 			}
 			case Action::Debug: {
-				infof("Debug");
+				//infof("Debug");
 				actionDebug();
 				break;
 			}
 			case Action::Debug2: {
-				infof("Debug2");
+				//infof("Debug2");
 				actionDebug2();
 				break;
 			}
@@ -1493,7 +1493,7 @@ void GUI::update() {
 		popup->show(true);
 	}
 
-	if (doSave) {
+	if (doSave || (Config::mode.game1 && Sim::tick == 60)) {
 		doSave = false;
 		Sim::locked([&]() {
 			bool ok = Sim::save(Config::savePath(Config::mode.saveName).c_str(), scene.position, scene.direction, scene.directing ? scene.directing->id: 0);

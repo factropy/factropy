@@ -18,7 +18,7 @@ function repairKit(name, title, color, repair)
 	})
 end
 
-repairKit("repair-kit", "Repair Kit mk1", 0x990000FF, 100)
-repairKit("repair-kit2", "Repair Kit mk2", 0x009900FF, 200)
-repairKit("repair-kit3", "Repair Kit mk3", 0x000099FF, 300)
+repairKit("repair-kit", "Repair Kit", 0x990000FF, 100)
+repairKit("parts-kit", "Parts Kit", 0x009900FF, 200)
+repairKit("upgrade-kit", "Upgrade Kit", 0x000099FF, 300)
 

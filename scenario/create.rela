@@ -1,25 +1,25 @@
 
 home = world_flat_area(origin, 30)
 
-falcon = entity_create("falcon")
+rocket = entity_create("rocket")
 smr = entity_create("smr")
 supply = entity_create("container-buffer")
 overflow = entity_create("container-overflow")
 zeppelin = entity_create("zeppelin")
 
-entity_place(falcon, home, east)
+entity_place(rocket, home, east)
 entity_place(smr, home + east*12, south)
 entity_place(supply, home + west*11 + north*5, east)
 entity_place(overflow, home + west*11 + north, east)
-entity_move(zeppelin, home + up*50 + north*30, east)
+entity_move(zeppelin, home + up*60 + north*50, east)
 
-entity_materialize(falcon)
+entity_materialize(rocket)
 entity_materialize(smr)
 entity_materialize(supply)
 entity_materialize(overflow)
 entity_materialize(zeppelin)
 
-entity_permanent(falcon)
+entity_permanent(rocket)
 entity_permanent(smr)
 entity_permanent(supply)
 entity_permanent(overflow)

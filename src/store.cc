@@ -120,7 +120,7 @@ void Store::update() {
 		}
 	}
 
-	hint.requesting = false;
+	hint.requesting = fuel;
 	hint.accepting = overflow;
 	hint.providing = overflow;
 	hint.activeproviding = false;

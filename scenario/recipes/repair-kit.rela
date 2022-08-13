@@ -15,8 +15,8 @@ add_recipe({
 })
 
 add_recipe({
-	name = "repair-kit2",
-	title = "Repair Kit mk2",
+	name = "parts-kit",
+	title = "Parts Kit",
 	energy = kJ(900),
 	tags = tags.crafting,
 	input = {
@@ -26,21 +26,22 @@ add_recipe({
 		"battery" = 1,
 		"filter" = 1,
 	},
-	output = { "repair-kit2" = 1 },
+	output = { "parts-kit" = 1 },
 })
 
 add_recipe({
-	name = "repair-kit3",
-	title = "Repair Kit mk3",
+	name = "upgrade-kit",
+	title = "Upgrade Kit",
 	energy = kJ(1200),
 	tags = tags.crafting,
 	input = {
-		"repair-kit2" = 2,
+		"parts-kit" = 2,
 		"aluminium-frame" = 1,
 		"heatsink" = 1,
-		"solid-fuel" = 1,
+		"filter" = 1,
+		"processor" = 1,
 	},
-	output = { "repair-kit3" = 1 },
+	output = { "upgrade-kit" = 1 },
 })
 
 

@@ -94,7 +94,6 @@ miniset<Recipe*> Item::recipes() {
 
 bool Item::manufacturable() {
 	if (free) return true;
-	if (mining.count(id)) return true;
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
 		if (recipe->mine == id) return true;

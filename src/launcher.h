@@ -31,7 +31,7 @@ struct Launcher {
 	bool activate;
 	uint completed;
 	float progress;
-	uint iid;
+	miniset<uint> cargo;
 
 	enum class Monitor {
 		Network = 0,

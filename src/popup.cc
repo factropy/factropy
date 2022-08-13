@@ -20,6 +20,8 @@
 #include <fstream>
 #include <chrono>
 
+using namespace ImGui;
+
 namespace {
 	void openURL(const std::string& url) {
 	#if defined(_WIN32)
@@ -85,12 +87,11 @@ void Popup::center() {
 		((float)Config::window.height-size.y)/2.0f
 	};
 
-	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
 int Popup::iconTier(float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 
 	int iconSize = 0;
@@ -107,13 +108,11 @@ ImTextureID Popup::itemIconChoose(Item* item, float pix) {
 }
 
 void Popup::itemIcon(Item* item, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 bool Popup::itemIconButton(Item* item, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	return ImageButton(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
@@ -123,13 +122,11 @@ ImTextureID Popup::fluidIconChoose(Fluid* fluid, float pix) {
 }
 
 void Popup::fluidIcon(Fluid* fluid, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 bool Popup::fluidIconButton(Fluid* fluid, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	return ImageButton(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
@@ -140,12 +137,7 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 		for (auto& [iid,_]: from) {
 			items.push(Item::get(iid));
 		}
-		std::sort(items.begin(), items.end(), [](const auto a, const auto b) {
-			return a->category->order < b->category->order
-				|| (a->category->order == b->category->order && b->group->order < b->group->order)
-				|| (a->category->order == b->category->order && b->group->order == b->group->order && a->order < b->order)
-				|| (a->category->order == b->category->order && b->group->order == b->group->order && a->order == b->order && a->title < b->title);
-		});
+		std::sort(items.begin(), items.end());
 		return items.size() ? items.front()->id: 0;
 	};
 
@@ -193,13 +185,11 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 }
 
 void Popup::recipeIcon(Recipe* recipe, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 bool Popup::recipeIconButton(Recipe* recipe, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 
 	auto state = ImageButton(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
@@ -269,19 +259,16 @@ ImTextureID Popup::specIconChoose(Spec* spec, float pix) {
 }
 
 void Popup::specIcon(Spec* spec, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 bool Popup::specIconButton(Spec* spec, float pix) {
-	using namespace ImGui;
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	return ImageButton(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
-	using namespace ImGui;
 
 	if (open) OpenPopup("##item-picker");
 
@@ -347,7 +334,6 @@ uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {
 }
 
 Recipe* Popup::recipePicker(bool open, std::function<bool(Recipe*)> show) {
-	using namespace ImGui;
 
 	if (open) OpenPopup("##recipe-picker");
 
@@ -411,8 +397,8 @@ void Popup::topRight() {
 		0.0f,
 	};
 
-	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
 void Popup::bottomLeft() {
@@ -426,8 +412,8 @@ void Popup::bottomLeft() {
 		(float)Config::window.height-size.y,
 	};
 
-	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Always);
 }
 
 void Popup::show(bool state) {
@@ -442,7 +428,7 @@ void Popup::prepare() {
 }
 
 float Popup::relativeWidth(float w) {
-	return ImGui::GetContentRegionAvail().x * w;
+	return GetContentRegionAvail().x * w;
 }
 
 std::string Popup::wrap(uint line, std::string text) {
@@ -461,7 +447,6 @@ std::string Popup::wrap(uint line, std::string text) {
 }
 
 bool Popup::tipBegin() {
-	using namespace ImGui;
 	if (IsItemHovered()) {
 		auto& style = GetStyle();
 		ImVec2 tooltip_pos = GetMousePos();
@@ -477,25 +462,33 @@ bool Popup::tipBegin() {
 }
 
 void Popup::tipEnd() {
-	using namespace ImGui;
 	End();
 }
 
-void Popup::tip(const std::string& s) {
-	using namespace ImGui;
-	tipBegin();
-	PushFont(Config::sidebar.font.imgui);
-	PushTextWrapPos((float)Config::window.width*0.1f);
-	PushStyleColor(ImGuiCol_Text, ImColorSRGB(0xffffccff));
-	Print(s.c_str());
+bool Popup::tipSmallBegin() {
+	if (tipBegin()) {
+		PushFont(Config::sidebar.font.imgui);
+		PushStyleColor(ImGuiCol_Text, ImColorSRGB(0xffffccff));
+		return true;
+	}
+	return false;
+}
+
+void Popup::tipSmallEnd() {
 	PopStyleColor(1);
-	PopTextWrapPos();
 	PopFont();
 	tipEnd();
 }
 
+void Popup::tip(const std::string& s) {
+	tipSmallBegin();
+	PushTextWrapPos((float)Config::window.width*0.1f);
+	Print(s.c_str());
+	PopTextWrapPos();
+	tipSmallEnd();
+}
+
 void Popup::crafterNotice(Crafter& crafter) {
-	using namespace ImGui;
 
 	auto& en = Entity::get(crafter.id);
 
@@ -536,7 +529,6 @@ void Popup::crafterNotice(Crafter& crafter) {
 }
 
 void Popup::launcherNotice(Launcher& launcher) {
-	using namespace ImGui;
 
 	if (launcher.working) {
 		if (launcher.progress < 0.1) {
@@ -575,7 +567,7 @@ void Popup::launcherNotice(Launcher& launcher) {
 			Notice("Launch window scheduled");
 		}
 		else
-		if (!launcher.iid) {
+		if (!launcher.cargo.size()) {
 			Warning("No payload set");
 		}
 		else
@@ -589,7 +581,6 @@ void Popup::launcherNotice(Launcher& launcher) {
 }
 
 void Popup::powerpoleNotice(PowerPole& pole) {
-	using namespace ImGui;
 
 	if (!pole.network) {
 		Warning("Disconnected");
@@ -612,7 +603,6 @@ void Popup::powerpoleNotice(PowerPole& pole) {
 }
 
 void Popup::goalRateChart(Goal* goal, Goal::Rate& rate, float h) {
-	using namespace ImGui;
 
 	uint minute = 60*60;
 	uint hour = minute*60;
@@ -730,7 +720,6 @@ LoadingPopup::~LoadingPopup() {
 }
 
 void LoadingPopup::draw() {
-	using namespace ImGui;
 
 	big();
 	Begin("Loading", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
@@ -778,7 +767,6 @@ void StatsPopup2::prepare() {
 }
 
 void StatsPopup2::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	uint64_t second = 60;
@@ -1149,10 +1137,10 @@ void StatsPopup2::draw() {
 		EndTabBar();
 	}
 
-	mouseOver = ImGui::IsWindowHovered();
+	mouseOver = IsWindowHovered();
 	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 
-	ImGui::End();
+	End();
 	if (visible) show(showing);
 }
 
@@ -1167,7 +1155,6 @@ void EntityPopup2::useEntity(uint eeid) {
 }
 
 void EntityPopup2::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -1432,24 +1419,15 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (itemPicker(Button("Allow item##filter-item"))) {
-					if (!arm.filter.has(itemPicked)) insert = itemPicked;
+				int i = 0;
+				for (auto iid: arm.filter) {
+					if (ButtonStrip(i++, fmtc(" %s ", Item::get(iid)->title))) remove = iid;
+					if (IsItemHovered()) tip("Remove item from filter set.");
 				}
 
-				if (arm.filter.size()) SpacingV();
-				PushFont(Config::sidebar.font.imgui);
-				int i = 0;
-				float limit = GetContentRegionAvail().x;
-				for (uint iid: arm.filter) {
-					Item* item = Item::get(iid);
-					float width = CalcTextSize(item->title.c_str()).x + GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2;
-					if (i && GetCursorPos().x + width > limit) NewLine();
-					if (Button(item->title.c_str())) remove = iid;
-					SameLine();
-					i++;
-				}
-				if (arm.filter.size()) NewLine();
-				PopFont();
+				auto pick = ButtonStrip(i++, arm.filter.size() ? " + Item ": " Set Filter ");
+				if (IsItemHovered()) tip("Add item to filter set.");
+				if (itemPicker(pick)) insert = itemPicked;
 
 				if (remove) arm.filter.erase(remove);
 				if (insert) arm.filter.insert(insert);
@@ -1510,24 +1488,15 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (itemPicker(Button("Allow item##filter-item"))) {
-					if (!loader.filter.has(itemPicked)) insert = itemPicked;
+				int i = 0;
+				for (auto iid: loader.filter) {
+					if (ButtonStrip(i++, fmtc(" %s ", Item::get(iid)->title))) remove = iid;
+					if (IsItemHovered()) tip("Remove item from filter set.");
 				}
 
-				if (loader.filter.size()) SpacingV();
-				PushFont(Config::sidebar.font.imgui);
-				int i = 0;
-				float limit = GetContentRegionAvail().x;
-				for (uint iid: loader.filter) {
-					Item* item = Item::get(iid);
-					float width = CalcTextSize(item->title.c_str()).x + GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2;
-					if (i && GetCursorPos().x + width > limit) NewLine();
-					if (Button(item->title.c_str())) remove = iid;
-					SameLine();
-					i++;
-				}
-				if (loader.filter.size()) NewLine();
-				PopFont();
+				auto pick = ButtonStrip(i++, loader.filter.size() ? " + Item ": " Set Filter ");
+				if (IsItemHovered()) tip("Add item to filter set.");
+				if (itemPicker(pick)) insert = itemPicked;
 
 				if (remove) loader.filter.erase(remove);
 				if (insert) loader.filter.insert(insert);
@@ -1871,16 +1840,21 @@ void EntityPopup2::draw() {
 
 				SpacingV();
 
-				auto pick = Button(launcher.iid ? Item::get(launcher.iid)->title.c_str(): " Set payload ");
-				if (IsItemHovered()) tip("Change payload");
-				if (itemPicker(pick)) launcher.iid = itemPicked;
+				uint insert = 0;
+				uint remove = 0;
 
-				if (launcher.iid) {
-					SameLine();
-					uint have = store.count(launcher.iid);
-					uint need = en.spec->capacity.items(launcher.iid);
-					PrintRight(fmtc("%u / %u", have, need));
+				int i = 0;
+				for (auto iid: launcher.cargo) {
+					if (ButtonStrip(i++, fmtc(" %s ", Item::get(iid)->title))) remove = iid;
+					if (IsItemHovered()) tip("Drop item type from payload");
 				}
+
+				auto pick = ButtonStrip(i++, launcher.cargo.size() ? " + Item ": " Set Payload ");
+				if (IsItemHovered()) tip("Add an item type to payload.");
+				if (itemPicker(pick)) insert = itemPicked;
+
+				if (remove) launcher.cargo.erase(remove);
+				if (insert) launcher.cargo.insert(insert);
 
 				SpacingV();
 
@@ -1901,10 +1875,8 @@ void EntityPopup2::draw() {
 				signalCondition(0, launcher.condition, true, [&]() { return launcher.checkCondition(); });
 
 				bool ready = launcher.ready();
-//crash				BeginDisabled(!ready);
 				if (Button(" Launch ") && ready) launcher.activate = true;
 				if (IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled) && !ready) tip("Not ready");
-//				EndDisabled();
 
 				PopID();
 
@@ -1931,7 +1903,7 @@ void EntityPopup2::draw() {
 					if (recipePicker(pick, craftable)) crafter.craft(recipePicked);
 				}
 				else {
-					if (recipePicker(Button("Set Recipe"), craftable)) {
+					if (recipePicker(Button(" Set Recipe "), craftable)) {
 						crafter.craft(recipePicked);
 					}
 				}
@@ -2274,7 +2246,7 @@ void EntityPopup2::draw() {
 				}
 
 				for (auto [eid,name]: Entity::names) {
-					if (ImGui::Button(fmtc("+way %s##%d", name.c_str(), n++))) {
+					if (Button(fmtc("+way %s##%d", name.c_str(), n++))) {
 						vehicle.addWaypoint(eid);
 					}
 				}
@@ -3186,24 +3158,15 @@ void EntityPopup2::draw() {
 				uint remove = 0;
 				uint insert = 0;
 
-				if (itemPicker(Button("Allow item##filter-item"))) {
-					if (!balancer.filter.has(itemPicked)) insert = itemPicked;
+				int i = 0;
+				for (auto iid: balancer.filter) {
+					if (ButtonStrip(i++, fmtc(" %s ", Item::get(iid)->title))) remove = iid;
+					if (IsItemHovered()) tip("Remove item from filter set.");
 				}
 
-				if (balancer.filter.size()) SpacingV();
-				PushFont(Config::sidebar.font.imgui);
-				int i = 0;
-				float limit = GetContentRegionAvail().x;
-				for (uint iid: balancer.filter) {
-					Item* item = Item::get(iid);
-					float width = CalcTextSize(item->title.c_str()).x + GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2;
-					if (i && GetCursorPos().x + width > limit) NewLine();
-					if (Button(item->title.c_str())) remove = iid;
-					SameLine();
-					i++;
-				}
-				if (balancer.filter.size()) NewLine();
-				PopFont();
+				auto pick = ButtonStrip(i++, balancer.filter.size() ? " + Item ": " Set Filter ");
+				if (IsItemHovered()) tip("Add item to filter set.");
+				if (itemPicker(pick)) insert = itemPicked;
 
 				if (remove) balancer.filter.erase(remove);
 				if (insert) balancer.filter.insert(insert);
@@ -3444,26 +3407,29 @@ void EntityPopup2::draw() {
 			if (BeginTabItem("Settings", nullptr, focusedTab())) {
 
 				PushID("entity");
+					{
+						bool permanent = en.isPermanent();
+						if (Checkbox("Permanent", &permanent)) en.setPermanent(permanent);
+						if (IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) tip(
+							"Permanent structures cannot be accidentally deconstructed."
+							"\n\nWARNING -- Removing permanent structures that have not"
+							" yet been unlocked may make it difficult to continue!"
+						);
+					}
 					if (en.spec->enable) {
 						bool enabled = en.isEnabled();
-						if (Checkbox("Enabled", &enabled)) {
-							en.setEnabled(enabled);
-						}
+						if (Checkbox("Enabled", &enabled)) en.setEnabled(enabled);
 					}
 					if (en.spec->generateElectricity) {
 						bool generating = en.isGenerating();
-						if (Checkbox("Generate Electricity", &generating)) {
-							en.setGenerating(generating);
-						}
+						if (Checkbox("Generate Electricity", &generating)) en.setGenerating(generating);
 					}
 					if (en.spec->named) {
 						bool saveEnter = InputText("Name", name, sizeof(name), ImGuiInputTextFlags_EnterReturnsTrue);
 						inputFocused = IsItemActive();
 						SameLine();
-						if (Button("save") || saveEnter) {
-							if (std::strlen(name)) {
-								en.rename(name);
-							}
+						if (Button(" Save ") || saveEnter) {
+							if (std::strlen(name)) en.rename(name);
 						}
 					}
 					if (en.spec->consumeFuel) {
@@ -3513,55 +3479,94 @@ void RecipePopup::prepare() {
 	for (auto& [_,goal]: Goal::all)
 		sorted.goals.push_back(goal);
 
-	reorder(sorted.items, [&](auto a, auto b) { return a->title < b->title; });
-	reorder(sorted.fluids, [&](auto a, auto b) { return a->title < b->title; });
+	std::sort(sorted.items.begin(), sorted.items.end(), Item::sort);
+	std::sort(sorted.fluids.begin(), sorted.fluids.end(), Fluid::sort);
 	reorder(sorted.recipes, [&](auto a, auto b) { return a->title < b->title; });
 	reorder(sorted.specs, [&](auto a, auto b) { return a->title < b->title; });
 	reorder(sorted.goals, [&](auto a, auto b) { return b->depends(a); });
 }
 
 void RecipePopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
 		big();
 		Begin("Build##recipe", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
-		Checkbox("Show Locked Stuff", &showUnavailable);
+		if (IsWindowAppearing()) {
+			expanded.goal.clear();
+			if (Goal::current()) expanded.goal[Goal::current()] = true;
+		}
 
 		float column = GetContentRegionAvail().x/4.0;
 
-		BeginTable("list", 4);
+		PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemSpacing.x/2,0));
+		BeginTable("list", 4, ImGuiTableFlags_BordersInnerV);
 
-		TableSetupColumn("Items & Fluids", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("Recipes", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("Structures & Vehicles", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("Goals", ImGuiTableColumnFlags_WidthFixed, column);
-		TableHeadersRow();
-
-		TableNextColumn();
-		BeginChild("list-items-and-fluids");
-		for (auto& item: sorted.items) drawItem(item);
-		for (auto& fluid: sorted.fluids) drawFluid(fluid);
-		EndChild();
+		TableSetupColumn("##items", ImGuiTableColumnFlags_WidthFixed, column);
+		TableSetupColumn("##recipes", ImGuiTableColumnFlags_WidthFixed, column);
+		TableSetupColumn("##specs", ImGuiTableColumnFlags_WidthFixed, column);
+		TableSetupColumn("##goals", ImGuiTableColumnFlags_WidthFixed, column);
 
 		TableNextColumn();
-		BeginChild("list-recipes");
-		for (auto& recipe: sorted.recipes) drawRecipe(recipe);
-		EndChild();
+
+			Header("Items & Fluids", false);
+			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-items-fluids"))) showUnavailableItemsFluids = !showUnavailableItemsFluids;
+			if (IsItemHovered()) tip("Toggle locked items & fluids");
+
+			BeginChild("list-items-and-fluids"); {
+				for (auto category: Item::display) {
+					bool show = false;
+					for (auto group: category->display) {
+						for (auto item: group->display) show = show || showItem(item);
+					}
+					if (show) {
+						Section(category->title, false);
+						for (auto group: category->display) {
+							for (auto item: group->display) drawItem(item);
+						}
+					}
+				}
+				bool show = false;
+				for (auto& fluid: sorted.fluids) {
+					show = show || showFluid(fluid);
+				}
+				if (show) {
+					Section("Fluids", false);
+					for (auto& fluid: sorted.fluids) drawFluid(fluid);
+				}
+			}
+			EndChild();
 
 		TableNextColumn();
-		BeginChild("list-specs");
-		for (auto& spec: sorted.specs) drawSpec(spec);
-		EndChild();
+
+			Header("Recipes", false);
+			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-recipes"))) showUnavailableRecipes = !showUnavailableRecipes;
+			if (IsItemHovered()) tip("Toggle locked recipes");
+
+			BeginChild("list-recipes");
+			for (auto& recipe: sorted.recipes) drawRecipe(recipe);
+			EndChild();
 
 		TableNextColumn();
-		BeginChild("list-goals");
-		for (auto& goal: sorted.goals) drawGoal(goal);
-		EndChild();
+
+			Header("Structures & Vehicles", false);
+			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-specs"))) showUnavailableSpecs = !showUnavailableSpecs;
+			if (IsItemHovered()) tip("Toggle locked structures & vehicles");
+
+			BeginChild("list-specs");
+			for (auto& spec: sorted.specs) drawSpec(spec);
+			EndChild();
+
+		TableNextColumn();
+
+			Header("Goals", false);
+			BeginChild("list-goals");
+			for (auto& goal: sorted.goals) drawGoal(goal);
+			EndChild();
 
 		EndTable();
+		PopStyleVar(1);
 
 		mouseOver = IsWindowHovered();
 		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
@@ -3570,10 +3575,12 @@ void RecipePopup::draw() {
 	});
 }
 
-void RecipePopup::drawItem(Item* item) {
-	using namespace ImGui;
+bool RecipePopup::showItem(Item* item) {
+	return showUnavailableItemsFluids || item->manufacturable() || item->show || expanded.item[item];
+}
 
-	if (!showUnavailable && !item->manufacturable() && !item->show && !expanded.item[item]) return;
+void RecipePopup::drawItem(Item* item) {
+	if (!showItem(item)) return;
 
 	if (locate.item == item) {
 		SetScrollHereY();
@@ -3665,7 +3672,6 @@ void RecipePopup::drawItem(Item* item) {
 }
 
 void RecipePopup::drawItemButton(Item* item) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(item->title.c_str())) {
 		locate.item = item;
@@ -3675,7 +3681,6 @@ void RecipePopup::drawItemButton(Item* item) {
 }
 
 void RecipePopup::drawItemButtonNoBullet(Item* item) {
-	using namespace ImGui;
 	if (SmallButton(item->title.c_str())) {
 		locate.item = item;
 		expanded.item[item] = !expanded.item[item];
@@ -3684,7 +3689,6 @@ void RecipePopup::drawItemButtonNoBullet(Item* item) {
 }
 
 void RecipePopup::drawItemButton(Item* item, int count) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(fmtc("%s(%d)", item->title, count))) {
 		locate.item = item;
@@ -3694,7 +3698,6 @@ void RecipePopup::drawItemButton(Item* item, int count) {
 }
 
 void RecipePopup::drawItemButton(Item* item, int count, int limit) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(fmtc("%s(%d/%d)", item->title, count, limit))) {
 		locate.item = item;
@@ -3703,10 +3706,12 @@ void RecipePopup::drawItemButton(Item* item, int count, int limit) {
 	highlited.item[item] = highlited.item[item] || IsItemHovered();
 }
 
-void RecipePopup::drawFluid(Fluid* fluid) {
-	using namespace ImGui;
+bool RecipePopup::showFluid(Fluid* fluid) {
+	return showUnavailableItemsFluids || fluid->manufacturable() || expanded.fluid[fluid];
+}
 
-	if (!showUnavailable && !fluid->manufacturable() && !expanded.fluid[fluid]) return;
+void RecipePopup::drawFluid(Fluid* fluid) {
+	if (!showFluid(fluid)) return;
 
 	if (locate.fluid == fluid) {
 		SetScrollHereY();
@@ -3769,7 +3774,6 @@ void RecipePopup::drawFluid(Fluid* fluid) {
 }
 
 void RecipePopup::drawFluidButton(Fluid* fluid) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(fluid->title.c_str())) {
 		locate.fluid = fluid;
@@ -3779,7 +3783,6 @@ void RecipePopup::drawFluidButton(Fluid* fluid) {
 }
 
 void RecipePopup::drawFluidButton(Fluid* fluid, int count) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(fmtc("%s(%d)", fluid->title, count))) {
 		locate.fluid = fluid;
@@ -3789,9 +3792,8 @@ void RecipePopup::drawFluidButton(Fluid* fluid, int count) {
 }
 
 void RecipePopup::drawRecipe(Recipe* recipe) {
-	using namespace ImGui;
 
-	if (!showUnavailable && !recipe->licensed && !expanded.recipe[recipe]) return;
+	if (!showUnavailableRecipes && !recipe->licensed && !expanded.recipe[recipe]) return;
 
 	if (locate.recipe == recipe) {
 		SetScrollHereY();
@@ -3868,7 +3870,6 @@ void RecipePopup::drawRecipe(Recipe* recipe) {
 }
 
 void RecipePopup::drawRecipeButton(Recipe* recipe) {
-	using namespace ImGui;
 	Bullet();
 	if (SmallButtonInline(recipe->title.c_str())) {
 		locate.recipe = recipe;
@@ -3878,9 +3879,8 @@ void RecipePopup::drawRecipeButton(Recipe* recipe) {
 }
 
 void RecipePopup::drawSpec(Spec* spec) {
-	using namespace ImGui;
 
-	if (!showUnavailable && !spec->licensed && !expanded.spec[spec]) return;
+	if (!showUnavailableSpecs && !spec->licensed && !expanded.spec[spec]) return;
 
 	if (locate.spec == spec) {
 		SetScrollHereY();
@@ -4066,7 +4066,6 @@ void RecipePopup::drawSpec(Spec* spec) {
 }
 
 void RecipePopup::drawSpecButton(Spec* spec) {
-	using namespace ImGui;
 	if (!spec->build) return;
 	Bullet();
 	if (SmallButtonInline(spec->title.c_str())) {
@@ -4077,7 +4076,6 @@ void RecipePopup::drawSpecButton(Spec* spec) {
 }
 
 void RecipePopup::drawGoal(Goal* goal) {
-	using namespace ImGui;
 
 //	if (!showUnavailable && !goal->licensed && !expanded.goal[goal]) return;
 
@@ -4099,9 +4097,9 @@ void RecipePopup::drawGoal(Goal* goal) {
 	}
 
 	SetNextItemOpen(expanded.goal[goal]);
-	PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+	if (!goal->active()) PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
 	expanded.goal[goal] = CollapsingHeader(fmtc("%s##build-goal-%s", goal->title, goal->name));
-	PopStyleColor(1);
+	if (!goal->active()) PopStyleColor(1);
 
 	if (goal->met) {
 		SameLine();
@@ -4112,7 +4110,7 @@ void RecipePopup::drawGoal(Goal* goal) {
 
 	if (expanded.goal[goal]) {
 
-		auto colorStore = ImGui::ImColorSRGB(0x999999ff);
+		auto colorStore = ImColorSRGB(0x999999ff);
 
 		if (goal->construction.size()) {
 			Section("Construction");
@@ -4183,8 +4181,8 @@ void RecipePopup::drawGoal(Goal* goal) {
 
 		if (goal->license.specs.size() || goal->license.recipes.size()) {
 			Section("Unlock");
-			for (auto spec: goal->license.specs) drawSpecButton(spec);
-			for (auto recipe: goal->license.recipes) drawRecipeButton(recipe);
+			for (auto spec: goal->license.specs) if (spec->build) { drawSpecButton(spec); }
+			for (auto recipe: goal->license.recipes) { drawRecipeButton(recipe); }
 			SpacingV();
 		}
 
@@ -4203,7 +4201,6 @@ void RecipePopup::drawGoal(Goal* goal) {
 }
 
 void RecipePopup::drawGoalButton(Goal* goal) {
-	using namespace ImGui;
 
 	if (SmallButtonInline(goal->title.c_str())) {
 		locate.goal = goal;
@@ -4219,7 +4216,6 @@ UpgradePopup::~UpgradePopup() {
 }
 
 void UpgradePopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -4311,7 +4307,6 @@ SignalsPopup::~SignalsPopup() {
 }
 
 void SignalsPopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	auto focusedTab = [&]() {
@@ -4441,7 +4436,6 @@ PlanPopup::~PlanPopup() {
 }
 
 void PlanPopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -4463,7 +4457,6 @@ PaintPopup::~PaintPopup() {
 }
 
 void PaintPopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -4479,8 +4472,8 @@ void PaintPopup::draw() {
 			((float)Config::window.height-size.y-gui.toolbar->size.y),
 		};
 
-		ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-		ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+		SetNextWindowSize(size, ImGuiCond_Always);
+		SetNextWindowPos(pos, ImGuiCond_Always);
 
 		Begin("##paint", &showing, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
@@ -4738,7 +4731,6 @@ void MapPopup::prepare() {
 }
 
 void MapPopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -4928,7 +4920,6 @@ ZeppelinPopup::~ZeppelinPopup() {
 }
 
 void ZeppelinPopup::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	Sim::locked([&]() {
@@ -5001,7 +4992,6 @@ std::time_t to_time_t(TP tp)
 }
 
 void MainMenu::draw() {
-	using namespace ImGui;
 	bool showing = true;
 
 	auto reset = [&]() {
@@ -5766,7 +5756,6 @@ DebugMenu::~DebugMenu() {
 }
 
 void DebugMenu::draw() {
-	using namespace ImGui;
 
 	narrow();
 	Begin("Debug##debugmenu", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);

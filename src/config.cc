@@ -181,6 +181,7 @@ namespace Config {
 		notef("Data path: %s", mode.dataPath);
 
 		if (!std::filesystem::exists(dataPath("saves"))) {
+			mode.game1 = true;
 			std::filesystem::create_directory(dataPath("saves"));
 		}
 
@@ -369,6 +370,16 @@ namespace Config {
 				mode.world = mode.world%1024 ? ((mode.world/1024)+1)*1024: mode.world;
 				notef("world size rounded to %d", mode.world);
 				forcenew = true;
+				continue;
+			}
+
+			if (arg == "--seed" && i+1 < argc) {
+				mode.specificseed = strtol(argv[++i], nullptr, 10);
+				continue;
+			}
+
+			if (arg == "--randomseed") {
+				mode.randomseed = true;
 				continue;
 			}
 

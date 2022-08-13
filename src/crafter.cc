@@ -509,13 +509,18 @@ void Crafter::update() {
 				}
 			}
 			else
+			if (eo && !eo->isGhost() && eo->spec->consumeFuel && eo->burner().store.isAccepting(iid)) {
+				eo->burner().store.insert({iid,1});
+				store.remove({iid,1});
+			}
+			else
 			if (eo && !eo->isGhost() && eo->spec->store && eo->store().isAccepting(iid)) {
 				eo->store().insert({iid,1});
 				store.remove({iid,1});
 			}
 			else
-			if (eo && !eo->isGhost() && eo->spec->consumeFuel && eo->burner().store.isAccepting(iid)) {
-				eo->burner().store.insert({iid,1});
+			if (eo && !eo->isGhost() && eo->spec->store && !eo->store().strict() && !eo->store().level(iid) && eo->store().countSpace(iid)) {
+				eo->store().insert({iid,1});
 				store.remove({iid,1});
 			}
 		}

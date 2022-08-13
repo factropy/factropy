@@ -2984,7 +2984,11 @@ void Launcher::saveAll(const char* name) {
 		state["activate"] = launcher.activate;
 		state["completed"] = launcher.completed;
 		state["progress"] = launcher.progress;
-		state["iid"] = launcher.iid;
+
+		int i = 0;
+		for (auto iid: launcher.cargo) {
+			state["cargo"][i++] = Save::itemOut(iid);
+		}
 
 		switch (launcher.monitor) {
 			case Monitor::Network: {
@@ -3015,8 +3019,8 @@ void Launcher::loadAll(const char* name) {
 		launcher.completed = state["completed"];
 		launcher.progress = state["progress"];
 
-		if (state.contains("iid")) {
-			launcher.iid = state["iid"];
+		for (auto name: state["cargo"]) {
+			launcher.cargo.insert(Save::itemIn(name));
 		}
 
 		if (state.contains("monitor")) {

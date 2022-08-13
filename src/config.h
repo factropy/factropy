@@ -142,6 +142,11 @@ namespace Config {
 	extern Popup popup;
 
 	struct Mode {
+		bool game1 = false;
+		minivec<uint> seeds = {60464830,60555982,60670951,60841977,60900622};
+		uint specificseed = 0;
+		bool randomseed = false;
+
 		bool pause = false;
 		bool load = false;
 		bool restart = false;

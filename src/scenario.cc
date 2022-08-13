@@ -423,13 +423,13 @@ public:
 		auto group = field("group");
 		if (is_string(group)) {
 			auto name = to_string(group);
-			ensuref(item->category->groups.count(name), "unknown item group '%s'", name);
+			ensuref(item->category && item->category->groups.count(name), "unknown item group '%s'", name);
 			item->group = &item->category->groups[name];
 		}
 
 		auto order = field("order");
 		if (is_string(order)) {
-				item->order = to_string(order);
+			item->order = to_string(order);
 		}
 
 		auto fuel = field("fuel");
@@ -3591,7 +3591,7 @@ void ScenarioBase::specifications() {
 	meshes["falconBase"] = new Mesh("models/falcon-base-hd.stl");
 	meshes["falconBaseLD"] = new Mesh("models/falcon-base-ld.stl");
 
-	spec = new Spec("falcon");
+	spec = new Spec("rocket");
 	spec->title = "Rocket";
 	spec->starship = true;
 	spec->health = 150;

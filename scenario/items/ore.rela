@@ -123,7 +123,6 @@ add_item({
 	group = "ore",
 	order = order.stone,
 	raw = true,
-	show = true,
 	parts = [{
 		color = colors.stone,
 		scale = 0.6,

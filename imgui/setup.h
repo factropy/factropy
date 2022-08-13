@@ -24,11 +24,11 @@ namespace ImGui {
 	void PrintRight(std::string s, bool spacing = false);
 	void SpacingH();
 	void SpacingV();
-	void Header(std::string s);
-	void Section(std::string s);
-	void Alert(std::string s);
-	void Notice(std::string s);
-	void Warning(std::string s);
+	void Header(std::string s, bool spacing = true);
+	void Section(std::string s, bool spacing = true);
+	void Alert(std::string s, bool spacing = true);
+	void Notice(std::string s, bool spacing = true);
+	void Warning(std::string s, bool spacing = true);
 	void Title(std::string s);
 	void LevelBar(float n, std::string s);
 	void LevelBar(float n);
@@ -37,8 +37,9 @@ namespace ImGui {
 	bool InputIntClamp(const char* label, int* v, int low, int high, int step = 1, int step_fast = 100);
 	void TrySameLine(const char* label, int margin = 0);
 	bool WideButton(const char* label);
+	bool ButtonStrip(int i, const char* label);
 	bool SmallButtonInline(const char* label);
-	bool SmallButtonInlineRight(const char* label);
+	bool SmallButtonInlineRight(const char* label, bool spacing = false);
 	void SmallBar(float n);
 	bool ExpandingHeader(bool* state, const char* label, ImGuiTreeNodeFlags flags = 0);
 	void ImageBanner(GLuint id, int w, int h);

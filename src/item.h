@@ -88,6 +88,14 @@ struct Item {
 	Group* group = nullptr;
 	std::string order;
 
+	static inline bool sort(const Item* a, const Item* b) {
+		return (a->category->order < b->category->order)
+			|| (a->category->order == b->category->order && a->group->order < b->group->order)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order < b->order)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order == b->order && a->title < b->title)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order == b->order && a->title == b->title && a->name < b->name);
+	}
+
 	struct Shipment {
 		uint64_t tick = 0;
 		uint count = 0;

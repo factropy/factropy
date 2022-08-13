@@ -150,7 +150,6 @@ add_goal({
 	production = { "steam" = L(100) },
 	dependencies = ["crafting"],
 	specs = [
-		"falcon",
 		"chemplant1",
 		"tube-small-1",
 		"tube-small-alt-1",
@@ -172,7 +171,7 @@ add_goal({
 add_goal({
 	name = "launching",
 	title = "Prepare for Launch",
-	construction = { "falcon" = 1 },
+	construction = { "rocket" = 1 },
 	production = { "hydrazine" = 5000 },
 	dependencies = ["electricity"],
 	specs = [
@@ -221,6 +220,7 @@ add_goal({
 	specs = [
 		"clarifier",
 		"incinerator",
+		"slab",
 	],
 	recipes = [
 		"slurry-stone-crushed",
@@ -244,7 +244,6 @@ add_goal({
 		"pipe-underwater",
 		"pipe-valve",
 		"flare-stack",
-		"slab",
 	],
 	recipes = [
 		"drill-oil",
@@ -273,6 +272,7 @@ add_goal({
 		"drone-depot1",
 		"wifi-tower",
 		"router",
+		"rocket",
 	],
 	recipes = [
 		"mother-board",
@@ -303,7 +303,7 @@ add_goal({
 	],
 	recipes = [
 		"ammo2",
-		"repair-kit2",
+		"parts-kit",
 		"hydrofluoric-acid",
 		"mine-aluminium-ore",
 		"aluminium-crushing",
@@ -354,7 +354,7 @@ add_goal({
 		"computer",
 		"mine-uranium-ore",
 		"uranium-ammo",
-		"repair-kit3",
+		"upgrade-kit",
 		"heatsink",
 		"uranium-crushing",
 		"uranium-enrichment",
@@ -366,7 +366,7 @@ add_goal({
 	period = 3,
 	rates = [
 		{ item = "ammo2", count = 5000 },
-		{ item = "repair-kit2", count = 5000 },
+		{ item = "parts-kit", count = 5000 },
 	],
 })
 
@@ -390,7 +390,7 @@ add_goal({
 	period = 3,
 	rates = [
 		{ item = "ammo3", count = 5000 },
-		{ item = "repair-kit3", count = 5000 },
+		{ item = "upgrade-kit", count = 5000 },
 		{ item = "explosive", count = 5000 },
 	],
 })
@@ -409,7 +409,7 @@ add_goal({
 	period = 5,
 	rates = [
 		{ item = "ammo3", count = 10000 },
-		{ item = "repair-kit3", count = 10000 },
+		{ item = "upgrade-kit", count = 10000 },
 		{ item = "explosive-atomic", count = 100 },
 	],
 })
