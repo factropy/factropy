@@ -62,6 +62,35 @@ struct Popup {
 	static void launcherNotice(Launcher& launcher);
 	static void powerpoleNotice(PowerPole& pole);
 	static void goalRateChart(Goal* goal, Goal::Rate& rate, float h);
+
+	struct Texture {
+		GLuint id = 0;
+		int w = 0;
+		int h = 0;
+	};
+
+	static Texture loadTexture(const char* path);
+	static void freeTexture(Texture texture);
+};
+
+struct StartScreen : Popup {
+	Texture banner;
+	minivec<bool> games;
+
+	enum class Screen {
+		Load = 0,
+		New,
+		Video,
+	};
+
+	Screen screen = Screen::New;
+	char seed[50];
+	char name[50];
+
+	StartScreen();
+	~StartScreen();
+	void prepare() override;
+	void draw() override;
 };
 
 struct SignalsPopup : Popup {
@@ -95,7 +124,7 @@ struct EntityPopup2 : Popup {
 };
 
 struct LoadingPopup : Popup {
-	Scene::Texture banner;
+	Texture banner;
 	std::vector<std::string> log;
 	float progress = 0.0f;
 	LoadingPopup();
@@ -257,7 +286,7 @@ struct MapPopup : Popup {
 };
 
 struct MainMenu : Popup {
-	Scene::Texture capsule;
+	Texture capsule;
 
 	struct {
 		int period = 0;

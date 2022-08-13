@@ -160,6 +160,7 @@ namespace Config {
 	}
 
 	bool saveNameOk(const std::string& name) {
+		if (!name.size()) return false;
 		for (auto c: name) if (!(std::isalpha(c) || std::isdigit(c) || c == '_' || c == '-')) return false;
 		return true;
 	}
@@ -341,61 +342,16 @@ namespace Config {
 	}
 
 	void args(int argc, char *argv[]) {
-		bool width = false;
-		bool height = false;
-		bool forcenew = false;
-
-		for (int i = 1; i < argc; i++) {
-			auto arg = std::string(argv[i]);
-
-			if (arg == "--fullscreen") {
-				window.fullscreen = true;
-				continue;
-			}
-
-			if (arg == "--width" && i+1 < argc) {
-				width = true;
-				window.width = strtol(argv[++i], nullptr, 10);
-				continue;
-			}
-
-			if (arg == "--height" && i+1 < argc) {
-				height = true;
-				window.height = strtol(argv[++i], nullptr, 10);
-				continue;
-			}
-
-			if (arg == "--world" && i+1 < argc) {
-				mode.world = std::max(4096, (int)strtol(argv[++i], nullptr, 10));
-				mode.world = mode.world%1024 ? ((mode.world/1024)+1)*1024: mode.world;
-				notef("world size rounded to %d", mode.world);
-				forcenew = true;
-				continue;
-			}
-
-			if (arg == "--seed" && i+1 < argc) {
-				mode.specificseed = strtol(argv[++i], nullptr, 10);
-				continue;
-			}
-
-			if (arg == "--randomseed") {
-				mode.randomseed = true;
-				continue;
-			}
-
-			if (arg == "--pause") {
-				mode.pause = true;
-				continue;
-			}
-		}
-
-		if ( width ||  height) window.fullscreen = false;
-		if ( width && !height) window.height = BASELINE_WINDOW_HEIGHT * ((float)window.width/BASELINE_WINDOW_WIDTH);
-		if (!width &&  height) window.width = BASELINE_WINDOW_WIDTH * ((float)window.height/BASELINE_WINDOW_HEIGHT);
-
-		if (!mode.load && !forcenew) {
-			mode.load = std::filesystem::exists(fmt("%s/sim.json", savePath(mode.saveName)));
-		}
+//		bool width = false;
+//		bool height = false;
+//
+//		if ( width ||  height) window.fullscreen = false;
+//		if ( width && !height) window.height = BASELINE_WINDOW_HEIGHT * ((float)window.width/BASELINE_WINDOW_WIDTH);
+//		if (!width &&  height) window.width = BASELINE_WINDOW_WIDTH * ((float)window.height/BASELINE_WINDOW_HEIGHT);
+//
+//		if (!mode.load && !forcenew) {
+//			mode.load = std::filesystem::exists(fmt("%s/sim.json", savePath(mode.saveName)));
+//		}
 	}
 
 	void sdl() {

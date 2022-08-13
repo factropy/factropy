@@ -10,6 +10,7 @@ struct Scene;
 #include "config.h"
 #include "plan.h"
 #include "sky.h"
+#include "popup.h"
 
 struct Scene {
 	uint current = 0;
@@ -275,12 +276,7 @@ struct Scene {
 
 	void view(Point pos);
 
-	struct Texture {
-		GLuint id = 0;
-		int w = 0;
-		int h = 0;
-	};
-
+	typedef Popup::Texture Texture;
 	Texture loadTexture(const char* path);
 };
 

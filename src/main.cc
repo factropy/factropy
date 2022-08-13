@@ -32,8 +32,11 @@
 #include <csignal>
 #include "stacktrace.h"
 
+using namespace std::literals::chrono_literals;
+
 FILE* errorLog = nullptr;
 SDL_Window* window = nullptr;
+SDL_GLContext context;
 const char* binary = nullptr;
 
 struct {
@@ -94,129 +97,10 @@ void wtf(const char* file, const char* func, int line, const char* err) {
 	std::terminate();
 }
 
-using namespace std::literals::chrono_literals;
-
 workers crew;
 workers crew2;
 
-int main(int argc, char* argv[]) {
-	binary = argv[0];
-
-	Config::version.major = 0;
-	Config::version.minor = 2;
-	Config::version.patch = 1;
-
-	snprintf(Config::version.text, sizeof(Config::version.text),
-		"%d.%d.%d-alpha",
-		Config::version.major,
-		Config::version.minor,
-		Config::version.patch
-	);
-
-	std::signal(SIGSEGV, omg);
-
-	if (argc > 1 && std::string(argv[1]) == "abort") {
-		SDL_ShowSimpleMessageBox(
-			SDL_MESSAGEBOX_ERROR,
-			argc > 2 ? argv[2]: "(no detail)",
-			argc > 3 ? argv[3]: "",
-			nullptr
-		);
-		exit(1);
-	}
-
-	errorLog = fopen("error.log", "w+");
-
-	notef("Factropy %s", Config::version.text);
-
-	glewExperimental = GL_TRUE;
-
-	bool SDLOk = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) == 0;
-	ensuref(SDLOk, fmtc(
-		"SDL_Init is failing to initialize with this error: \"%s\".\r\n"
-		"This is likely a low level problem and not a bug in the game.\r\n"
-		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
-		SDL_GetError()
-	));
-
-	Config::load();
-	Config::args(argc, argv);
-	Config::sdl();
-	Config::profile();
-
-	crew.start(Config::engine.threads);
-	crew2.start(Config::engine.cores);
-
-	window = SDL_CreateWindow("Factropy",
-		 SDL_WINDOWPOS_CENTERED,
-		 SDL_WINDOWPOS_CENTERED,
-		 Config::window.width,
-		 Config::window.height,
-		 Config::window.sdlFlags
-	);
-
-	ensuref(window, fmtc(
-		"SDL_CreateWindow is failing to create a window with this error: \"%s\".\r\n"
-		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
-		SDL_GetError()
-	));
-
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-
-	ensuref(context, fmtc(
-		"SDL_GL_CreateContext OpenGL 4.4 setup is failing with this error: \"%s\".\r\n"
-		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
-		SDL_GetError()
-	));
-
-	SDL_GL_MakeCurrent(window, context);
-
-	auto glewErr = glewInit();
-
-	ensuref(glewErr == GLEW_OK, fmtc(
-		"GLEW setup is failing with this error: \"%s\".\r\n"
-		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
-		(char*)glewGetErrorString(glewErr)
-	));
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	ImGui_ImplSDL2_InitForOpenGL(window, context);
-	ImGui_ImplOpenGL3_Init("#version 330");
-
-	ImPlot::CreateContext();
-
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::StyleColorsDark();
-
-	io.IniFilename = nullptr;
-	io.WantSaveIniSettings = false;
-
-	auto& style = ImGui::GetStyle();
-	style.ScaleAllSizes(0.6);
-	Config::styleDefault = style;
-
-	SDL_GetDisplayDPI(0, &Config::window.ddpi, &Config::window.hdpi, &Config::window.vdpi);
-//	notef("DPI: diagonal %0.2f horizontal %0.2f vertical %0.2f", Config::window.ddpi, Config::window.hdpi, Config::window.vdpi);
-
-	SDL_GL_SetSwapInterval(Config::window.vsync ? 1:0);
-
-	glViewport(0, 0, Config::window.width, Config::window.height);
-	glClearDepth(1.0);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_DEPTH_TEST);
-
-	if (Config::window.antialias) glEnable(GL_MULTISAMPLE);
-
-	#if defined(_WIN32)
-		timeBeginPeriod(1);
-	#endif
-
+void game() {
 	auto now = []() {
 		return std::chrono::steady_clock::now();
 	};
@@ -235,37 +119,17 @@ int main(int argc, char* argv[]) {
 	pulser pulse;
 	scene.init();
 	gui.init();
-	Config::imgui();
 
 	bool run = true;
 	bool done = true;
 
 	{
-		auto todayMS = []() {
-			auto now = std::chrono::system_clock::now();
-			time_t tnow = std::chrono::system_clock::to_time_t(now);
-			tm *date = std::localtime(&tnow);
-			date->tm_hour = 0;
-			date->tm_min = 0;
-			date->tm_sec = 0;
-			auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
-			return std::chrono::duration_cast<std::chrono::milliseconds>(now-midnight).count();
-		};
-
-		uint seed = 0;
-
-		if (!seed && Config::mode.randomseed) seed = todayMS();
-		if (!seed && Config::mode.specificseed) seed = Config::mode.specificseed;
-		if (!seed) seed = Config::mode.seeds[todayMS() % Config::mode.seeds.size()];
-
 		bool readyScenario = false;
 		bool readyIcons = false;
 
 		scenario = new ScenarioBase();
 
 		Sim::reset();
-		Sim::reseed(seed);
-		notef("Seed: %u", seed);
 
 		crew.job([&]() {
 			trigger done;
@@ -367,6 +231,7 @@ int main(int argc, char* argv[]) {
 				}
 			} else {
 				notef("Generating a new world...");
+				Sim::reseed(Config::mode.freshSeed);
 				world.scenario.size = std::max(Config::mode.world, 4096);
 				world.init();
 				sky.init();
@@ -526,6 +391,8 @@ int main(int argc, char* argv[]) {
 		scene.update(Config::window.width, Config::window.height, fps);
 		scene.advance();
 
+		auto& io = ImGui::GetIO();
+
 		while (run) {
 			Config::autoscale(window);
 
@@ -610,18 +477,185 @@ int main(int argc, char* argv[]) {
 	while (!Sim::saveTickets.send_if_empty(true))
 		std::this_thread::sleep_for(1ms);
 
-	Sim::locked([&]() {
-		crew.stop();
-		crew2.stop();
-	});
+	Chunk::reset();
+	Sim::reset();
+	Entity::reset();
+}
+
+void menu() {
+	using namespace ImGui;
+
+	SDL_GL_SetSwapInterval(1);
+
+	bool run = true;
+	StartScreen screen;
+	screen.prepare();
+
+	while (run) {
+		Config::autoscale(window);
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame(window);
+		ImGui::NewFrame();
+
+		glClearColor(0,0,0,1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		screen.draw();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		SDL_GL_SwapWindow(window);
+
+		SDL_Event event;
+		while(SDL_PollEvent(&event))
+		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+
+			switch(event.type)
+			{
+				case SDL_QUIT: {
+					run = false;
+					break;
+				}
+			}
+		}
+
+		if (Config::mode.load || Config::mode.fresh) {
+			game();
+			Config::mode.load = false;
+			Config::mode.fresh = false;
+		}
+	}
+
+	SDL_GL_SetSwapInterval(Config::window.vsync ? 1:0);
+}
+
+int main(int argc, char* argv[]) {
+	binary = argv[0];
+
+	Config::version.major = 0;
+	Config::version.minor = 2;
+	Config::version.patch = 1;
+
+	snprintf(Config::version.text, sizeof(Config::version.text),
+		"%d.%d.%d-alpha",
+		Config::version.major,
+		Config::version.minor,
+		Config::version.patch
+	);
+
+	std::signal(SIGSEGV, omg);
+
+	if (argc > 1 && std::string(argv[1]) == "abort") {
+		SDL_ShowSimpleMessageBox(
+			SDL_MESSAGEBOX_ERROR,
+			argc > 2 ? argv[2]: "(no detail)",
+			argc > 3 ? argv[3]: "",
+			nullptr
+		);
+		exit(1);
+	}
+
+	errorLog = fopen("error.log", "w+");
+
+	notef("Factropy %s", Config::version.text);
+
+	glewExperimental = GL_TRUE;
+
+	bool SDLOk = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) == 0;
+	ensuref(SDLOk, fmtc(
+		"SDL_Init is failing to initialize with this error: \"%s\".\r\n"
+		"This is likely a low level problem and not a bug in the game.\r\n"
+		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
+		SDL_GetError()
+	));
+
+	Config::load();
+	Config::args(argc, argv);
+	Config::sdl();
+	Config::profile();
+
+	window = SDL_CreateWindow("Factropy",
+		 SDL_WINDOWPOS_CENTERED,
+		 SDL_WINDOWPOS_CENTERED,
+		 Config::window.width,
+		 Config::window.height,
+		 Config::window.sdlFlags
+	);
+
+	ensuref(window, fmtc(
+		"SDL_CreateWindow is failing to create a window with this error: \"%s\".\r\n"
+		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
+		SDL_GetError()
+	));
+
+	context = SDL_GL_CreateContext(window);
+
+	ensuref(context, fmtc(
+		"SDL_GL_CreateContext OpenGL 4.4 setup is failing with this error: \"%s\".\r\n"
+		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
+		SDL_GetError()
+	));
+
+	SDL_GL_MakeCurrent(window, context);
+
+	auto glewErr = glewInit();
+
+	ensuref(glewErr == GLEW_OK, fmtc(
+		"GLEW setup is failing with this error: \"%s\".\r\n"
+		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
+		(char*)glewGetErrorString(glewErr)
+	));
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGui_ImplSDL2_InitForOpenGL(window, context);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
+	ImPlot::CreateContext();
+
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+
+	io.IniFilename = nullptr;
+	io.WantSaveIniSettings = false;
+
+	auto& style = ImGui::GetStyle();
+	style.ScaleAllSizes(0.6);
+	Config::styleDefault = style;
+
+	SDL_GetDisplayDPI(0, &Config::window.ddpi, &Config::window.hdpi, &Config::window.vdpi);
+//	notef("DPI: diagonal %0.2f horizontal %0.2f vertical %0.2f", Config::window.ddpi, Config::window.hdpi, Config::window.vdpi);
+
+	SDL_GL_SetSwapInterval(Config::window.vsync ? 1:0);
+
+	glViewport(0, 0, Config::window.width, Config::window.height);
+	glClearDepth(1.0);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+
+	if (Config::window.antialias) glEnable(GL_MULTISAMPLE);
+
+	#if defined(_WIN32)
+		timeBeginPeriod(1);
+	#endif
+
+	Config::imgui();
+
+	crew.start(Config::engine.threads);
+	crew2.start(Config::engine.cores);
+
+	menu();
 
 	#if defined(_WIN32)
 		timeEndPeriod(1);
 	#endif
-
-	Chunk::reset();
-	Sim::reset();
-	Entity::reset();
 
 	ImPlot::DestroyContext();
 	ImGui_ImplOpenGL3_Shutdown();
@@ -633,6 +667,9 @@ int main(int argc, char* argv[]) {
 	SDL_Quit();
 
 	Config::save();
+
+	crew.stop();
+	crew2.stop();
 
 	if (Config::mode.restart) {
 		execv(argv[0], argv);

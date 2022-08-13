@@ -14,6 +14,7 @@
 #include "catenate.h"
 
 #include "../imgui/setup.h"
+#include "stb_image.h"
 
 #include <vector>
 #include <filesystem>
@@ -33,6 +34,14 @@ namespace {
 		if (system(fmtc("xdg-open %s &", url)) < 0)
 			notef("openURL failed");
 	#endif
+	}
+
+	template <typename TP>
+	std::time_t to_time_t(TP tp)
+	{
+		using namespace std::chrono;
+		auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
+		return system_clock::to_time_t(sctp);
 	}
 }
 
@@ -89,6 +98,38 @@ void Popup::center() {
 
 	SetNextWindowSize(size, ImGuiCond_Always);
 	SetNextWindowPos(pos, ImGuiCond_Always);
+}
+
+Popup::Texture Popup::loadTexture(const char* path) {
+	int width, height, components;
+	unsigned char *data = stbi_load(path, &width, &height, &components, 0);
+	ensuref(data, "texture invalid or missing: %s", path);
+
+	GLuint id = 0;
+	GLenum format;
+
+	switch (components) {
+		case 1: format = GL_RED; break;
+		case 3: format = GL_RGB; break;
+		case 4: format = GL_RGBA; break;
+		default: ensuref(0, "texture invalid components: %d", components);
+	}
+
+	glGenTextures(1, &id);
+	glBindTexture(GL_TEXTURE_2D, id);
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	stbi_image_free(data);
+
+	return {.id = id, .w = width, .h = height};
+}
+
+void Popup::freeTexture(Texture texture) {
+	glDeleteTextures(1, &texture.id);
 }
 
 int Popup::iconTier(float pix) {
@@ -712,11 +753,217 @@ void Popup::goalRateChart(Goal* goal, Goal::Rate& rate, float h) {
 	PopFont();
 }
 
+StartScreen::StartScreen() : Popup() {
+	banner = loadTexture("assets/banner.png");
+
+	auto todayMS = []() {
+		auto now = std::chrono::system_clock::now();
+		time_t tnow = std::chrono::system_clock::to_time_t(now);
+		tm *date = std::localtime(&tnow);
+		date->tm_hour = 0;
+		date->tm_min = 0;
+		date->tm_sec = 0;
+		auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
+		return std::chrono::duration_cast<std::chrono::milliseconds>(now-midnight).count();
+	};
+
+	for (int i = 1; ; i++) {
+		snprintf(name, sizeof(name), "game%d", i);
+		auto str = std::string(name);
+		if (Config::saveNameOk(name) && Config::saveNameFree(name)) break;
+	}
+
+	snprintf(seed, sizeof(seed), "%u", Config::mode.seeds[todayMS() % Config::mode.seeds.size()]);
+
+	try {
+		for (auto& entry: std::filesystem::directory_iterator{Config::dataPath("saves")}) {
+			if (!std::filesystem::is_directory(entry)) continue;
+			auto simjson = fmt("%s/sim.json", entry.path().string());
+			if (!std::filesystem::exists(simjson)) continue;
+			screen = Screen::Load;
+			break;
+		}
+	}
+	catch (std::filesystem::filesystem_error& e) {
+		infof("%s", e.what());
+	}
+}
+
+StartScreen::~StartScreen() {
+	freeTexture(banner);
+}
+
+void StartScreen::prepare() {
+}
+
+void StartScreen::draw() {
+	small();
+	Begin("Factropy", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+	PushID("start-screen");
+
+	ImageBanner(banner.id, banner.w, banner.h);
+
+	BeginTable("##layout", 2);
+	TableSetupColumn("##layout-left", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.25));
+	TableSetupColumn("##layout-right", ImGuiTableColumnFlags_WidthStretch, relativeWidth(0.25));
+
+	TableNextColumn();
+		BeginChild("##layout-left-group");
+
+		PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::Load ? ImGuiCol_ButtonActive: ImGuiCol_Button));
+		if (Button(" Load Game ", ImVec2(-1,0))) screen = Screen::Load;
+		PopStyleColor();
+
+		PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::New ? ImGuiCol_ButtonActive: ImGuiCol_Button));
+		if (Button(" New Game ", ImVec2(-1,0))) screen = Screen::New;
+		PopStyleColor();
+
+		if (Button(" Exit ", ImVec2(-1,0))) exit(0);
+
+		EndChild();
+
+	TableNextColumn();
+		BeginChild("##layout-right-group");
+
+		switch (screen) {
+			case Screen::New: {
+				bool ok = true;
+
+				if (!Config::saveNameOk(name)) {
+					Warning("Invalid save name: _ a-z A-Z 0-9");
+					ok = false;
+				}
+
+				if (!Config::saveNameFree(std::string(name))) {
+					Warning(fmtc("Save '%s' already exists.", name));
+					ok = false;
+				}
+
+				if (!strtoul(seed, nullptr, 10)) {
+					Warning(fmtc("Seed invalid.", name));
+					ok = false;
+				}
+
+				InputText("Name##name", name, sizeof(name));
+				InputText("Seed##seed", seed, sizeof(seed));
+
+				if (Button(" Start ") && ok) {
+					Config::mode.fresh = true;
+					Config::mode.freshSeed = strtoul(seed, nullptr, 10);
+					Config::mode.saveName = std::string(name);
+				}
+
+				break;
+			}
+
+			case Screen::Load: {
+				struct Save {
+					std::string name;
+					char date[32];
+					char time[32];
+				};
+
+				std::vector<Save> saves;
+
+				try {
+					for (auto& entry: std::filesystem::directory_iterator{Config::dataPath("saves")}) {
+						if (!std::filesystem::is_directory(entry)) continue;
+						auto simjson = fmt("%s/sim.json", entry.path().string());
+						if (!std::filesystem::exists(simjson)) continue;
+						std::string name = entry.path().filename().string();
+						std::time_t cftime = to_time_t(std::filesystem::last_write_time(simjson));
+						auto& save = saves.emplace_back();
+						save.name = name;
+						std::strftime(save.date, sizeof(save.date), "%b %d", std::localtime(&cftime));
+						std::strftime(save.time, sizeof(save.time), "%H:%M", std::localtime(&cftime));
+					}
+				}
+				catch (std::filesystem::filesystem_error& e) {
+					Alert("Error listing saves");
+					Print(fmtc("%s", e.what()));
+					saves.clear();
+				}
+
+				std::sort(saves.begin(), saves.end(), [](const auto& a, const auto& b) { return a.name < b.name; });
+				games.resize(saves.size());
+
+				if (!saves.size()) {
+					Print("(no saved games)");
+				}
+
+				float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
+				float width = GetContentRegionAvail().x*0.2;
+
+				for (int i = 0, l = saves.size(); i < l; i++) {
+					auto name = saves[i].name;
+					BeginTable("##load-list", 4);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+						TableNextRow();
+						TableNextColumn();
+						Checkbox(fmtc("##check-%s", name), &games[i]);
+						TableNextColumn();
+						if (Button(fmtc("%s##open-%d", ICON_FA_FOLDER_OPEN, i), ImVec2(button,0))) {
+							Config::mode.load = true;
+							Config::mode.saveName = name;
+						}
+						if (IsItemHovered()) tip("Open game");
+						TableNextColumn();
+						Print(name.c_str());
+						TableNextColumn();
+						PushFont(Config::sidebar.font.imgui);
+						PrintRight(fmtc("%s %s", saves[i].date, saves[i].time));
+						PopFont();
+					EndTable();
+					Separator();
+				}
+
+				int selected = 0; for (auto flag: games) if (flag) selected++;
+
+				if (!selected) {
+					PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+				}
+
+				if (Button("Delete Selected") && selected) {
+					for (int i = 0, l = saves.size(); i < l; i++) {
+						if (games[i]) Config::saveDelete(saves[i].name);
+					}
+					games.clear();
+				}
+
+				if (!selected) {
+					PopStyleColor(1);
+				}
+
+				break;
+			}
+
+			case Screen::Video: {
+				break;
+			}
+		}
+
+
+		EndChild();
+
+	EndTable();
+
+	PopID();
+
+	mouseOver = IsWindowHovered();
+	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
+	End();
+}
+
 LoadingPopup::LoadingPopup() : Popup() {
-	banner = scene.loadTexture("assets/banner.png");
+	banner = loadTexture("assets/banner.png");
 }
 
 LoadingPopup::~LoadingPopup() {
+	freeTexture(banner);
 }
 
 void LoadingPopup::draw() {
@@ -4977,18 +5224,10 @@ void ZeppelinPopup::draw() {
 }
 
 MainMenu::MainMenu() : Popup() {
-	capsule = scene.loadTexture("assets/capsule.png");
+	capsule = loadTexture("assets/capsule.png");
 }
 
 MainMenu::~MainMenu() {
-}
-
-template <typename TP>
-std::time_t to_time_t(TP tp)
-{
-	using namespace std::chrono;
-	auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
-	return system_clock::to_time_t(sctp);
 }
 
 void MainMenu::draw() {
@@ -5137,198 +5376,6 @@ void MainMenu::draw() {
 					"The enemy, livid that your logistics skills are so awesome, will"
 					" periodically send missiles to disrupt your supply chain."
 				);
-
-				EndTabItem();
-			}
-
-			if (BeginTabItem("Save", nullptr, focusedTab())) {
-
-				int id = 0;
-
-				SpacingV();
-
-				switch (saveStatus) {
-					case SaveStatus::Current: {
-						Notice(fmt("Game: %s", Config::mode.saveName));
-						if (IsItemHovered()) tip("Current game.");
-						break;
-					}
-					case SaveStatus::SaveAsOk: {
-						Notice(fmt("Saved: %s", Config::mode.saveName));
-						if (IsItemHovered()) tip("Current game saved successfully.");
-						break;
-					}
-					case SaveStatus::SaveAsFail: {
-						Alert(fmt("Error: %s", Config::mode.saveName));
-						if (IsItemHovered()) tip("The last save operation failed. Check the log window.");
-						break;
-					}
-				}
-
-				if (Button("Save [F5]", ImVec2(-1,0))) {
-					gui.doSave = true;
-					saveStatus = SaveStatus::SaveAsOk;
-				}
-				if (IsItemHovered()) tip(fmt("Save current game \"%s\"", Config::mode.saveName));
-
-				SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + GetStyle().ItemSpacing.y/2.0));
-
-				BeginTable("##saveas-table", 2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.3));
-
-					TableNextRow();
-					TableNextColumn();
-					PushItemWidth(-1);
-					InputTextWithHint("##saveas", "<new save>", saveas, sizeof(saveas));
-					PopItemWidth();
-
-					auto renamed = std::string(saveas);
-
-					TableNextColumn();
-					if (Button("Save As", ImVec2(-1,0)) && strlen(saveas)) {
-						if (renamed != Config::mode.saveName && Config::saveNameOk(renamed) && Config::saveNameFree(renamed)) {
-							Config::mode.saveName = renamed;
-							gui.doSave = true;
-							saveStatus = SaveStatus::SaveAsOk;
-							reset();
-						}
-					}
-				EndTable();
-				if (IsItemHovered()) tip("Save a copy of the current game under a new name. The original is preserved.");
-
-				PushFont(Config::sidebar.font.imgui);
-				if (renamed.size() && !Config::saveNameOk(renamed)) {
-					Warning("invalid save name: _ a-z A-Z 0-9");
-				}
-				else
-				if (renamed.size() && !Config::saveNameFree(renamed) && renamed != Config::mode.saveName) {
-					Warning("duplicate save name");
-				}
-				PopFont();
-
-				BeginTable("##create-table", 2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.3));
-
-					TableNextRow();
-					TableNextColumn();
-					PushItemWidth(-1);
-					InputTextWithHint("##create", "<new game>", create, sizeof(create));
-					PopItemWidth();
-
-					auto created = std::string(create);
-
-					TableNextColumn();
-					if (Button("Create", ImVec2(-1,0)) && strlen(create)) {
-						if (Config::saveNameOk(created) && Config::saveNameFree(created)) {
-							Config::mode.saveName = created;
-							Config::mode.restart = true;
-							gui.doQuit = true;
-						}
-					}
-				EndTable();
-				if (IsItemHovered()) tip("Create a new game with a random seed. Save the current game first!");
-
-				PushFont(Config::sidebar.font.imgui);
-				if (created.size() && !Config::saveNameOk(created)) {
-					Warning("invalid save name: _ a-z A-Z 0-9");
-				}
-				else
-				if (created.size() && !Config::saveNameFree(created)) {
-					Warning("duplicate save name");
-				}
-				PopFont();
-
-				float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
-				float width = GetContentRegionAvail().x*0.2;
-
-				struct Save {
-					std::string name;
-					char date[32];
-					char time[32];
-				};
-
-				std::vector<Save> saves;
-
-				try {
-					for (auto& entry: std::filesystem::directory_iterator{Config::dataPath("saves")}) {
-						if (!std::filesystem::is_directory(entry)) continue;
-						auto simjson = fmt("%s/sim.json", entry.path().string());
-						if (!std::filesystem::exists(simjson)) continue;
-						std::string name = entry.path().filename().string();
-						std::time_t cftime = to_time_t(std::filesystem::last_write_time(simjson));
-						auto& save = saves.emplace_back();
-						save.name = name;
-						std::strftime(save.date, sizeof(save.date), "%b %d", std::localtime(&cftime));
-						std::strftime(save.time, sizeof(save.time), "%H:%M", std::localtime(&cftime));
-					}
-				}
-				catch (std::filesystem::filesystem_error& e) {
-					notef("error listing saves: %s", e.what());
-					saves.clear();
-				}
-
-				std::sort(saves.begin(), saves.end(), [](const auto& a, const auto& b) { return a.name < b.name; });
-				games.resize(saves.size());
-				SpacingV();
-				Separator();
-
-				if (!saves.size()) {
-					Print("(no saved games)");
-					Separator();
-				}
-
-				for (int i = 0, l = saves.size(); i < l; i++) {
-					auto name = saves[i].name;
-					BeginTable("##load-list", 4);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
-						TableNextRow();
-						TableNextColumn();
-						SpacingV();
-						SpacingV();
-						Checkbox(fmtc("##check-%s", name), &games[i]);
-						TableNextColumn();
-						SpacingV();
-						SpacingV();
-						if (Button(fmtc("%s##%d", ICON_FA_FOLDER_OPEN, ++id), ImVec2(button,0))) {
-							Config::mode.saveName = name;
-							Config::mode.restart = true;
-							gui.doQuit = true;
-						}
-						TableNextColumn();
-						SpacingV();
-						SpacingV();
-						Print(name.c_str());
-						TableNextColumn();
-						PushFont(Config::sidebar.font.imgui);
-						PrintRight(saves[i].date);
-						PrintRight(saves[i].time);
-						PopFont();
-					EndTable();
-					Separator();
-				}
-				SpacingV();
-
-				int selected = 0; for (auto flag: games) if (flag) selected++;
-
-				if (!selected) {
-					PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
-				}
-
-				if (Button(fmtc("Delete Selected", ICON_FA_TRASH, ++id)) && selected) {
-					for (int i = 0, l = saves.size(); i < l; i++) {
-						if (games[i]) Config::saveDelete(saves[i].name);
-					}
-					reset();
-				}
-
-				if (!selected) {
-					PopStyleColor(1);
-				}
 
 				EndTabItem();
 			}
