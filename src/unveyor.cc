@@ -98,11 +98,6 @@ void Unveyor::update() {
 	auto& send = Conveyor::get(id);
 	auto& recv = Conveyor::get(partner);
 
-	if (!send.blocked() && !send.empty()) {
-		send.en->consume(send.en->spec->energyConsume);
-		recv.en->consume(recv.en->spec->energyConsume);
-	}
-
 	if (left && recv.deliverLeft(left)) {
 		left = 0;
 	}

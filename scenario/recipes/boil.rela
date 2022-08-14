@@ -1,0 +1,11 @@
+
+add_recipe({
+	name = "boiling",
+	title = "Water to Steam",
+	energy = MJ(30),
+	tags = ["boiling"],
+	input = { "water" = L(1000) },
+	output = { "steam" = L(1000) },
+})
+
+

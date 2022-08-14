@@ -16,6 +16,7 @@ struct Popup {
 	bool opened = false;
 	bool mouseOver = false;
 	bool inputFocused = false;
+	bool subpopup = false;
 	Popup();
 	virtual ~Popup();
 	virtual void draw();
@@ -28,7 +29,32 @@ struct Popup {
 	void center();
 	void topRight();
 	void bottomLeft();
+
+	uint itemPicked = 0;
+	uint itemPicker(bool open = false, std::function<bool(Item*)> show = nullptr);
+	static int iconTier(float pix = 0);
+	static ImTextureID itemIconChoose(Item* item, float pix = 0);
+	static void itemIcon(Item* item, float pix = 0);
+	static bool itemIconButton(Item* item, float pix = 0);
+	static ImTextureID fluidIconChoose(Fluid* fluid, float pix = 0);
+	static void fluidIcon(Fluid* fluid, float pix = 0);
+	static bool fluidIconButton(Fluid* fluid, float pix = 0);
+	static ImTextureID recipeIconChoose(Recipe* recipe, float pix = 0);
+	static void recipeIcon(Recipe* recipe, float pix = 0);
+	static bool recipeIconButton(Recipe* recipe, float pix = 0);
+	static ImTextureID specIconChoose(Spec* spec, float pix = 0);
+	static void specIcon(Spec* spec, float pix = 0);
+	static bool specIconButton(Spec* spec, float pix = 0);
+
+	Recipe* recipePicked = nullptr;
+	Recipe* recipePicker(bool open = false, std::function<bool(Recipe*)> show = nullptr);
+
 	float relativeWidth(float w);
+
+	static bool tipBegin();
+	static void tipEnd();
+	static bool tipSmallBegin();
+	static void tipSmallEnd();
 	static void tip(const std::string& s);
 	static std::string wrap(uint line, std::string text);
 
@@ -36,6 +62,37 @@ struct Popup {
 	static void launcherNotice(Launcher& launcher);
 	static void powerpoleNotice(PowerPole& pole);
 	static void goalRateChart(Goal* goal, Goal::Rate& rate, float h);
+
+	struct Texture {
+		GLuint id = 0;
+		int w = 0;
+		int h = 0;
+	};
+
+	static Texture loadTexture(const char* path);
+	static void freeTexture(Texture texture);
+};
+
+struct StartScreen : Popup {
+	Texture banner;
+	minivec<bool> games;
+
+	enum class Screen {
+		Load = 0,
+		New,
+		Video,
+	};
+
+	Screen screen = Screen::New;
+	char seed[50];
+	char name[50];
+
+	StartScreen();
+	~StartScreen();
+	void draw() override;
+	void drawLoad();
+	void drawNew();
+	void drawVideo();
 };
 
 struct SignalsPopup : Popup {
@@ -69,7 +126,7 @@ struct EntityPopup2 : Popup {
 };
 
 struct LoadingPopup : Popup {
-	Scene::Texture banner;
+	Texture banner;
 	std::vector<std::string> log;
 	float progress = 0.0f;
 	LoadingPopup();
@@ -79,7 +136,9 @@ struct LoadingPopup : Popup {
 };
 
 struct RecipePopup : Popup {
-	bool showUnavailable = false;
+	bool showUnavailableItemsFluids = false;
+	bool showUnavailableRecipes = false;
+	bool showUnavailableSpecs = false;
 
 	struct {
 		Item* item = nullptr;
@@ -117,11 +176,13 @@ struct RecipePopup : Popup {
 	~RecipePopup();
 	void draw() override;
 	void prepare() override;
+	bool showItem(Item* item);
 	void drawItem(Item* item);
 	void drawItemButton(Item* item);
 	void drawItemButtonNoBullet(Item* item);
 	void drawItemButton(Item* item, int count);
 	void drawItemButton(Item* item, int count, int limit);
+	bool showFluid(Fluid* fluid);
 	void drawFluid(Fluid* fluid);
 	void drawFluidButton(Fluid* fluid);
 	void drawFluidButton(Fluid* fluid, int count);
@@ -227,26 +288,12 @@ struct MapPopup : Popup {
 };
 
 struct MainMenu : Popup {
-	Scene::Texture capsule;
+	Texture capsule;
 
 	struct {
 		int period = 0;
 		int ticker = 0;
 	} quitting;
-
-	char saveas[50];
-	char create[50];
-	std::string load;
-
-	minivec<bool> games;
-
-	enum class SaveStatus {
-		Current = 0,
-		SaveAsOk,
-		SaveAsFail,
-	};
-
-	SaveStatus saveStatus;
 
 	MainMenu();
 	~MainMenu();

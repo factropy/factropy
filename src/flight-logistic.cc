@@ -165,7 +165,7 @@ void FlightLogistic::updateToDst() {
 		if (!recv.en->spec->flightPadRecv) continue;
 		bool candidate = false;
 		for (auto& stack: store->stacks) {
-			if (recv.store->isAccepting(stack.iid) && recv.store->countAcceptable(stack.iid) >= stack.size) {
+			if (recv.store->isAccepting(stack.iid) && recv.store->countAccepting(stack.iid) >= stack.size) {
 				candidate = true;
 				break;
 			}
@@ -234,7 +234,7 @@ void FlightLogistic::updateUnloading() {
 	for (auto stack: lstore.stacks) {
 		if (!dstore.isAccepting(stack.iid)) continue;
 		stack.size = std::min(stack.size, en->spec->flightLogisticRate);
-		stack.size = std::min(stack.size, dstore.countAcceptable(stack.iid));
+		stack.size = std::min(stack.size, dstore.countAccepting(stack.iid));
 		auto remain = dstore.insert(stack);
 		lstore.remove({stack.iid, stack.size-remain.size});
 		activity = true;

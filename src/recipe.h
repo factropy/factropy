@@ -33,7 +33,6 @@ struct Recipe {
 	bool delivery;
 	std::string name;
 	std::string title;
-	std::vector<Part*> parts;
 
 	std::set<std::string> tags;
 
@@ -81,4 +80,6 @@ struct Recipe {
 	Energy totalEnergy(std::vector<Recipe*>* path = nullptr);
 	std::vector<Stack> totalRawItems(std::vector<Recipe*>* path = nullptr);
 	std::vector<Amount> totalRawFluids(std::vector<Recipe*>* path = nullptr);
+
+	bool manufacturable();
 };

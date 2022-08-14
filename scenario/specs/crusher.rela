@@ -1,0 +1,123 @@
+function()
+	states = []
+	state0 = identity
+
+	for i in 360
+		j = if (i < 180) i else 180-(i-180) end
+
+		state1 = matrix_rotate(up, i)
+		state2 = matrix_translate(0,0, -0.001*j)
+
+		states[#states] = [
+			state0,
+			state1,
+			state2,
+			state2,
+			state2,
+			state2,
+		]
+	end
+
+	add_spec({
+		name = "crusher",
+		title = "Crusher",
+		toolbar = "$(toolbar.mining)-b",
+		store = true,
+		capacity = kg(1000),
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		priority = 10,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterState = true,
+		enable = true,
+		recipeTags = ["crushing", "crushing-with-fluid"],
+		consumeElectricity = true,
+		energyConsume = kW(300),
+		energyDrain = kW(9),
+		collision = [0, 0, 0, 5, 4, 5],
+		status = true,
+		beacon = [0,2,0],
+		iconD = 4,
+		iconV = 0,
+		health = 150,
+		wiki = "https://github.com/factropy/community/wiki/Crusher",
+		enemyTarget = true,
+		pipeHints = true,
+		pipeInputConnections = [
+			point_rotate([2.5, -1.5, 0.0], up, 0.0),
+			point_rotate([2.5, -1.5, 0.0], up, 180.0),
+		],
+		pipeOutputConnections = [
+			point_rotate([2.5, -1.5, 0.0], up, 90.0),
+			point_rotate([2.5, -1.5, 0.0], up, 270.0),
+		],
+		materials = {
+			"brick" = 5,
+			"steel-sheet" = 4,
+			"steel-frame" = 4,
+			"gear-wheel" = 5,
+		},
+		states = states,
+		parts = [
+			{
+				color = 0x333333ff,
+				filter = filter.powdercoat,
+				gloss = gloss.metallic,
+				translate = [0,-2,0],
+				lods = [
+					["models/ore-crusher-frame-hd.stl", high, shadow],
+					["models/ore-crusher-frame-ld.stl", medium, shadow],
+					["models/ore-crusher-frame-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x778899ff,
+				translate = [0,-2,0],
+				lods = [
+					["models/ore-crusher-rotor-hd.stl", high, shadow],
+					["models/ore-crusher-rotor-ld.stl", medium, noshadow],
+					["models/ore-crusher-rotor-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x778899ff,
+				translate = [0,-2,0],
+				rotate = [up, 0.0],
+				lods = [
+					["models/ore-crusher-side-hd.stl", high, noshadow],
+					["models/ore-crusher-side-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x778899ff,
+				translate = [0,-2,0],
+				rotate = [up, 90.0],
+				lods = [
+					["models/ore-crusher-side-hd.stl", high, noshadow],
+					["models/ore-crusher-side-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x778899ff,
+				translate = [0,-2,0],
+				rotate = [up, 180.0],
+				lods = [
+					["models/ore-crusher-side-hd.stl", high, noshadow],
+					["models/ore-crusher-side-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x778899ff,
+				translate = [0,-2,0],
+				rotate = [up, 270.0],
+				lods = [
+					["models/ore-crusher-side-hd.stl", high, noshadow],
+					["models/ore-crusher-side-ld.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end()
+

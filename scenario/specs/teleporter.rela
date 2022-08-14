@@ -1,0 +1,117 @@
+function()
+
+	states = []
+
+	for i in 90
+		states[#states] = [
+			identity,
+			matrix_rotate(up, 4.0*i),
+			matrix_rotate(east, 4.0*i),
+			matrix_rotate(south, 4.0*i),
+		]
+	end
+
+	add_spec({
+		name = "teleporter-send",
+		title = "Teleporter (Send)",
+		rotateGhost = true,
+		rotateExtant = true,
+		health = 150,
+		collision = [0,0,0,8,8,8],
+		enemyTarget = true,
+		teleporter = true,
+		teleporterSend = true,
+		teleporterEnergyCycle = GJ(1),
+		consumeElectricity = true,
+		energyConsume = MW(100),
+		store = true,
+		storeSetUpper = true,
+		storeAnything = true,
+		tipStorage = true,
+		capacity = kg(5000),
+		states = states,
+		parts = [
+			{
+				color = colors.provider,
+				translate = [0,-2.5,0],
+				lods = [
+					["models/teleporter-base-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.gold,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring1-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.bronze,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring2-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.steel,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring3-hd.stl", medium, shadow],
+				],
+			},
+		],
+	})
+
+	add_spec({
+		name = "teleporter-recv",
+		title = "Teleporter (Receive)",
+		rotateGhost = true,
+		rotateExtant = true,
+		health = 150,
+		collision = [0,0,0,8,8,8],
+		enemyTarget = true,
+		teleporter = true,
+		teleporterTab = "Teleporter",
+		teleporterRecv = true,
+		teleporterEnergyCycle = GJ(1),
+		consumeElectricity = true,
+		energyConsume = MW(100),
+		store = true,
+		storeSetUpper = true,
+		tipStorage = true,
+		capacity = kg(5000),
+		states = states,
+		parts = [
+			{
+				color = colors.requester,
+				translate = [0,-2.5,0],
+				lods = [
+					["models/teleporter-base-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.gold,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring1-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.bronze,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring2-hd.stl", medium, shadow],
+				],
+			},
+			{
+				color = colors.steel,
+				gloss = gloss.shiny,
+				lods = [
+					["models/teleporter-ring3-hd.stl", medium, shadow],
+				],
+			},
+		],
+	})
+
+end()
+

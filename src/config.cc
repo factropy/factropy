@@ -160,6 +160,7 @@ namespace Config {
 	}
 
 	bool saveNameOk(const std::string& name) {
+		if (!name.size()) return false;
 		for (auto c: name) if (!(std::isalpha(c) || std::isdigit(c) || c == '_' || c == '-')) return false;
 		return true;
 	}
@@ -170,7 +171,11 @@ namespace Config {
 	}
 
 	void load() {
-		char* path = SDL_GetPrefPath("factropy.com", "factropy");
+		std::string folder = (version.minor > 1)
+			? fmt("factropy.%d.%d", version.major, version.minor)
+			: "factropy";
+
+		char* path = SDL_GetPrefPath("factropy.com", folder.c_str());
 		mode.dataPath = std::string(path ? path: "./");
 		if (path) SDL_free(path);
 
@@ -248,6 +253,14 @@ namespace Config {
 			Config::mode.autosave = state["mode"]["autosave"];
 		}
 
+		if (state.contains("/mode/autosaveN"_json_pointer)) {
+			Config::mode.autosaveN = state["mode"]["autosaveN"];
+		}
+
+		if (state.contains("/mode/autotip"_json_pointer)) {
+			Config::mode.autotip = state["mode"]["autotip"];
+		}
+
 		if (state.contains("/mode/grid"_json_pointer)) {
 			Config::mode.grid = state["mode"]["grid"];
 		}
@@ -314,6 +327,8 @@ namespace Config {
 		};
 
 		state["mode"]["autosave"] = Config::mode.autosave;
+		state["mode"]["autosaveN"] = Config::mode.autosaveN;
+		state["mode"]["autotip"] = Config::mode.autotip;
 		state["mode"]["grid"] = Config::mode.grid;
 		state["mode"]["alignment"] = Config::mode.alignment;
 		state["mode"]["cardinalSnap"] = Config::mode.cardinalSnap;
@@ -331,51 +346,6 @@ namespace Config {
 	}
 
 	void args(int argc, char *argv[]) {
-		bool width = false;
-		bool height = false;
-		bool forcenew = false;
-
-		for (int i = 1; i < argc; i++) {
-			auto arg = std::string(argv[i]);
-
-			if (arg == "--fullscreen") {
-				window.fullscreen = true;
-				continue;
-			}
-
-			if (arg == "--width" && i+1 < argc) {
-				width = true;
-				window.width = strtol(argv[++i], nullptr, 10);
-				continue;
-			}
-
-			if (arg == "--height" && i+1 < argc) {
-				height = true;
-				window.height = strtol(argv[++i], nullptr, 10);
-				continue;
-			}
-
-			if (arg == "--world" && i+1 < argc) {
-				mode.world = std::max(4096, (int)strtol(argv[++i], nullptr, 10));
-				mode.world = mode.world%1024 ? ((mode.world/1024)+1)*1024: mode.world;
-				notef("world size rounded to %d", mode.world);
-				forcenew = true;
-				continue;
-			}
-
-			if (arg == "--pause") {
-				mode.pause = true;
-				continue;
-			}
-		}
-
-		if ( width ||  height) window.fullscreen = false;
-		if ( width && !height) window.height = BASELINE_WINDOW_HEIGHT * ((float)window.width/BASELINE_WINDOW_WIDTH);
-		if (!width &&  height) window.width = BASELINE_WINDOW_WIDTH * ((float)window.height/BASELINE_WINDOW_HEIGHT);
-
-		if (!mode.load && !forcenew) {
-			mode.load = std::filesystem::exists(fmt("%s/sim.json", savePath(mode.saveName)));
-		}
 	}
 
 	void sdl() {
@@ -392,7 +362,7 @@ namespace Config {
 
 		window.sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 		if (window.fullscreen) window.sdlFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		if (window.resizable && !window.fullscreen) window.sdlFlags |= SDL_WINDOW_RESIZABLE;
+		if (window.resizable) window.sdlFlags |= SDL_WINDOW_RESIZABLE;
 	}
 
 	void profile() {
@@ -465,12 +435,6 @@ namespace Config {
 
 		Config::toolbar.icon.size = scale() < 1.1 ? 0: 1;
 
-//notef("WindowPadding: %f,%f", style.WindowPadding.x, style.WindowPadding.y);
-//notef("FramePadding: %f,%f", style.FramePadding.x, style.FramePadding.y);
-//notef("ItemSpacing: %f,%f", style.ItemSpacing.x, style.ItemSpacing.y);
-//notef("ItemInnerSpacing: %f,%f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
-//notef("CellPadding: %f,%f", style.CellPadding.x, style.CellPadding.y);
-
 		style.FrameRounding = style.FramePadding.x;
 		style.WindowRounding = style.FrameRounding;
 		style.TabRounding = style.FrameRounding;
@@ -481,7 +445,16 @@ namespace Config {
 	void autoscale(SDL_Window* win) {
 		int w = 0, h = 0;
 		SDL_GetWindowSize(win, &w, &h);
-		if (w != window.width) {
+		bool rescale = w != window.width;
+
+		int hr = BASELINE_WINDOW_HEIGHT * ((float)w/BASELINE_WINDOW_WIDTH);
+		if (!window.resizable && !window.fullscreen && h != hr) {
+			h = hr;
+			rescale = true;
+			SDL_SetWindowSize(win, w, h);
+		}
+
+		if (rescale) {
 			window.width = w;
 			window.height = h;
 			imgui();

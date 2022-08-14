@@ -15,6 +15,10 @@ struct Part;
 #include <vector>
 
 struct Part {
+	static inline std::set<Part*> all;
+	static void reset();
+	static void resetAll();
+
 	enum Detail {
 		HD = 0,
 		MD = 1,
@@ -68,7 +72,6 @@ struct Part {
 	Part* gloss(float s);
 	Part* translucent();
 	Part* lod(Mesh* mesh, Detail detail, bool shadow = NOSHADOW);
-	static void resetAll();
 	virtual void update();
 	Part* transform(const Mat4& ssrt);
 	virtual Mat4 transform();

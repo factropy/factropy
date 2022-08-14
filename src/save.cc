@@ -143,6 +143,7 @@ namespace Sim {
 					state["tick"] = tick;
 					state["seed"] = seed;
 					state["enemy"] = Enemy::enable;
+					state["name"] = Config::mode.saveName;
 
 					for (auto [iid,size]: Item::supplied) {
 						state["supplied"][Save::itemOut(iid)] = size;
@@ -285,17 +286,32 @@ namespace Sim {
 				auto state = json::parse(line);
 
 				if (state.contains("version")) {
-					throwf(
-						state["version"][0] <= Config::version.major &&
-						state["version"][1] <= Config::version.minor &&
-						state["version"][2] <= Config::version.patch,
-						"Saved game is from Factropy %d.%d.%d but this is version %d.%d.%d."
-						" Please update the game to continue."
+					int sMajor = (int)state["version"][0];
+					int sMinor = (int)state["version"][1];
+					int sPatch = (int)state["version"][2];
+					int cMajor = Config::version.major;
+					int cMinor = Config::version.minor;
+					int cPatch = Config::version.patch;
+
+					bool sameMajorMinor = sMajor == cMajor && sMinor == cMinor;
+
+					throwf(sameMajorMinor,
+						"Saved game from %d.%d.%d is incompatible with version %d.%d.%d.",
+						sMajor, sMinor, sPatch, cMajor, cMinor, cPatch
+					);
+
+					bool sameOrNewer = sameMajorMinor && sPatch <= cPatch;
+
+					throwf(sameOrNewer,
+						"Saved game comes from %d.%d.%d but this is version %d.%d.%d."
+						" Please update the game to continue.",
+						sMajor, sMinor, sPatch, cMajor, cMinor, cPatch
 					);
 				}
 
+				Config::mode.saveName = state["name"];
+				init(state["seed"]);
 				tick = state["tick"];
-				reseed(state["seed"]);
 
 				if (state.contains("enemy")) {
 					Enemy::enable = state["enemy"];
@@ -776,7 +792,11 @@ void Entity::loadAll(const char* name) {
 		dir = dir.normalize();
 
 		if (en.spec->alignStrict(pos, dir) && !en.spec->monorailContainer) {
-			dir = contains(en.spec->rotations, dir) ? dir: en.spec->rotations.front();
+			if (!contains(en.spec->rotations, dir) && dir == Point::East && contains(en.spec->rotations, Point::West)) dir = Point::West;
+			if (!contains(en.spec->rotations, dir) && dir == Point::West && contains(en.spec->rotations, Point::East)) dir = Point::East;
+			if (!contains(en.spec->rotations, dir) && dir == Point::North && contains(en.spec->rotations, Point::South)) dir = Point::South;
+			if (!contains(en.spec->rotations, dir) && dir == Point::South && contains(en.spec->rotations, Point::North)) dir = Point::North;
+			if (!contains(en.spec->rotations, dir)) dir = en.spec->rotations.front();
 			pos = en.spec->aligned(pos, dir);
 		}
 
@@ -848,9 +868,10 @@ void Store::saveAll(const char* name) {
 		state["id"] = store.id;
 		state["sid"] = store.sid;
 		state["activity"] = store.activity;
-		state["input"] = store.input;
-		state["output"] = store.output;
-		state["anything"] = store.anything;
+
+		if (store.purge) {
+			state["purge"] = store.purge;
+		}
 
 		int i = 0;
 		for (Stack stack: store.stacks) {
@@ -902,12 +923,8 @@ void Store::loadAll(const char* name) {
 		store.sid = state["sid"];
 		store.activity = state["activity"];
 
-		if (state.contains("input")) {
-			store.input = state["input"];
-		}
-
-		if (state.contains("output")) {
-			store.output = state["output"];
+		if (state.contains("purge")) {
+			store.purge = state["purge"];
 		}
 
 		for (auto stack: state["stacks"]) {
@@ -938,10 +955,6 @@ void Store::loadAll(const char* name) {
 
 		if (state.contains("transmit")) {
 			store.transmit = state["transmit"];
-		}
-
-		if (state.contains("anything")) {
-			store.anything = state["anything"];
 		}
 	}
 
@@ -1461,7 +1474,7 @@ void Depot::loadAll(const char* name) {
 		Depot& depot = get(state["id"]);
 		depot.construction = state["construction"];
 		depot.deconstruction = state["deconstruction"];
-		//depot.network = state["network"];
+		depot.network = state["network"];
 
 		for (uint did: state["drones"]) {
 			depot.drones.insert(did);
@@ -1878,7 +1891,7 @@ void Loader::saveAll(const char* name) {
 		state["id"] = loader.id;
 		state["storeId"] = loader.storeId;
 		state["pause"] = loader.pause;
-		state["force"] = loader.force;
+		state["ignore"] = loader.ignore;
 
 		int i = 0;
 		for (uint iid: loader.filter) {
@@ -1915,8 +1928,8 @@ void Loader::loadAll(const char* name) {
 		loader.storeId = state["storeId"];
 		loader.pause = state["pause"];
 
-		if (state.contains("force")) {
-			loader.force = state["force"];
+		if (state.contains("ignore")) {
+			loader.ignore = state["ignore"];
 		}
 
 		for (std::string name: state["filter"]) {
@@ -2974,8 +2987,12 @@ void Launcher::saveAll(const char* name) {
 		state["completed"] = launcher.completed;
 		state["progress"] = launcher.progress;
 
+		int i = 0;
+		for (auto iid: launcher.cargo) {
+			state["cargo"][i++] = Save::itemOut(iid);
+		}
+
 		switch (launcher.monitor) {
-			case Monitor::Store: break;
 			case Monitor::Network: {
 				state["monitor"] = "network";
 				break;
@@ -3003,6 +3020,10 @@ void Launcher::loadAll(const char* name) {
 		launcher.activate = state["activate"];
 		launcher.completed = state["completed"];
 		launcher.progress = state["progress"];
+
+		for (auto name: state["cargo"]) {
+			launcher.cargo.insert(Save::itemIn(name));
+		}
 
 		if (state.contains("monitor")) {
 			if (state["monitor"] == "network") {

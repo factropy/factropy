@@ -1,0 +1,31 @@
+
+add_recipe({
+	name = "hydrazine",
+	title = "Hydrazine Synthesis",
+	energy = MJ(1),
+	tags = tags.chemistry,
+	input = { "log" = 1, "water" = L(100) },
+	output = { "hydrazine" = L(100) },
+	fluid = "hydrazine",
+})
+
+add_recipe({
+	name = "sulfuric-acid",
+	title = "Sulfuric Acid Hydration",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "steel-sheet" = 1, "sulfur" = 5, "water" = L(100) },
+	output = { "sulfuric-acid" = L(50) },
+	fluid = "sulfuric-acid",
+})
+
+add_recipe({
+	name = "hydrofluoric-acid",
+	title = "Hydrofluoric Acid Hydration",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "stone-crushed" = 5, "water" = L(100), "sulfuric-acid" = L(50) },
+	output = { "hydrofluoric-acid" = L(50) },
+	fluid = "hydrofluoric-acid",
+})
+

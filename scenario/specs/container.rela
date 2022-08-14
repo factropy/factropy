@@ -1,0 +1,154 @@
+function containerSmall(fields)
+	spec = {
+		health = 150,
+		collision = [0, 0, 0, 3, 3, 7],
+		rotateGhost = true,
+		rotations = [south,east],
+		store = true,
+		capacity = kg(5000),
+		tipStorage = true,
+		iconD = 4.0,
+		iconV = -0.4,
+		parts = [{
+			color = fields.color,
+			gloss = gloss.metallic,
+			filter = filter.powdercoat,
+			lods = [
+				["models/container-small-hd.stl", high, shadow],
+				["models/container-small-ld.stl", medium, shadow],
+				["models/container-small-vld.stl", verylow, noshadow],
+			],
+		}],
+	}
+
+	for k,v in fields spec[k] = v end
+	spec.color = nil
+	spec.autoColor = nil
+
+	if fields.autoColor then
+		spec.parts[0].autoColor = true
+	end
+
+	add_spec(spec)
+end
+
+function containerSmallNetworker(fields)
+	fields.networker = true
+	fields.networkInterfaces = 1
+	fields.networkWifi = [0,1.45,0]
+	containerSmall(fields)
+end
+
+containerSmall({
+	name = "magic-container",
+	title = "magic-container",
+	color = colors.magic,
+	build = false,
+	storeSetLower = true,
+	storeSetUpper = true,
+	storeMagic = true,
+	logistic = true,
+	construction = true,
+})
+
+containerSmall({
+	name = "magic-generator",
+	title = "magic-generator",
+	color = 0x0000ffff,
+	build = false,
+	enable = true,
+	consumeMagic = true,
+	generateElectricity = true,
+	energyGenerate = GW(1),
+	store = false,
+})
+
+containerSmall({
+	name = "container-shipping",
+	title = "Container (Shipping)",
+	color = 0x8d6e54ff,
+	build = true,
+	plan = false,
+	clone = true,
+	tipStorage = true,
+	storeAnything = true,
+	storeAnythingDefault = true,
+	monorailContainer = true,
+	autoColor = true,
+	materials = {
+		"steel-sheet" = 4,
+		"steel-frame" = 2,
+	},
+})
+
+containerSmall({
+	name = "container-provider",
+	title = "Container (Provider)",
+	toolbar = "$(toolbar.storage)-a",
+	color = colors.provider,
+	logistic = true,
+	storeSetUpper = true,
+	storeUpgradePreserve = true,
+	storeAnything = true,
+	storeAnythingDefault = true,
+	cycle = "container-requester",
+	wiki = "https://github.com/factropy/community/wiki/Container",
+	materials = {
+		"steel-sheet" = 4,
+		"steel-frame" = 2,
+		"circuit-board" = 2,
+	},
+})
+
+containerSmallNetworker({
+	name = "container-requester",
+	title = "Container (Requester)",
+	toolbar = "$(toolbar.storage)-b",
+	color = colors.requester,
+	logistic = true,
+	storeSetLower = true,
+	storeSetUpper = true,
+	storeUpgradePreserve = true,
+	cycle = "container-buffer",
+	materials = {
+		"steel-sheet" = 4,
+		"steel-frame" = 2,
+		"mother-board" = 1,
+	},
+})
+
+containerSmallNetworker({
+	name = "container-overflow",
+	title = "Container (Overflow)",
+	toolbar = "$(toolbar.storage)-c",
+	color = colors.overflow,
+	logistic = true,
+	storeSetUpper = true,
+	storeUpgradePreserve = true,
+	overflow = true,
+	cycle = "container-provider",
+	materials = {
+		"steel-sheet" = 4,
+		"steel-frame" = 2,
+		"mother-board" = 1,
+	},
+})
+
+containerSmallNetworker({
+	name = "container-buffer",
+	title = "Container (Buffer)",
+	toolbar = "$(toolbar.storage)-d",
+	color = colors.buffer,
+	logistic = true,
+	storeSetLower = true,
+	storeSetUpper = true,
+	storeUpgradePreserve = true,
+	construction = true,
+	cycle = "container-overflow",
+	materials = {
+		"steel-sheet" = 4,
+		"steel-frame" = 2,
+		"mother-board" = 1,
+	},
+})
+

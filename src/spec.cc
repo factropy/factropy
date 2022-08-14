@@ -45,7 +45,6 @@ Spec::Spec(std::string name) {
 	directRevert = false;
 
 	forceDelete = false;
-	forceDeleteStore = false;
 	collideBuild = true;
 
 	health = 0;
@@ -62,8 +61,6 @@ Spec::Spec(std::string name) {
 	storeSetLower = false;
 	storeSetUpper = false;
 	storeMagic = false;
-	storeAnything = false;
-	storeAnythingDefault = false;
 	storeUpgradePreserve = false;
 	// store drones
 	logistic = false;
@@ -77,6 +74,7 @@ Spec::Spec(std::string name) {
 
 	place = Land;
 	placeOnHill = false;
+	placeOnWaterSurface = false;
 	placeOnHillPlatform = 0.0f;
 
 	collision = {0,0,0,0,0,0};
@@ -289,6 +287,7 @@ Spec::Spec(std::string name) {
 	ruled = false;
 	status = false;
 	beacon = Point::Zero;
+	icon = Point::Zero;
 
 	tube = false;
 	tubeOrigin = 0;
@@ -355,7 +354,9 @@ Point Spec::aligned(Point p, Point dir) const {
 		}
 
 		if (alignStrict(p, dir)) {
-			p.y = underground ? -collision.h*0.5: collision.h*0.5;
+			p.y = collision.h*0.5;
+			if (underground) p.y = -collision.h*0.5;
+			if (placeOnWaterSurface) p.y = -3.0f + collision.h*0.5;
 		}
 
 		p.z = std::floor(p.z);
@@ -371,7 +372,8 @@ bool Spec::alignStrict(Point pos, Point dir) const {
 	float yMax = collision.h*0.5 + 0.01;
 	bool grounded = pos.y > yMin && pos.y < yMax;
 	bool undergrounded = pos.y < -yMin && pos.y > -yMax;
-	return align && (grounded || undergrounded) && !drone && !zeppelin && !flightPath && !cart && !missile && !junk && !monocar && !vehicle;
+	return align && (grounded || undergrounded || placeOnWaterSurface)
+		&& !drone && !zeppelin && !flightPath && !cart && !missile && !junk && !monocar && !vehicle;
 }
 
 // AABB
@@ -494,3 +496,9 @@ Health Spec::damage(uint ammoId) const {
 			: ((float)(ammoId ? Item::get(ammoId)->ammoDamage: 0) * turretDamage)
 	);
 }
+
+Point Spec::iconPoint(Point pos, Point dir) {
+	Point i = icon == Point::Zero ? Point::Up*(collision.h/2+0.5f) : icon;
+	return i.transform(dir.rotation()) + pos;
+}
+

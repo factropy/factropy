@@ -25,6 +25,7 @@ colors = {
 	copperOre = 0x8FccccFF,
 	coal = 0x333333FF,
 	stone = 0x999999FF,
+	gold = 0xFFD700ff,
 	uraniumOre = 0x32CD32FF,
 	tinOre = 0x238E68FF,
 	leadOre = 0x666677FF,
@@ -132,6 +133,10 @@ mining = {
 		ore = "aluminium-ore",
 		title = "Aluminium",
 	},
+	gold = {
+		ore = "gold-ore",
+		title = "Gold",
+	},
 }
 
 crushing = {
@@ -161,14 +166,16 @@ smelting = {
 	},
 }
 
-function reverse(vec)
-	i = 0
-	j = #vec-1
-	while i < j
-		a = vec[i]
-		vec[i] = vec[j]
-		vec[j] = a
-		i = i+1
-		j = j-1
-	end
-end
+order = {
+	iron = "a",
+	copper = "b",
+	tin = "c",
+	lead = "d",
+	aluminium = "e",
+	gold = "f",
+	uranium = "g",
+	coal = "h",
+	stone = "i",
+	sulfur = "j",
+	silica = "k",
+}

@@ -118,6 +118,9 @@ struct World {
 	std::deque<Change> changes;
 	bool ready = false;
 
+	// used by thread_local caches to reset
+	uint game = 0;
+
 	void save(const char* path, channel<bool,3>* tickets);
 	void load(const char* path);
 

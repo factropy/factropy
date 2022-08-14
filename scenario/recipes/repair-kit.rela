@@ -1,0 +1,47 @@
+
+add_recipe({
+	name = "repair-kit",
+	title = "Repair Kit",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = {
+		"circuit-board" = 1,
+		"pipe" = 1,
+		"gear-wheel" = 1,
+		"steel-frame" = 1,
+		"brick" = 1,
+	},
+	output = { "repair-kit" = 1 },
+})
+
+add_recipe({
+	name = "parts-kit",
+	title = "Parts Kit",
+	energy = kJ(900),
+	tags = tags.crafting,
+	input = {
+		"repair-kit" = 2,
+		"electric-motor" = 1,
+		"mother-board" = 1,
+		"battery" = 1,
+		"filter" = 1,
+	},
+	output = { "parts-kit" = 1 },
+})
+
+add_recipe({
+	name = "upgrade-kit",
+	title = "Upgrade Kit",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = {
+		"parts-kit" = 2,
+		"aluminium-frame" = 1,
+		"heatsink" = 1,
+		"filter" = 1,
+		"processor" = 1,
+	},
+	output = { "upgrade-kit" = 1 },
+})
+
+

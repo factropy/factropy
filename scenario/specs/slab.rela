@@ -1,0 +1,28 @@
+add_spec({
+	name = "slab",
+	title = "Slab",
+	collision = [0,0,0,12,0.01,12],
+	iconD = 8,
+	iconV = 0,
+	place = [placement.land],
+	materials = {
+		"brick" = 25,
+	},
+	slab = true,
+	rotateExtant = false,
+	rotateGhost = true,
+	rotations = [south],
+	parts = [
+		{
+			color = 0xc5c5c3ff,
+			filter = filter.powdercoat,
+			customColor = true,
+			lods = [
+				["models/slab-hd.stl", high, noshadow],
+				["models/slab-ld.stl", medium, noshadow],
+				["models/slab-vld.stl", verylow, noshadow],
+			],
+		},
+	],
+})
+

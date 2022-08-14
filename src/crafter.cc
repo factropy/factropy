@@ -493,7 +493,13 @@ void Crafter::update() {
 
 	if (enabled && en->spec->crafterOutput) {
 		auto& store = en->store();
-		auto iid = store.wouldRemoveAny();
+		uint iid = 0;
+		for (auto& stack: store.stacks) {
+			if (store.countActiveProviding(stack.iid)) {
+				iid = stack.iid;
+				break;
+			}
+		}
 		if (iid) {
 			auto eo = Entity::at(en->pos() + en->spec->crafterOutputPos.transform(en->dir().rotation()));
 			if (eo && !eo->isGhost() && eo->spec->conveyor) {
@@ -503,13 +509,18 @@ void Crafter::update() {
 				}
 			}
 			else
+			if (eo && !eo->isGhost() && eo->spec->consumeFuel && eo->burner().store.isAccepting(iid)) {
+				eo->burner().store.insert({iid,1});
+				store.remove({iid,1});
+			}
+			else
 			if (eo && !eo->isGhost() && eo->spec->store && eo->store().isAccepting(iid)) {
 				eo->store().insert({iid,1});
 				store.remove({iid,1});
 			}
 			else
-			if (eo && !eo->isGhost() && eo->spec->consumeFuel && eo->burner().store.isAccepting(iid)) {
-				eo->burner().store.insert({iid,1});
+			if (eo && !eo->isGhost() && eo->spec->store && !eo->store().strict() && !eo->store().level(iid) && eo->store().countSpace(iid)) {
+				eo->store().insert({iid,1});
 				store.remove({iid,1});
 			}
 		}

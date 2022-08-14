@@ -1,0 +1,208 @@
+function laserTurret(name, title, toolbar, color)
+
+	pivot = [0,1.5,-0.6]
+	pivot_fire = pivot
+
+	function ring(color, offset, on)
+		return {
+			color = color,
+			glow = on,
+			gloss = gloss.metallic,
+			scale = 2.0,
+			rotate = [up,-90],
+			translate = [0,0,1.6+offset],
+			pivots = ["azimuth", "altitude", pivot],
+			lods = [
+				["models/turret-laser-ring-hd.stl", high, shadow],
+				["models/turret-laser-ring-ld.stl", medium, noshadow],
+			],
+		}
+	end
+
+	function multiple(v,n)
+		batch = []
+		for i in n batch[#batch] = v end
+		return batch
+	end
+
+	color_alt = 0x035096ff
+	spacing = 0.18
+
+	rings = [
+		ring(color_alt, 0.6, false),
+		ring(color, 0.6, true),
+		ring(color_alt, 0.6-(spacing*1), false),
+		ring(color, 0.6-(spacing*1), true),
+		ring(color_alt, 0.6-(spacing*2), false),
+		ring(color, 0.6-(spacing*2), true),
+		ring(color_alt, 0.6-(spacing*3), false),
+		ring(color, 0.6-(spacing*3), true),
+		ring(color_alt, 0.6-(spacing*4), false),
+		ring(color, 0.6-(spacing*4), true),
+		ring(color_alt, 0.6-(spacing*5), false),
+		ring(color, 0.6-(spacing*5), true),
+		ring(color_alt, 0.6-(spacing*6), false),
+		ring(color, 0.6-(spacing*6), true),
+	]
+
+	states = [ [
+		identity,
+		identity,
+		identity,
+		identity,
+		multiple(identity,#rings)...,
+	] ]
+
+	states_show = [ [
+		true,
+		true,
+		true,
+		true,
+
+		true,
+		false,
+		true,
+		false,
+		true,
+		false,
+		true,
+		false,
+		true,
+		false,
+		true,
+		false,
+		true,
+		false,
+	] ]
+
+	for i in 60
+		state = [
+			identity,
+			identity,
+			identity,
+			identity,
+			multiple(identity,#rings)...,
+		]
+
+		states[#states] = state
+		states[#states] = state
+
+		state_show = [
+			true,
+			true,
+			true,
+			true,
+
+			(i+0) % (#rings/2) != 0,
+			(i+0) % (#rings/2) == 0,
+			(i+1) % (#rings/2) != 0,
+			(i+1) % (#rings/2) == 0,
+			(i+2) % (#rings/2) != 0,
+			(i+2) % (#rings/2) == 0,
+			(i+3) % (#rings/2) != 0,
+			(i+3) % (#rings/2) == 0,
+			(i+4) % (#rings/2) != 0,
+			(i+4) % (#rings/2) == 0,
+			(i+5) % (#rings/2) != 0,
+			(i+5) % (#rings/2) == 0,
+			(i+6) % (#rings/2) != 0,
+			(i+6) % (#rings/2) == 0,
+		]
+
+		states_show[#states_show] = state_show
+		states_show[#states_show] = state_show
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		health = 500,
+		collision = [0, 0, 0, 4, 5, 4],
+		iconD = 3,
+		iconV = 0.5,
+		align = true,
+		rotateGhost = true,
+		rotations = [south],
+		turret = true,
+		turretRange = 120,
+		turretPivotSpeed = 0.05,
+		turretCooldown = 1,
+		turretDamage = 1.0,
+		turretPivotPoint = pivot,
+		turretPivotFirePoint = pivot_fire,
+		turretTrail = color,
+		turretLaser = true,
+		turretStateRevert = true,
+		enemyTarget = true,
+		place = ["land", "hill"],
+		placeOnHill = true,
+		placeOnHillPlatform = 2.0,
+		consumeCharge = true,
+		consumeChargeEffect = true,
+		consumeChargeBuffer = MJ(50),
+		consumeChargeRate = MW(1),
+		energyConsume = MW(50),
+		materials = {
+			"gear-wheel" = 10,
+			"copper-sheet" = 10,
+			"steel-frame" = 3,
+			"steel-sheet" = 5,
+			"battery" = 5,
+		},
+		states = states,
+		statesShow = states_show,
+		parts = [
+			{
+				color = 0x444444ff,
+				scale = 2.0,
+				translate = [0,-2.5,0],
+				lods = [
+					["models/turret-base-hd.stl", high, shadow],
+					["models/turret-base-ld.stl", medium, shadow],
+					["models/turret-base-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x888888ff,
+				gloss = gloss.metallic,
+				scale = 2.0,
+				rotate = [up,-90],
+				translate = [0,-2.5,0],
+				pivots = ["azimuth"],
+				lods = [
+					["models/turret-mount-hd.stl", high, shadow],
+					["models/turret-mount-ld.stl", medium, shadow],
+					["models/turret-mount-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = color_alt,
+				scale = 2.0,
+				rotate = [up,-90],
+				pivots = ["azimuth", "altitude", pivot],
+				lods = [
+					["models/turret-butt-hd.stl", high, shadow],
+					["models/turret-butt-ld.stl", medium, shadow],
+					["models/turret-butt-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = colors.steel,
+				gloss = gloss.metallic,
+				scale = 2.0,
+				rotate = [up,-90],
+				translate = [0,0,1.6],
+				pivots = ["azimuth", "altitude", pivot],
+				lods = [
+					["models/turret-laser-hd.stl", high, shadow],
+					["models/turret-laser-ld.stl", medium, shadow],
+					["models/turret-laser-vld.stl", verylow, noshadow],
+				],
+			},
+			rings...,
+		]
+	})
+end
+
+laserTurret("turret-laser", "Turret (Laser)", "$(toolbar.defence)-b", 0xff0000ff)
+

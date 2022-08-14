@@ -1,0 +1,124 @@
+function()
+	add_spec({
+		name = "hill-explosion",
+		title = "hill-explosion",
+		align = false,
+		build = false,
+		explosion = true,
+		explosionDamage = 0,
+		explosionRadius = 5,
+		explosionRate = 0.5,
+	})
+
+	add_spec({
+		name = "hill-explosive",
+		title = "Hill Explosive",
+		collision = [0, 0, 0, 0.99, 0.99, 0.99],
+		iconD = 0.5,
+		iconV = 0.0,
+		explodes = true,
+		explosive = true,
+		explosionSpec = "hill-explosion",
+		place = [placement.land, placement.hill],
+		placeOnHill = true,
+		placeOnHillPlatform = 1.0,
+		materialsMultiplyHill = 0.3,
+		materials = {
+			"explosive" = 1,
+		},
+		parts = [
+			{
+				color = 0x666666ff,
+				translate = [0,0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x666666ff,
+				translate = [0,-0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x660000ff,
+				lods = [
+					["models/explosive-stick-hd.stl", high, shadow],
+					["models/explosive-stick-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x909090ff,
+				lods = [
+					["models/explosive-pin-hd.stl", high, noshadow],
+					["models/explosive-pin-ld.stl", medium, noshadow],
+				],
+			},
+		]
+	})
+
+	add_spec({
+		name = "hill-explosion-atomic",
+		title = "hill-explosion-atomic",
+		align = false,
+		build = false,
+		explosion = true,
+		explosionDamage = 0,
+		explosionRadius = 50,
+		explosionRate = 3.0,
+	})
+
+	add_spec({
+		name = "hill-explosive-atomic",
+		title = "Hill Explosive (Atomic)",
+		collision = [0, 0, 0, 0.99, 0.99, 0.99],
+		explodes = true,
+		explosive = true,
+		explosionSpec = "hill-explosion-atomic",
+		place = [placement.land, placement.hill],
+		placeOnHill = true,
+		placeOnHillPlatform = 1.0,
+		materialsMultiplyHill = 0.0,
+		materials = {
+			"explosive-atomic" = 1,
+		},
+		parts = [
+			{
+				color = 0x666666ff,
+				translate = [0,0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x666666ff,
+				translate = [0,-0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x006600ff,
+				lods = [
+					["models/explosive-stick-hd.stl", high, shadow],
+					["models/explosive-stick-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x909090ff,
+				lods = [
+					["models/explosive-pin-hd.stl", high, noshadow],
+					["models/explosive-pin-ld.stl", medium, noshadow],
+				],
+			},
+		]
+	})
+
+end()
+
+

@@ -1,0 +1,63 @@
+add_spec({
+	name = "cart-stop",
+	title = "Cart Stop",
+	cycle = "cart-waypoint",
+	health = 150,
+	collision = [0, 0, 0, 2, 0.05, 2],
+	iconD = 1.25,
+	iconV = -0.25,
+	cartStop = true,
+	cartWaypoint = true,
+	rotateGhost = true,
+	rotations = [south],
+	parts = [
+		{
+			color = 0x444455ff,
+			translate = up*0.01,
+			lods = [
+				["models/cart-stop-hd.stl", high, noshadow],
+				["models/cart-stop-ld.stl", low, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			translate = up*0.01,
+			lods = [
+				["models/cart-stop-edge-hd.stl", high, noshadow],
+				["models/cart-stop-edge-ld.stl", low, noshadow],
+			]
+		},
+	],
+})
+
+add_spec({
+	name = "cart-waypoint",
+	title = "Cart Waypoint",
+	cycle = "cart-stop",
+	health = 150,
+	collision = [0, 0, 0, 2, 0.05, 2],
+	iconD = 1.25,
+	iconV = -0.25,
+	cartWaypoint = true,
+	rotateGhost = true,
+	rotations = [south],
+	parts = [
+		{
+			color = 0x444455ff,
+			translate = up*0.01,
+			lods = [
+				["models/cart-waypoint-hd.stl", high, noshadow],
+				["models/cart-waypoint-ld.stl", low, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			translate = up*0.01,
+			lods = [
+				["models/cart-waypoint-edge-hd.stl", high, noshadow],
+				["models/cart-waypoint-edge-ld.stl", low, noshadow],
+			]
+		},
+	],
+})
+

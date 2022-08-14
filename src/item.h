@@ -10,6 +10,7 @@ struct Stack;
 #include "part.h"
 #include "mass.h"
 #include "energy.h"
+#include "recipe.h"
 #include "slabarray.h"
 #include "time-series.h"
 #include <map>
@@ -68,6 +69,33 @@ struct Item {
 	TimeSeriesSum consumption;
 	TimeSeriesSum supplies;
 
+	struct Group {
+		std::string order;
+		std::vector<Item*> display;
+	};
+
+	struct Category {
+		std::string title;
+		std::string order;
+		std::map<std::string,Group> groups;
+		std::vector<Group*> display;
+	};
+
+	static inline std::map<std::string,Category> categories;
+	static inline std::vector<Category*> display;
+
+	Category* category = nullptr;
+	Group* group = nullptr;
+	std::string order;
+
+	static inline bool sort(const Item* a, const Item* b) {
+		return (a->category->order < b->category->order)
+			|| (a->category->order == b->category->order && a->group->order < b->group->order)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order < b->order)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order == b->order && a->title < b->title)
+			|| (a->category->order == b->category->order && a->group->order == b->group->order && a->order == b->order && a->title == b->title && a->name < b->name);
+	}
+
 	struct Shipment {
 		uint64_t tick = 0;
 		uint count = 0;
@@ -78,6 +106,7 @@ struct Item {
 	uint ammoRounds;
 	Health ammoDamage;
 	bool raw;
+	bool free;
 	bool show;
 
 	Item();
@@ -88,4 +117,5 @@ struct Item {
 	void consume(int count);
 	void supply(int count);
 	bool hasLOD(float distance);
+	miniset<Recipe*> recipes();
 };

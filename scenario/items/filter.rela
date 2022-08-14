@@ -1,0 +1,30 @@
+
+add_item({
+	name = "filter",
+	title = "Filter",
+	parts = [
+		{
+			color = colors.plastic,
+			lods = [
+				["models/air-filter-frame-hd.stl", high, shadow],
+				["models/air-filter-frame-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			lods = [
+				["models/air-filter-mesh-hd.stl", high, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			lods = [
+				["models/air-filter-hd.stl", high, noshadow],
+				["models/air-filter-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.1,
+	mass = kg(0.5),
+})
+

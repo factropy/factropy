@@ -10,6 +10,7 @@ struct Scene;
 #include "config.h"
 #include "plan.h"
 #include "sky.h"
+#include "popup.h"
 
 struct Scene {
 	uint current = 0;
@@ -177,11 +178,21 @@ struct Scene {
 		Mesh* pipeConnector;
 		Mesh* chevron;
 		Mesh* flame;
+		Mesh* droplet;
 	} bits;
+
+	struct {
+		Mesh* triangle;
+		Mesh* tick;
+		Mesh* exclaim;
+		Mesh* electricity;
+	} icon;
 
 	std::array<float,1024> packets;
 
-	std::map<Spec*,std::vector<uint64_t>> iconTextures;
+	std::map<Spec*,std::vector<uint64_t>> specIconTextures;
+	std::map<uint,std::vector<uint64_t>> itemIconTextures;
+	std::map<uint,std::vector<uint64_t>> fluidIconTextures;
 
 	struct {
 		TimeSeries update;
@@ -198,10 +209,23 @@ struct Scene {
 		TimeSeries render;
 	} stats;
 
+	struct Riser {
+		Point start = Point::Zero;
+		Mesh* icon = nullptr;
+		Color color = 0x00ff00ff;
+		uint64_t tick = 0;
+	};
+
+	std::vector<Riser> risers;
+
+	void tick(Point pos);
+	void exclaim(Point pos);
+
 	Scene() = default;
+	void initGL();
 	void init();
+	void reset();
 	void prepare();
-	void destroy();
 	float pen();
 	void cube(const Box& box, const Color& color);
 	void sphere(const Sphere& sphere, const Color& color);
@@ -209,6 +233,8 @@ struct Scene {
 	void square(const Point& centroid, float half, const Color& color, float pen = 0.0f);
 	void line(const Point& a, const Point& b, const Color& color, float penW = 0.0f, float penH = 0.0f);
 	void cuboid(const Cuboid& cuboid, const Color& color, float pen = 0.0f);
+	void warning(Mesh* symbol, Point pos);
+	void alert(Mesh* symbol, Point pos);
 	bool keyDown(int key);
 	bool keyReleased(int key);
 	bool buttonDown(int button);
@@ -219,6 +245,8 @@ struct Scene {
 	std::pair<bool,Point> collisionRayGround(const Ray& ray, float level = 0.0f);
 	Point groundTarget(float level = 0.0f);
 	Point mouseGroundTarget(float level = 0.0f);
+	Point mouseTerrainTarget();
+	Point mouseWaterSurfaceTarget();
 	void updateMouse();
 	void updateCamera();
 	void updateVisibleCells();
@@ -236,7 +264,9 @@ struct Scene {
 	void advance();
 	void render();
 	void renderLoading();
-	bool renderIcon();
+	bool renderSpecIcon();
+	bool renderItemIcon();
+	bool renderFluidIcon();
 	void build(Spec* spec, Point dir = Point::South);
 	void saveFramebuffer();
 	void print(std::string m);
@@ -247,12 +277,7 @@ struct Scene {
 
 	void view(Point pos);
 
-	struct Texture {
-		GLuint id = 0;
-		int w = 0;
-		int h = 0;
-	};
-
+	typedef Popup::Texture Texture;
 	Texture loadTexture(const char* path);
 };
 

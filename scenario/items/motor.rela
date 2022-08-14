@@ -1,0 +1,31 @@
+
+add_item({
+	name = "electric-motor",
+	title = "Electric Motor",
+	parts = [
+		{
+			color = 0xB22222ff,
+			lods = [
+				["models/electric-motor-body-hd.stl", high, shadow],
+				["models/electric-motor-body-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			lods = [
+				["models/electric-motor-foot-hd.stl", high, shadow],
+				["models/electric-motor-foot-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x888888ff,
+			lods = [
+				["models/electric-motor-shaft-hd.stl", high, noshadow],
+				["models/electric-motor-shaft-ld.stl", medium, noshadow],
+			],
+		},
+	],
+	armV = 0.175,
+})
+
+

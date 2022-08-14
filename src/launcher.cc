@@ -22,7 +22,7 @@ Launcher& Launcher::create(uint id) {
 	launcher.activate = false;
 	launcher.progress = 0.0f;
 	launcher.completed = 0;
-	launcher.monitor = Monitor::Store;
+	launcher.monitor = Monitor::Network;
 	launcher.en->state = launcher.en->spec->launcherInitialState;
 	return launcher;
 }
@@ -95,6 +95,10 @@ bool Launcher::fueled() {
 	return fluidsReady;
 }
 
+bool Launcher::ready() {
+	return fueled() && cargo.size();
+}
+
 // check network
 bool Launcher::checkCondition() {
 	bool rule = condition.valid();
@@ -102,9 +106,9 @@ bool Launcher::checkCondition() {
 
 	bool permit = true;
 
-	if (rule && monitor == Monitor::Store) {
-		permit = condition.evaluate(store->signals());
-	}
+//	if (rule && monitor == Monitor::Store) {
+//		permit = condition.evaluate(store->signals());
+//	}
 
 	if (rule && en->spec->networker && monitor == Monitor::Network) {
 		auto network = en->networker().input().network;
@@ -118,6 +122,10 @@ bool Launcher::checkCondition() {
 void Launcher::update() {
 	if (en->isGhost()) return;
 
+	store->levels.clear();
+	for (auto& stack: store->stacks) store->levelSet(stack.iid, 0, 0);
+	for (auto& iid: cargo) store->levelSet(iid, en->spec->capacity.items(iid), en->spec->capacity.items(iid));
+
 	// initial landing
 	if (!working && en->state) {
 		if (en->state) en->state++;
@@ -127,41 +135,41 @@ void Launcher::update() {
 	if (working) {
 		en->state++;
 		if (en->state == en->spec->states.size()) {
-			for (auto stack: shipment) {
-				Item::get(stack.iid)->consume(stack.size);
-				Item::get(stack.iid)->supply(stack.size);
-			}
 			working = false;
 			progress = 0.0f;
 			en->state = 0;
-			shipment.clear();
 			completed++;
 			return;
 		}
 	}
 
-	if (!working && !activate) {
-		activate = condition.valid() ? checkCondition(): store->isFull();
-	}
-
-	if (!working && activate && fueled()) {
-		auto fuelPipes = pipes();
-		for (auto amount: en->spec->launcherFuel) {
-			for (uint pid: fuelPipes) {
-				Entity& pe = Entity::get(pid);
-				if (pe.isGhost()) continue;
-				Pipe& pipe = Pipe::get(pid);
-				if (!pipe.network) continue;
-				amount.size -= pipe.network->extract(amount).size;
-				if (!amount.size) continue;
-			}
+	if (!working && ready()) {
+		if (!activate) {
+			activate = condition.valid() ? checkCondition(): store->isFull();
 		}
-		shipment = store->stacks;
-		store->stacks.clear();
-		working = true;
-		en->state = 0;
-		progress = 0.0f;
-		activate = false;
+		if (activate) {
+			auto fuelPipes = pipes();
+			for (auto amount: en->spec->launcherFuel) {
+				for (uint pid: fuelPipes) {
+					Entity& pe = Entity::get(pid);
+					if (pe.isGhost()) continue;
+					Pipe& pipe = Pipe::get(pid);
+					if (!pipe.network) continue;
+					amount.size -= pipe.network->extract(amount).size;
+					if (!amount.size) continue;
+				}
+			}
+			for (auto& iid: cargo) {
+				if (!store->count(iid)) continue;
+				auto stack = store->remove({iid,store->count(iid)});
+				Item::get(iid)->consume(stack.size);
+				Item::get(iid)->supply(stack.size);
+			}
+			working = true;
+			en->state = 0;
+			progress = 0.0f;
+			activate = false;
+		}
 	}
 
 	en->setBlocked(!working);

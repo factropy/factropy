@@ -1,0 +1,46 @@
+
+function explosive(name, title, color)
+	add_item({
+		name = name,
+		title = title,
+		parts = [
+			{
+				color = 0x666666ff,
+				translate = [0,0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x666666ff,
+				translate = [0,-0.1,0],
+				lods = [
+					["models/explosive-strap-hd.stl", high, noshadow],
+					["models/explosive-strap-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = color,
+				lods = [
+					["models/explosive-stick-hd.stl", high, shadow],
+					["models/explosive-stick-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x909090ff,
+				lods = [
+					["models/explosive-pin-hd.stl", high, noshadow],
+					["models/explosive-pin-ld.stl", medium, noshadow],
+				],
+			}
+		],
+		armV = 0.15,
+		beltV = 0.15,
+		tubeV = 0.1,
+	})
+end
+
+explosive("explosive", "Explosive", 0x660000ff)
+explosive("explosive-atomic", "Explosive (Atomic)", 0x006600ff)
+

@@ -1,0 +1,34 @@
+name: MSYS2 ming64
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glm mingw-w64-x86_64-freetype zip
+      - name: make
+        run: ./package-windows.sh
+      - name: factropy-windows
+        uses: actions/upload-artifact@v2
+        with:
+          name: factropy-windows
+          path: factropy-windows.zip
+          retention-days: 1
+

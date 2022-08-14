@@ -89,7 +89,6 @@ struct Spec {
 	bool directRevert;
 
 	bool forceDelete;
-	bool forceDeleteStore;
 	bool collideBuild;
 
 	bool rotateGhost;
@@ -101,6 +100,7 @@ struct Spec {
 
 	int place;
 	bool placeOnHill;
+	bool placeOnWaterSurface;
 	float placeOnHillPlatform;
 	std::vector<Footing> footings;
 
@@ -126,8 +126,6 @@ struct Spec {
 	bool storeSetLower;
 	bool storeSetUpper;
 	bool storeMagic;
-	bool storeAnything;
-	bool storeAnythingDefault;
 	bool storeUpgradePreserve;
 	std::vector<Stack> supplies;
 	// store drones
@@ -349,6 +347,7 @@ struct Spec {
 	bool ruled;
 	bool status;
 	Point beacon;
+	Point icon;
 
 	bool tube;
 	float tubeOrigin;
@@ -467,5 +466,7 @@ struct Spec {
 
 	Rail railTo(Point posA, Point dirA, Spec* specB, Point posB, Point dirB);
 	bool railOk(Rail& rail);
+
+	Point iconPoint(Point pos, Point dir);
 };
 

@@ -1,0 +1,124 @@
+function()
+	states = []
+	for i in 360
+		states[#states] = [
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_rotate(east, 3.0*i),
+			matrix_rotate(east, 3.0*i),
+		]
+	end
+
+	add_spec({
+		name = "offshore-pump",
+		title = "Offshore Pump",
+		rotateGhost = true,
+		rotateExtant = true,
+		place = [placement.water],
+		consumeMagic = true,
+		energyConsume = kW(100),
+		energyDrain = kW(3),
+		collision = [0, -0.5, 0, 3, 4, 3],
+		iconD = 2.5,
+		iconV = 1,
+		source = true,
+		sourceFluid = "water",
+		sourceFluidRate = L(20),
+		enable = true,
+		health = 150,
+		pipe = true,
+		pipeCapacity = L(100),
+		pipeHints = true,
+		pipeConnections = [ [1.5, -1.5, 0.0] ],
+		materials = {
+			"circuit-board" = 1,
+			"gear-wheel" = 1,
+			"pipe" = 1,
+		},
+		states = states,
+		parts = [
+			{
+				color = 0x4444ccff,
+				translate = [0,-2,0],
+				lods = [
+					["models/offshore-pump-base-hd.stl", high, shadow],
+					["models/offshore-pump-base-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				translate = [-0.5,0,-1],
+				lods = [
+					["models/offshore-pump-thingy-hd.stl", high, shadow],
+					["models/offshore-pump-thingy-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				translate = [0.5,0,-1],
+				lods = [
+					["models/offshore-pump-thingy-hd.stl", high, shadow],
+					["models/offshore-pump-thingy-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				translate = [0.75,-0.5,0.3],
+				rotate = [up,-90],
+				lods = [
+					["models/offshore-pump-motor-hd.stl", high, shadow],
+					["models/offshore-pump-motor-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				translate = [0,-0.5,1],
+				rotate = [up,-90],
+				lods = [
+					["models/offshore-pump-belt-hd.stl", high, shadow],
+					["models/offshore-pump-belt-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				translate = [0,-2,0],
+				lods = [
+					["models/offshore-pump-pipe-hd.stl", high, shadow],
+					["models/offshore-pump-pipe-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				spinner = [east, -3],
+				gloss = gloss.metallic,
+				translate = [-0.5,0,1],
+				rotate = [up,90],
+				lods = [
+					["models/offshore-pump-wheel-hd.stl", high, shadow],
+					["models/offshore-pump-wheel-ld.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0xccccccff,
+				spinner = [east, 10],
+				gloss = gloss.metallic,
+				translate = [0.75,-0.5,0.3],
+				rotate = [up,-90],
+				lods = [
+					["models/offshore-pump-motor-shaft-hd.stl", high, shadow],
+					["models/offshore-pump-motor-shaft-ld.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end()
+

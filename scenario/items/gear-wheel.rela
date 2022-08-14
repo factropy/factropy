@@ -1,0 +1,20 @@
+
+add_item({
+	name = "gear-wheel",
+	title = "Gear Wheel",
+	parts = [{
+		color = 0x999999ff,
+		gloss = gloss.metallic,
+		scale = 0.8,
+		lods = [
+			["models/gear-hd.stl", high, shadow],
+			["models/gear-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.38,
+	beltV = 0.05,
+	tubeV = 0.05,
+	mass = kg(0.5),
+})
+
+

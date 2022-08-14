@@ -23,7 +23,6 @@ struct GUI {
 	bool doPaint = false;
 	bool doEscape = false;
 	bool doQuit = false;
-
 	bool focused = false;
 	bool prepared = false;
 
@@ -46,7 +45,9 @@ struct GUI {
 	float ups = 0.0f;
 	float fps = 0.0f;
 
-	std::map<std::string,std::string> controlHints;
+	std::map<std::string,std::string> controlHintsRelated;
+	std::map<std::string,std::string> controlHintsGeneral;
+	std::map<std::string,std::string> controlHintsSpecific;
 
 	struct {
 		uint planId = 0;
@@ -57,6 +58,7 @@ struct GUI {
 
 	GUI() = default;
 	void init();
+	void reset();
 	void prepare();
 	bool active();
 	void render();

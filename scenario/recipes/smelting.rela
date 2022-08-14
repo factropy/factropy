@@ -1,0 +1,39 @@
+
+for item,data in smelting
+	add_recipe({
+		name = "$(data.ingot or item)-smelting",
+		title = "$(data.title) Smelting",
+		input = { "$item-crushed" = 2 },
+		output = { "$(data.ingot or item)-ingot" = 1 },
+		energy = data.energy,
+		tags = tags.smelting,
+	})
+end
+
+add_recipe({
+	name = "silicon-smelting",
+	title = "Silicon Smelting",
+	input = { "silica-sand" = 2 },
+	output = { "silicon-ingot" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+
+add_recipe({
+	name = "brick-smelting"
+	title = "Brick Smelting",
+	input = { "stone-crushed" = 2 },
+	output = { "brick" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+
+add_recipe({
+	name = "gold-smelting"
+	title = "Gold Smelting",
+	input = { "gold-powder" = 2 },
+	output = { "gold-ingot" = 1 },
+	energy = energy.smelting,
+	tags = tags.smelting,
+})
+

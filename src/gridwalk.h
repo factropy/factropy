@@ -35,6 +35,11 @@ struct gridwalk {
 			y = *i++;
 		}
 
+		xy(const Point& p) {
+			x = (int)std::floor(p.x);
+			y = (int)std::floor(p.z);
+		}
+
 		bool operator==(const xy &o) const {
 			return x == o.x && y == o.y;
 		}

@@ -1,0 +1,128 @@
+function()
+	add_spec({
+		name = "fluid-tank",
+		title = "Fluid Tank",
+		pipe = true,
+		rotateGhost = true,
+		collision = [0, 0, 0, 5, 3, 5],
+		iconD = 3,
+		iconV = 0,
+		pipeHints = true,
+		pipeCapacity = L(50000),
+		pipeConnections = [
+			north*2.5 + down,
+			south*2.5 + down,
+			east*2.5 + down,
+			west*2.5 + down,
+		],
+		pipeLevels = [
+			[ [0,0,0,0.4,1.9,0.2], matrix_translate(0,-0.25,2.48) * matrix_rotate(up,45)],
+			[ [0,0,0,0.4,1.9,0.2], matrix_translate(0,-0.25,2.48) * matrix_rotate(up,135)],
+			[ [0,0,0,0.4,1.9,0.2], matrix_translate(0,-0.25,2.48) * matrix_rotate(up,225)],
+			[ [0,0,0,0.4,1.9,0.2], matrix_translate(0,-0.25,2.48) * matrix_rotate(up,315)],
+		],
+		health = 150,
+		networker = true,
+		networkInterfaces = 1,
+		networkWifi = up * 1.5,
+		materials = {
+			"copper-sheet" = 5,
+		},
+		parts = [
+			{
+				color = colors.pipe,
+				translate = down*1.5,
+				lods = [
+					["models/fluid-tank-small-hd.stl", high, shadow],
+					["models/fluid-tank-small-ld.stl", medium, shadow],
+					["models/fluid-tank-small-vld.stl", verylow, noshadow],
+				],
+			}
+			{
+				color = colors.pipe,
+				translate = down,
+				scale = [5,1,1],
+				lods = [
+					["models/pipe-straight-hd.stl", high, shadow],
+					["models/pipe-straight-ld.stl", medium, shadow],
+				],
+			}
+			{
+				color = colors.pipe,
+				translate = down,
+				scale = [5,1,1],
+				rotate = [up,90],
+				lods = [
+					["models/pipe-straight-hd.stl", high, shadow],
+					["models/pipe-straight-ld.stl", medium, shadow],
+				],
+			}
+			{
+				color = 0xffffffff,
+				transform = matrix_rotate(up, -90) * matrix_translate(0,-1.5,2.5) * matrix_rotate(up,45),
+				lods = [
+					["models/fluid-tank-meter-hd.stl", high, shadow],
+					["models/fluid-tank-meter-ld.stl", medium, shadow],
+				],
+			}
+			{
+				color = 0xffffffff,
+				transform = matrix_rotate(up, -90) * matrix_translate(0,-1.5,2.5) * matrix_rotate(up,135),
+				lods = [
+					["models/fluid-tank-meter-hd.stl", high, shadow],
+					["models/fluid-tank-meter-ld.stl", medium, shadow],
+				],
+			}
+			{
+				color = 0xffffffff,
+				transform = matrix_rotate(up, -90) * matrix_translate(0,-1.5,2.5) * matrix_rotate(up,225),
+				lods = [
+					["models/fluid-tank-meter-hd.stl", high, shadow],
+					["models/fluid-tank-meter-ld.stl", medium, shadow],
+				],
+			}
+			{
+				color = 0xffffffff,
+				transform = matrix_rotate(up, -90) * matrix_translate(0,-1.5,2.5) * matrix_rotate(up,315),
+				lods = [
+					["models/fluid-tank-meter-hd.stl", high, shadow],
+					["models/fluid-tank-meter-ld.stl", medium, shadow],
+				],
+			}
+		],
+	})
+
+	add_spec({
+		name = "fluid-tank-large",
+		title = "Fluid Tank (Large)",
+		pipe = true,
+		rotateGhost = true,
+		collision = [0, 0, 0, 8, 3, 8],
+		pipeHints = true,
+		pipeConnections = [
+			north*4.0 + down,
+			south*4.0 + down,
+			east*4.0 + down,
+			west*4.0 + down,
+		],
+		pipeCapacity = L(150000),
+		health = 150,
+		networker = true,
+		networkInterfaces = 1,
+		networkWifi = up * 1.5,
+		materials = {
+			"copper-sheet" = 10,
+			"plastic-bar" = 10,
+		},
+		parts = [{
+			color = colors.pipe,
+			translate = down*1.5,
+			lods = [
+				["models/fluid-tank-large-hd.stl", high, shadow],
+				["models/fluid-tank-large-ld.stl", medium, shadow],
+				["models/fluid-tank-large-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+end()
+

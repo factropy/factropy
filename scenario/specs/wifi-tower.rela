@@ -1,0 +1,25 @@
+add_spec({
+	name = "wifi-tower",
+	title = "Wifi Tower",
+	health = 150,
+	collision = [0, 0, 0, 2, 6, 2],
+	rotateGhost = true,
+	parts = [{
+		color = 0x778899FF,
+		filter = filter.powdercoat,
+		gloss = gloss.metallic,
+		translate = [0,-3,0],
+		lods = [ ["models/network-repeater-hd.stl", medium, shadow] ],
+	}],
+	networker = true,
+	networkInterfaces = 3,
+	networkHub = true,
+	networkRange = 100.0,
+	networkWifi = [0,2.5,0],
+	materials = {
+		"brick" = 5,
+		"copper-sheet" = 5,
+		"mother-board" = 1,
+	},
+})
+

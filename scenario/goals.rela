@@ -10,7 +10,6 @@ add_goal({
 		"conveyor-right-1",
 		"unveyor-entry-1",
 		"unveyor-exit-1",
-		"powerpole-small",
 	],
 	recipes = [
 		"mine-coal",
@@ -103,7 +102,6 @@ add_goal({
 		"lead-smelting",
 		"silicon-smelting",
 		"brick-smelting",
-		"incinerate-log",
 	],
 	hints = [
 		"Furnaces require coal for fuel.",
@@ -152,7 +150,6 @@ add_goal({
 	production = { "steam" = L(100) },
 	dependencies = ["crafting"],
 	specs = [
-		"falcon",
 		"chemplant1",
 		"tube-small-1",
 		"tube-small-alt-1",
@@ -174,7 +171,7 @@ add_goal({
 add_goal({
 	name = "launching",
 	title = "Prepare for Launch",
-	construction = { "falcon" = 1 },
+	construction = { "rocket" = 1 },
 	production = { "hydrazine" = 5000 },
 	dependencies = ["electricity"],
 	specs = [
@@ -223,10 +220,12 @@ add_goal({
 	specs = [
 		"clarifier",
 		"incinerator",
+		"slab",
 	],
 	recipes = [
 		"slurry-stone-crushed",
 		"slurry-clarification",
+		"incinerate-log",
 	],
 	hints = [
 		"Enemy scout detected in-system! They know you are here."
@@ -241,15 +240,12 @@ add_goal({
 	specs = [
 		"oil-refinery",
 		"oil-rig",
+		"powerbuoy-small",
 		"pipe-underwater",
 		"pipe-valve",
 		"flare-stack",
-		"truck1",
-		"truck-engineer1",
-		"slab",
 	],
 	recipes = [
-		"ammo2",
 		"drill-oil",
 		"oil-refining",
 		"plastic-bar",
@@ -259,7 +255,7 @@ add_goal({
 		"sulfuric-acid",
 	],
 	supplies = {
-		"ammo1" = 1000,
+		"ammo1" = 500,
 	},
 })
 
@@ -274,15 +270,17 @@ add_goal({
 		"container-buffer",
 		"container-overflow",
 		"drone-depot1",
+		"wifi-tower",
+		"router",
+		"rocket",
 	],
 	recipes = [
 		"mother-board",
 		"battery",
 		"filter",
-		"repair-kit2",
 	],
 	supplies = {
-		"repair-kit" = 1000,
+		"repair-kit" = 500,
 	},
 })
 
@@ -293,7 +291,6 @@ add_goal({
 	chits = 2,
 	specs = [
 		"electrolyser1",
-		"starship",
 		"blimp1",
 		"flight-pad-depot",
 		"flight-pad-load",
@@ -303,17 +300,22 @@ add_goal({
 		"monorail-stop",
 		"monocar",
 		"container-shipping",
-		"wifi-tower",
-		"router",
 	],
 	recipes = [
-		"electrolysis",
+		"ammo2",
+		"parts-kit",
 		"hydrofluoric-acid",
 		"mine-aluminium-ore",
 		"aluminium-crushing",
 		"aluminium-electrolysis",
 		"aluminium-frame",
 		"oil-cracking",
+		"mine-gold-ore",
+		"gold-crushing",
+		"gold-smelting",
+		"gold-wire",
+		"ammonia-electrolysis",
+		"processor",
 	],
 	interval = 1,
 	period = 3,
@@ -349,9 +351,10 @@ add_goal({
 		"hill-explosive",
 	],
 	recipes = [
+		"computer",
 		"mine-uranium-ore",
 		"uranium-ammo",
-		"repair-kit3",
+		"upgrade-kit",
 		"heatsink",
 		"uranium-crushing",
 		"uranium-enrichment",
@@ -363,7 +366,7 @@ add_goal({
 	period = 3,
 	rates = [
 		{ item = "ammo2", count = 5000 },
-		{ item = "repair-kit2", count = 5000 },
+		{ item = "parts-kit", count = 5000 },
 	],
 })
 
@@ -373,7 +376,6 @@ add_goal({
 	dependencies = ["supply4"],
 	chits = 3,
 	specs = [
-		"computer",
 		"battery-pack",
 		"air-filter",
 		"turret-laser",
@@ -388,7 +390,7 @@ add_goal({
 	period = 3,
 	rates = [
 		{ item = "ammo3", count = 5000 },
-		{ item = "repair-kit3", count = 5000 },
+		{ item = "upgrade-kit", count = 5000 },
 		{ item = "explosive", count = 5000 },
 	],
 })
@@ -407,7 +409,7 @@ add_goal({
 	period = 5,
 	rates = [
 		{ item = "ammo3", count = 10000 },
-		{ item = "repair-kit3", count = 10000 },
+		{ item = "upgrade-kit", count = 10000 },
 		{ item = "explosive-atomic", count = 100 },
 	],
 })

@@ -1,0 +1,207 @@
+function electrolyser(name, title, toolbar, upgrade, color, energy, materials)
+	pipeInput = [3.0,-1.0,1.5]
+	pipeOutput = [3.0,-1.0,-1.5]
+
+	parts = [
+		{
+			color = color,
+			filter = filter.powdercoat,
+			gloss = gloss.metallic,
+			lods = [
+				["models/electrolysis-plant-base-hd.stl", high, shadow],
+				["models/electrolysis-plant-base-ld.stl", medium, shadow],
+				["models/electrolysis-plant-base-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			gloss = gloss.metallic,
+			translate = [-1,0,0],
+			lods = [
+				["models/electrolysis-plant-pipe-hd.stl", high, shadow],
+				["models/electrolysis-plant-pipe-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			gloss = gloss.metallic,
+			translate = [1,0,0],
+			lods = [
+				["models/electrolysis-plant-pipe-hd.stl", high, shadow],
+				["models/electrolysis-plant-pipe-ld.stl", medium, noshadow],
+			],
+		},
+	]
+
+	for i in 5
+		parts[#parts] = {
+			color = colors.steel,
+			gloss = gloss.metallic,
+			translate = [0,0,i-2],
+			lods = [
+				["models/electrolysis-plant-frame-hd.stl", high, shadow],
+				["models/electrolysis-plant-frame-ld.stl", medium, noshadow],
+			],
+		}
+	end
+
+	for i in 5
+		parts[#parts] = {
+			color = 0x9999ffff,
+			translucent = true,
+			translate = [0,0,i-2],
+			lods = [
+				["models/electrolysis-plant-glass-hd.stl", medium, noshadow],
+			],
+		}
+	end
+
+	for i in 5
+		for j in 5
+			parts[#parts] = {
+				color = 0xffffffff,
+				smoke = {
+					direction = up,
+					particlesMax = 60,
+					particlesPerTick = 1,
+					particleRadius = 0.02,
+					emitRadius = 0.1,
+					spreadFactor = 0.0,
+					tickRadiusFactor = 0.005,
+					tickDirectionFactor = 0.04,
+					tickDecayFactor = 0.99,
+					tickLifeLower = 60,
+					tickLifeUpper = 60,
+				},
+				translate = [0.8*(i-2),-0.5,j-2],
+			}
+		end
+	end
+
+	function multiple(v,n)
+		batch = []
+		for i in n batch[#batch] = v end
+		return batch
+	end
+
+	states = [
+		[
+			multiple(identity, 3)...,
+			multiple(identity, 5)...,
+			multiple(identity, 5)...,
+			multiple(identity, 25)...,
+		],
+	]
+
+	states_show = [
+		[
+			multiple(true, 3)...,
+			multiple(true, 5)...,
+			multiple(true, 5)...,
+			multiple(false, 25)...,
+		],
+	]
+
+	// turn on, grow bubbles
+	for i in 10
+		states[#states] = [
+			multiple(identity, 3)...,
+			multiple(identity, 5)...,
+			multiple(identity, 5)...,
+			multiple(matrix_scale(0.1*(i+1)), 25)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 3)...,
+			multiple(true, 5)...,
+			multiple(true, 5)...,
+			multiple(true, 25)...,
+		]
+	end
+
+	// normal running, full bubbles
+	for i in 80
+		states[#states] = [
+			multiple(identity, 3)...,
+			multiple(identity, 5)...,
+			multiple(identity, 5)...,
+			multiple(identity, 25)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 3)...,
+			multiple(true, 5)...,
+			multiple(true, 5)...,
+			multiple(true, 25)...,
+		]
+	end
+
+	// turn off, shrink bubbles
+	for i in 10
+		states[#states] = [
+			multiple(identity, 3)...,
+			multiple(identity, 5)...,
+			multiple(identity, 5)...,
+			multiple(matrix_scale(0.1*(9-i)), 25)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 3)...,
+			multiple(true, 5)...,
+			multiple(true, 5)...,
+			multiple(true, 25)...,
+		]
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		upgrade = upgrade,
+		health = 150,
+		store = true,
+		capacity = kg(100),
+		priority = 10,
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterProgress = true,
+		enable = true,
+		recipeTags = ["electrolysis"],
+		consumeElectricity = true,
+		energyConsume = energy,
+		energyDrain = 0+(0.03*energy),
+		collision = [0, 0, 0, 6, 3, 6],
+		iconD = 4,
+		iconV = 0.25,
+		status = true,
+		beacon = [0,1.2,0],
+		enemyTarget = true,
+		materials = materials,
+		pipeHints = true,
+		pipeInputConnections = [
+			point_rotate(pipeInput, up, 0.0),
+			point_rotate(pipeInput, up, 90.0),
+			point_rotate(pipeInput, up, 180.0),
+			point_rotate(pipeInput, up, 270.0),
+		],
+		pipeOutputConnections = [
+			point_rotate(pipeOutput, up, 0.0),
+			point_rotate(pipeOutput, up, 90.0),
+			point_rotate(pipeOutput, up, 180.0),
+			point_rotate(pipeOutput, up, 270.0),
+		],
+		states = states,
+		statesShow = states_show,
+		parts = parts,
+	})
+end
+
+electrolyser("electrolyser1", "Electrolyser", "$(toolbar.crafting)-b", nil, colors.crafter2, MW(1), {
+	"steel-sheet" = 4,
+	"copper-sheet" = 4,
+	"pipe" = 4,
+	"plastic-bar" = 4,
+	"steel-frame" = 4,
+	"mother-board" = 1,
+})
+

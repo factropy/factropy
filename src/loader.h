@@ -30,7 +30,7 @@ struct Loader {
 	uint64_t pause = 0;
 	miniset<uint> filter;
 	bool loading = false;
-	bool force = false;
+	bool ignore = false;
 
 	struct {
 		Point point = Point::Zero;
@@ -63,6 +63,5 @@ struct LoaderSettings {
 	Loader::Monitor monitor;
 	Signal::Condition condition;
 	bool loading;
-	bool force;
 	LoaderSettings(Loader& arm);
 };

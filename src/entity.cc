@@ -12,31 +12,40 @@
 
 void Entity::reset() {
 	for (Entity& en: all) en.destroy();
-	all.clear();
+	ensure(all.size() == 0);
 	grid.clear();
 	gridStores.clear();
-	gridStoresLogistic.clear();
-	gridGhosts.clear();
-	gridDamaged.clear();
+	gridStoresFuel.clear();
 	gridConveyors.clear();
 	gridPipes.clear();
 	gridPipesChange.clear();
 	gridEnemyTargets.clear();
 	gridCartWaypoints.clear();
+	gridFlightPaths.clear();
+	gridTubes.clear();
+	gridSlabs.clear();
+	gridRender.clear();
+	gridRenderTubes.clear();
+	gridRenderMonorails.clear();
+	gridGhosts.clear();
+	gridDamaged.clear();
+	gridStoresLogistic.clear();
 	enemyTargets.clear();
 	repairActions.clear();
 	removing.clear();
 	exploding.clear();
-	names.clear();
+	damaged.clear();
 	sequence = 0;
-	Burner::reset();
-	Generator::reset();
-	Ghost::reset();
+	names.clear();
 	Store::reset();
 	Crafter::reset();
 	Venter::reset();
 	Effector::reset();
 	Launcher::reset();
+	Drone::reset();
+	Missile::reset();
+	Explosion::reset();
+	Depot::reset();
 	Vehicle::reset();
 	Cart::reset();
 	CartStop::reset();
@@ -47,28 +56,28 @@ void Entity::reset() {
 	Loader::reset();
 	Balancer::reset();
 	Pipe::reset();
-	Drone::reset();
-	Missile::reset();
-	Explosion::reset();
-	Depot::reset();
 	Turret::reset();
-	Computer::reset();
-	Router::reset();
 	Pile::reset();
 	Explosive::reset();
 	Networker::reset();
+	Computer::reset();
+	Router::reset();
 	Zeppelin::reset();
 	FlightPad::reset();
 	FlightPath::reset();
 	FlightLogistic::reset();
-	Tube::reset();
 	Teleporter::reset();
 	Monorail::reset();
 	Monocar::reset();
+	Tube::reset();
+	Burner::reset();
+	Charger::reset();
+	Generator::reset();
 	Source::reset();
 	PowerPole::reset();
 	ElectricityProducer::reset();
 	ElectricityConsumer::reset();
+	ElectricityBuffer::reset();
 	ElectricityNetwork::reset();
 }
 
@@ -1507,6 +1516,12 @@ Entity& Entity::deconstruct(bool items) {
 				gstore.insert({iid,1});
 			}
 		}
+
+		if (spec->tube) {
+			for (auto thing: tube().stuff) {
+				gstore.insert({thing.iid,1});
+			}
+		}
 	}
 
 	// When a game is loaded, the old ghost contents may differ from an
@@ -1655,20 +1670,25 @@ Energy Entity::consume(Energy e) {
 	if (!isEnabled()) return c;
 
 	if (spec->consumeElectricity) {
-		c = ElectricityConsumer::get(id).consume(e);
+		c = electricityConsumer().consume(e);
 	}
+	else
 	if (spec->consumeFuel) {
 		c = burner().consume(e);
 	}
+	else
 	if (spec->consumeCharge) {
 		c = charger().consume(e);
 	}
+	else
 	if (spec->consumeThermalFluid) {
 		c = generator().consume(e);
 	}
+	else
 	if (spec->consumeMagic) {
 		c = e;
 	}
+
 	// chargers add a level of indirection to electricity
 	// consumption and manage consumption tracking directly
 	if (!spec->consumeCharge) {

@@ -123,117 +123,99 @@ void Arm::updateProximity() {
 }
 
 Stack Arm::transferStoreToStore(Store& dst, Store& src) {
-	Entity& de = Entity::get(dst.id);
-	Entity& se = Entity::get(src.id);
+	Entity& de = *dst.en; //Entity::get(dst.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
-	if (de.isGhost() || se.isGhost()) {
+	if (de.isGhost() || se.isGhost()) return {0,0};
+
+	// crafter to crafter, strict respect of levels
+	if (dst.strict() && src.strict()) {
+		if (dst.hint.requesting && src.hint.providing) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = src.countProviding(stack.iid);
+			if (!have) continue;
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			return {stack.iid,1};
+		}
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = src.overflowTo(dst, filter);
-		if (!stack.iid) {
-			stack = dst.supplyFrom(src, filter);
+	// container to crafter, strict respect of dst levels
+	if (dst.strict() && !src.strict()) {
+		if (dst.hint.requesting) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = stack.size;
+			if (!have) continue;
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			return {stack.iid,1};
 		}
-		if (!stack.iid) {
-			if (de.spec->priority >= se.spec->priority) {
-				stack = dst.forceSupplyFrom(src, filter);
-			}
-		}
-		if (!stack.iid && !src.fuel) {
-			for (Stack& ss: src.stacks) {
-				bool allow = filter.count(ss.iid) > 0;
-				bool dstOk = dst.isAccepting(ss.iid);
-				bool srcOk = de.spec->priority >= se.spec->priority || src.isProviding(ss.iid) || src.level(ss.iid) == NULL;
-				if (allow && dstOk && srcOk) {
-					stack = {ss.iid,1};
-					break;
-				}
-			}
-		}
-		return stack;
+		return {0,0};
 	}
 
-	Stack stack = src.overflowTo(dst);
-	if (!stack.iid) {
-		stack = dst.supplyFrom(src);
-	}
-	if (!stack.iid) {
-		if (de.spec->priority >= se.spec->priority || dst.fuel) {
-			stack = dst.forceSupplyFrom(src);
+	// crafter to container, strict respect of src levels
+	if (!dst.strict() && src.strict()) {
+		if (src.hint.providing) for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			uint have = src.countProviding(stack.iid);
+			if (!have) continue;
+			uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+			if (!space) continue;
+			return {stack.iid,1};
 		}
+		return {0,0};
 	}
-	if (!stack.iid && !src.fuel) {
-		for (Stack& ss: src.stacks) {
-			bool dstOk = dst.isAccepting(ss.iid);
-			bool srcOk = de.spec->priority >= se.spec->priority || src.isProviding(ss.iid) || src.level(ss.iid) == NULL;
-			if (dstOk && srcOk) {
-				stack = {ss.iid,1};
-				break;
-			}
-		}
+
+	// container to container, destination levels have priority
+	for (auto& stack: src.stacks) {
+		if (filter.size() && !filter.count(stack.iid)) continue;
+		uint have = src.countLessReserved(stack.iid);
+		if (!have) continue;
+		uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+		if (!space) continue;
+		return {stack.iid,1};
 	}
-	return stack;
+
+	return {0,0};
 }
 
 Stack Arm::transferStoreToBelt(Store& src) {
-	Entity& se = Entity::get(src.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
-	if (se.isGhost()) {
+	if (se.isGhost()) return {0,0};
+
+	if (src.strict()) {
+		for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			if (src.countProviding(stack.iid)) return {stack.iid,1};
+		}
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = {src.wouldRemoveAny(filter),1};
-		if (!stack.iid) {
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-		}
-		return stack;
+	for (auto& stack: src.stacks) {
+		if (filter.size() && !filter.count(stack.iid)) continue;
+		uint have = src.level(stack.iid) ? src.countProviding(stack.iid): src.countLessReserved(stack.iid);
+		if (have) return {stack.iid,1};
 	}
 
-	Stack stack = {src.wouldRemoveAny(),1};
-	if (!stack.iid) {
-		for (Stack& ss: src.stacks) {
-			if (src.isActiveProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		for (Stack& ss: src.stacks) {
-			if (src.isProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-	}
-	return stack;
+	return {0,0};
 }
 
 Stack Arm::transferBeltToStore(Store& dst, Stack stack) {
-	Entity& de = Entity::get(dst.id);
+	Entity& de = *dst.en; //Entity::get(dst.id);
 
-	if (de.isGhost()) {
+	if (de.isGhost()) return {0,0};
+
+	if (filter.size() && !filter.count(stack.iid)) return {0,0};
+
+	if (dst.strict()) {
+		if (dst.countAccepting(stack.iid)) return {stack.iid,1};
 		return {0,0};
 	}
 
-	if (filter.size() && filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-	}
-
-	if (filter.size() && !filter.count(stack.iid)) {
-		return {0,0};
-	}
-
-	if (dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
-	}
+	uint have = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+	if (have) return {stack.iid,1};
 
 	return {0,0};
 }

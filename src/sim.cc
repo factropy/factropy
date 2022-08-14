@@ -54,7 +54,7 @@ namespace Sim {
 	TimeSeries statsPowerPole;
 	TimeSeries statsCharger;
 
-	OpenSimplex* opensimplex;
+	OpenSimplex* opensimplex = nullptr;
 	std::mutex mutex;
 	uint64_t tick = 0;
 	int64_t seed = 0;
@@ -86,11 +86,6 @@ namespace Sim {
 		ICON_FA_BATTERY_FULL,
 	};
 
-	void reseed(int64_t s) {
-		seed = s;
-		opensimplex = OpenSimplexNew(s);
-	}
-
 	void reseedThread() {
 		if (!mt || seed != mySeed) {
 			delete mt;
@@ -114,6 +109,11 @@ namespace Sim {
 	std::mt19937* urng() {
 		reseedThread();
 		return mt;
+	}
+
+	void init(int64_t s) {
+		seed = s;
+		opensimplex = OpenSimplexNew(s);
 	}
 
 	void reset() {
@@ -169,6 +169,9 @@ namespace Sim {
 			fluid.production.clear();
 			fluid.consumption.clear();
 		}
+
+		OpenSimplexFree(opensimplex);
+		opensimplex = nullptr;
 	}
 
 	void locked(lockCallback cb) {

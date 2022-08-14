@@ -1,0 +1,19 @@
+
+add_recipe({
+	name = "aluminium-electrolysis",
+	title = "Aluminium Electrolysis",
+	energy = MJ(3),
+	tags = tags.electrolysis,
+	input = { "alumina-powder" = 5, "hydrofluoric-acid" = 5 },
+	output = { "aluminium-ingot" = 1 },
+})
+
+add_recipe({
+	name = "ammonia-electrolysis",
+	title = "Ammonia Electrolysis",
+	energy = MJ(3),
+	tags = tags.electrolysis,
+	input = { "water" = L(500), "stone-crushed" = 1 },
+	output = { "ammonia" = L(100) },
+})
+

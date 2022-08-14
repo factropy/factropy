@@ -1,0 +1,21 @@
+
+add_recipe({
+	name = "solid-fuel",
+	title = "Solid Fuel (Fuel Oil)",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "fuel-oil" = L(20) },
+	output = { "solid-fuel" = 1 },
+	fluid = "fuel-oil",
+})
+
+add_recipe({
+	name = "solid-fuel-naphtha",
+	title = "Solid Fuel (Naphtha)",
+	energy = kJ(600),
+	tags = tags.chemistry,
+	input = { "naphtha" = L(40) },
+	output = { "solid-fuel" = 1 },
+	fluid = "naphtha",
+})
+

@@ -5,6 +5,8 @@
 void Fluid::reset() {
 	names.clear();
 	all.clear();
+	drilling.clear();
+	sequence = 0;
 }
 
 uint Fluid::next() {
@@ -43,11 +45,11 @@ Fluid* Fluid::get(uint id) {
 bool Fluid::manufacturable() {
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
-		for (auto [fid,_]: recipe->outputFluids) {
-			if (fid == id) {
-				return true;
-			}
-		}
+		if (recipe->drill == id) return true;
+		if (recipe->outputFluids.count(id)) return true;
+	}
+	for (auto& [_,spec]: Spec::all) {
+		if (spec->licensed && spec->source && spec->sourceFluid == this) return true;
 	}
 	return false;
 }

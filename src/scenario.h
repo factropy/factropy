@@ -50,6 +50,7 @@ struct ScenarioBase : Scenario {
 	RelaMod* rela = nullptr;
 	std::vector<Spec*> rocks;
 	ScenarioBase();
+	~ScenarioBase();
 	void items();
 	void fluids();
 	void recipes();
@@ -59,6 +60,7 @@ struct ScenarioBase : Scenario {
 	void generate();
 	void create();
 	void init();
+	void run(const std::vector<int>& mset);
 	void load();
 	bool attack();
 	float attackFactor();

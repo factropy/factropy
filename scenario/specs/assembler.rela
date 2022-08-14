@@ -1,0 +1,261 @@
+function assembler(name, title, toolbar, upgrade, color, energy, materials)
+	pipeInput = [3.0,-1.0,1.5]
+	pipeOutput = [3.0,-1.0,-1.5]
+
+	states = []
+	state0 = identity
+
+	for i in 360
+		state1 = matrix_rotate(up,-i*5)
+
+		piston1 = state0
+		piston2 = state0
+		piston3 = state0
+
+		mod = 0.0 + (i%60)
+
+		if i >= 0 && i < 60
+			piston1 = matrix_translate(0,mod*-0.01,0)
+		end
+
+		if i >= 60 && i < 120
+			piston1 = matrix_translate(0,-0.60+mod*0.01,0)
+		end
+
+		if i >= 120 && i < 180
+			piston2 = matrix_translate(0,mod*-0.01,0)
+		end
+
+		if i >= 180 && i < 240
+			piston2 = matrix_translate(0,-0.60+mod*0.01,0)
+		end
+
+		if i >= 240 && i < 300
+			piston3 = matrix_translate(0,mod*-0.01,0)
+		end
+
+		if i >= 300 && i < 360
+			piston3 = matrix_translate(0,-0.60+mod*0.01,0)
+		end
+
+		states[#states] = [
+			state0,
+			state1,
+			state1,
+			state1,
+			state1,
+			piston1,
+			piston2,
+			piston3,
+			matrix_rotate(up, 1.0 * i),
+			matrix_rotate(up, -0.8 * i),
+			matrix_rotate(up, 0.6 * i),
+			matrix_rotate(up, -0.4 * i),
+			matrix_rotate(up, 0.2 * i),
+		]
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		upgrade = upgrade,
+		health = 150,
+		store = true,
+		capacity = kg(100),
+		priority = 10,
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterState = true,
+		enable = true,
+		recipeTags = ["crafting", "crafting-with-fluid"],
+		consumeElectricity = true,
+		energyConsume = energy,
+		energyDrain = 0+(0.03*energy),
+		collision = [0, 0, 0, 6, 3, 6],
+		iconD = 4,
+		iconV = 0.25,
+		status = true,
+		beacon = [0,1,0],
+		enemyTarget = true,
+		materials = materials,
+		pipeHints = true,
+		pipeInputConnections = [
+			point_rotate(pipeInput, up, 0.0),
+			point_rotate(pipeInput, up, 90.0),
+			point_rotate(pipeInput, up, 180.0),
+			point_rotate(pipeInput, up, 270.0),
+		],
+		pipeOutputConnections = [
+			point_rotate(pipeOutput, up, 0.0),
+			point_rotate(pipeOutput, up, 90.0),
+			point_rotate(pipeOutput, up, 180.0),
+			point_rotate(pipeOutput, up, 270.0),
+		],
+		states = states,
+		parts = [
+			{
+				color = color,
+				gloss = gloss.metallic,
+				filter = filter.powdercoat,
+				lods = [
+					["models/assembler-chassis-hd.stl", high, shadow],
+					["models/assembler-chassis-ld.stl", medium, shadow],
+					["models/assembler-chassis-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				spinner = true,
+				rotate = [east, 70.0],
+				translate = [0,0.5,2.5],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				spinner = true,
+				rotate = [west, 70.0],
+				translate = [0,0.5,-2.5],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				spinner = true,
+				rotate = [north, 70.0],
+				translate = [2.5,0.5,0],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				spinner = true,
+				rotate = [south, 70.0],
+				translate = [-2.5,0.5,0],
+				lods = [
+					["models/fan-hd.stl", high, shadow],
+					["models/fan-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				lods = [
+					["models/assembler-piston-hd.stl", high, shadow],
+					["models/assembler-piston-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				translate = [0,0,1.2],
+				lods = [
+					["models/assembler-piston-hd.stl", high, shadow],
+					["models/assembler-piston-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0x666666FF,
+				gloss = gloss.metallic,
+				translate = [0,0,-1.2],
+				lods = [
+					["models/assembler-piston-hd.stl", high, shadow],
+					["models/assembler-piston-ld.stl", medium, shadow],
+				],
+			},
+			{
+				color = 0xcaccceFF,
+				gloss = gloss.metallic,
+				scale = [1.5,1.8,1.5],
+				rotate = [east, 90.0],
+				translate = [1,1,-1.2],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, shadow]
+				],
+			},
+			{
+				color = 0xcaccceFF,
+				gloss = gloss.metallic,
+				scale = [1.1,1.8,1.1],
+				rotate = [east, 90.0],
+				translate = [1,1,-0.6],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, shadow]
+				],
+			},
+			{
+				color = 0xcaccceFF,
+				gloss = gloss.metallic,
+				scale = [1.3,1.8,1.3],
+				rotate = [east, 90.0],
+				translate = [1,1,0.0],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, shadow]
+				],
+			},
+			{
+				color = 0xcaccceFF,
+				gloss = gloss.metallic,
+				scale = [1.2,1.8,1.2],
+				rotate = [east, 90.0],
+				translate = [1,1,0.6],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, shadow]
+				],
+			},
+			{
+				color = 0xcaccceFF,
+				gloss = gloss.metallic,
+				scale = [1.4,1.8,1.4],
+				rotate = [east, 90.0],
+				translate = [1,1,1.2],
+				lods = [
+					["models/gear-hd.stl", high, shadow],
+					["models/gear-ld.stl", medium, shadow]
+				],
+			},
+		],
+	})
+end
+
+assembler("assembler", "Assembler", "$(toolbar.crafting)-a", "assembler2", colors.crafter, kW(300), {
+	"steel-sheet" = 2,
+	"copper-sheet" = 2,
+	"pipe" = 2,
+	"gear-wheel" = 2,
+	"steel-frame" = 5,
+	"circuit-board" = 3,
+})
+
+assembler("assembler2", "Manufacturer", "$(toolbar.crafting)-aa", nil, 0x008080FF, kW(900), {
+	"steel-sheet" = 2,
+	"copper-sheet" = 2,
+	"pipe" = 2,
+	"gear-wheel" = 2,
+	"steel-frame" = 5,
+	"circuit-board" = 3,
+	"aluminium-frame" = 3,
+	"battery" = 3,
+	"filter" = 3,
+	"plastic-bar" = 5,
+	"mother-board" = 1,
+})
+

@@ -1,0 +1,19 @@
+
+add_item({
+	name = "pipe",
+	title = "Pipe",
+	parts = [{
+		color = 0xffa500ff,
+		scale = 0.7,
+		translate = [0,0.32,0],
+		lods = [
+			["models/pipe-item-hd.stl", high, shadow],
+			["models/pipe-item-ld.stl", medium, noshadow],
+		],
+	}],
+	armV = 0.05,
+	droneV = -0.18,
+	tubeV = -0.05,
+	mass = kg(0.5),
+})
+

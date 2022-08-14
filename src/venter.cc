@@ -39,14 +39,15 @@ void Venter::update() {
 
 	auto& pipe = en->pipe();
 
-	if (!pipe.network || !pipe.network->fid || Liquid(pipe.network->count(pipe.network->fid)) < en->spec->venterRate) {
+	float speed = en->consumeRate(en->spec->energyConsume * Effector::speed(id));
+	auto count = (uint)std::max(1.0f, (float)en->spec->venterRate.value * speed);
+
+	if (!pipe.network || !pipe.network->fid || Liquid(pipe.network->count(pipe.network->fid)) < Mass(count) || speed < 1.0f) {
 		en->state = 0;
 		return;
 	}
 
-	en->consumeRate(en->spec->energyConsume * Effector::speed(id));
-
 	if (++en->state >= en->spec->states.size()) en->state = 0;
 
-	pipe.network->extract({pipe.network->fid,(uint)en->spec->venterRate.value});
+	pipe.network->extract({pipe.network->fid,count});
 }

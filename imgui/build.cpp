@@ -52,7 +52,7 @@ namespace ImGui {
 
 	void TextCentered(std::string text) {
 		auto regionWidth = GetContentRegionAvail().x;
-		auto textWidth   = CalcTextSize(text.c_str()).x;
+		auto textWidth   = CalcTextSize(text.c_str(), nullptr, true).x;
 		SetCursorPosX(GetCursorPosX() + ((regionWidth - textWidth) * 0.5f));
 		TextUnformatted(text.c_str());
 	}
@@ -67,7 +67,7 @@ namespace ImGui {
 	}
 
 	void PrintRight(std::string s, bool spacing) {
-		ImVec2 size = CalcTextSize(s.c_str());
+		ImVec2 size = CalcTextSize(s.c_str(), nullptr, true);
 		ImVec2 space = GetContentRegionAvail();
 		SetCursorPosX(GetCursorPosX() + space.x - size.x - (spacing ? GetStyle().ItemSpacing.x: 0));
 		TextUnformatted(s.c_str());
@@ -81,8 +81,8 @@ namespace ImGui {
 		SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + GetStyle().ItemSpacing.y));
 	}
 
-	void panel(std::string s, ImU32 bg, ImU32 fg = 0) {
-		ImVec2 size = CalcTextSize(s.c_str());
+	void panel(std::string s, bool spacing, ImU32 bg, ImU32 fg = 0) {
+		ImVec2 size = CalcTextSize(s.c_str(), nullptr, true);
 		ImVec2 space = GetContentRegionAvail();
 
 		auto top = GetCursorPos();
@@ -102,27 +102,27 @@ namespace ImGui {
 		if (fg) PopStyleColor(1);
 
 		SetCursorPos(ImVec2(top.x, top.y + size.y + GetStyle().FramePadding.x*2));
-		SpacingV();
+		if (spacing) SpacingV();
 	}
 
-	void Header(std::string s) {
-		panel(s, GetColorU32(ImGuiCol_TitleBgActive));
+	void Header(std::string s, bool spacing) {
+		panel(s, spacing, GetColorU32(ImGuiCol_TitleBgActive));
 	}
 
-	void Section(std::string s) {
-		panel(s, ImColorSRGB(0x333333ff));
+	void Section(std::string s, bool spacing) {
+		panel(s, spacing, ImColorSRGB(0x333333ff));
 	}
 
-	void Alert(std::string s) {
-		panel(s, ImColorSRGB(0xcc0000ff), ImColorSRGB(0xffffffff));
+	void Alert(std::string s, bool spacing) {
+		panel(s, spacing, ImColorSRGB(0xcc0000ff), ImColorSRGB(0xffffffff));
 	}
 
-	void Notice(std::string s) {
-		panel(s, ImColorSRGB(0x006600ff), ImColorSRGB(0xffffffff));
+	void Notice(std::string s, bool spacing) {
+		panel(s, spacing, ImColorSRGB(0x006600ff), ImColorSRGB(0xffffffff));
 	}
 
-	void Warning(std::string s) {
-		panel(s, ImColorSRGB(0xdd8800ff), ImColorSRGB(0xffffffff));
+	void Warning(std::string s, bool spacing) {
+		panel(s, spacing, ImColorSRGB(0xdd8800ff), ImColorSRGB(0xffffffff));
 	}
 
 	void Title(std::string s) {
@@ -193,7 +193,7 @@ namespace ImGui {
 
 	void TrySameLine(const char* label, int margin) {
 		SameLine();
-		ImVec2 size = CalcTextSize(label);
+		ImVec2 size = CalcTextSize(label, nullptr, true);
 		ImVec2 space = GetContentRegionAvail();
 		if (space.x < size.x + margin) NewLine();
 	}
@@ -202,18 +202,26 @@ namespace ImGui {
 		return Button(label, ImVec2(-1,0));
 	}
 
+	bool ButtonStrip(int i, const char* label) {
+		if (i) TrySameLine(label, GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2);
+		return Button(label);
+	}
+
 	bool SmallButtonInline(const char* label) {
 		TrySameLine(label, GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2);
 		return SmallButton(label);
 	}
 
-	bool SmallButtonInlineRight(const char* label) {
+	bool SmallButtonInlineRight(const char* label, bool spacing) {
+		auto pos = GetCursorPos();
 		TrySameLine(label, GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2);
 
-		ImVec2 size = CalcTextSize(label);
+		ImVec2 size = CalcTextSize(label, nullptr, true);
 		ImVec2 space = GetContentRegionAvail();
-		SetCursorPosX(GetCursorPosX() + space.x - size.x - GetStyle().ItemSpacing.x - GetStyle().FramePadding.x*2);
-		return SmallButton(label);
+		SetCursorPosX(GetCursorPosX() + space.x - size.x - (spacing ? GetStyle().ItemSpacing.x: 0) - GetStyle().FramePadding.x*2);
+		auto press = SmallButton(label);
+		SetCursorPos(pos);
+		return press;
 	}
 
 	void SmallBar(float n) {

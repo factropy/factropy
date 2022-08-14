@@ -12,12 +12,13 @@ public:
 
 	struct {
 		int common = 0;
-		int items = 0;
-		int recipes = 0;
-		int specs = 0;
+		int init = 0;
 		int goals = 0;
 		int messages = 0;
 		int create = 0;
+		std::vector<int> items;
+		std::vector<int> recipes;
+		std::vector<int> specs;
 	} modules;
 
 	typedef void (RelaMod::*callback)(void);
@@ -46,6 +47,8 @@ public:
 		func liquid_ML          = { .name = "ML",                 .cb = &RelaMod::liquid_ML          };
 		func mass_kg            = { .name = "kg",                 .cb = &RelaMod::mass_kg            };
 		func add_item           = { .name = "add_item",           .cb = &RelaMod::add_item           };
+		func add_item_category  = { .name = "add_item_category",  .cb = &RelaMod::add_item_category  };
+		func add_item_group     = { .name = "add_item_group",     .cb = &RelaMod::add_item_group     };
 		func add_recipe         = { .name = "add_recipe",         .cb = &RelaMod::add_recipe         };
 		func add_spec           = { .name = "add_spec",           .cb = &RelaMod::add_spec           };
 		func add_goal           = { .name = "add_goal",           .cb = &RelaMod::add_goal           };
@@ -88,20 +91,37 @@ public:
 		};
 
 		auto common   = slurp("scenario/common.rela");
-		auto items    = slurp("scenario/items.rela");
-		auto recipes  = slurp("scenario/recipes.rela");
-		auto specs    = slurp("scenario/specs.rela");
+		auto init     = slurp("scenario/init.rela");
 		auto goals    = slurp("scenario/goals.rela");
 		auto messages = slurp("scenario/messages.rela");
 		auto create   = slurp("scenario/create.rela");
 
 		modules.common   = module(common.c_str());
-		modules.items    = module(items.c_str());
-		modules.recipes  = module(recipes.c_str());
-		modules.specs    = module(specs.c_str());
+		modules.init     = module(init.c_str());
+		modules.create   = module(create.c_str());
 		modules.goals    = module(goals.c_str());
 		modules.messages = module(messages.c_str());
-		modules.create   = module(create.c_str());
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/items/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.items.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/recipes/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.recipes.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
+
+		for (const auto& file: std::filesystem::directory_iterator("scenario/specs/")) {
+			if (file.path().extension() == ".rela") {
+				auto src = slurp(file.path());
+				modules.specs.push_back(module(fmtc("function()\n%s\nend()\n", src)));
+			}
+		}
 
 		funcs.sentinelA.id = 0;
 		funcs.sentinelB.id = &funcs.sentinelB - &funcs.sentinelA;
@@ -351,6 +371,31 @@ public:
 		return part;
 	}
 
+	void add_item_category() {
+		auto data = stack_pop();
+
+		auto name = to_string(map_get_named(data, "name"));
+		ensuref(!Item::categories.count(name), "duplicate item category '%s'", name);
+
+		auto title = to_string(map_get_named(data, "title"));
+		auto order = to_string(map_get_named(data, "order"));
+
+		Item::categories[name] = {title, order};
+	}
+
+	void add_item_group() {
+		auto data = stack_pop();
+
+		auto category = to_string(map_get_named(data, "category"));
+		ensuref(Item::categories.count(category), "unknown item category '%s'", category);
+
+		auto name = to_string(map_get_named(data, "name"));
+		auto order = to_string(map_get_named(data, "order"));
+		ensuref(!Item::categories[category].groups.count(name), "duplicate item group '%s' in category '%s'", name, category);
+
+		Item::categories[category].groups[name] = {order};
+	}
+
 	void add_item() {
 		auto data = stack_pop();
 
@@ -367,6 +412,25 @@ public:
 
 		auto item = Item::create(Item::next(), strField("name"));
 		item->title = strField("title");
+
+		auto category = field("category");
+		if (is_string(category)) {
+			auto name = to_string(category);
+			ensuref(Item::categories.count(name), "unknown item category '%s'", name);
+			item->category = &Item::categories[name];
+		}
+
+		auto group = field("group");
+		if (is_string(group)) {
+			auto name = to_string(group);
+			ensuref(item->category && item->category->groups.count(name), "unknown item group '%s'", name);
+			item->group = &item->category->groups[name];
+		}
+
+		auto order = field("order");
+		if (is_string(order)) {
+			item->order = to_string(order);
+		}
 
 		auto fuel = field("fuel");
 		if (is_vector(fuel) && item_count(fuel) == 2) {
@@ -414,6 +478,11 @@ public:
 		auto raw = field("raw");
 		if (is_bool(raw)) {
 			item->raw = to_bool(raw);
+		}
+
+		auto free = field("free");
+		if (is_bool(free)) {
+			item->free = to_bool(free);
 		}
 
 		auto show = field("show");
@@ -654,11 +723,6 @@ public:
 			spec->forceDelete = to_bool(forceDelete);
 		}
 
-		auto forceDeleteStore = field("forceDeleteStore");
-		if (is_bool(forceDeleteStore)) {
-			spec->forceDeleteStore = to_bool(forceDeleteStore);
-		}
-
 		auto slab = field("slab");
 		if (is_bool(slab)) {
 			spec->slab = to_bool(slab);
@@ -863,6 +927,11 @@ public:
 		auto beacon = field("beacon");
 		if (is_vector(beacon)) {
 			spec->beacon = to_point(beacon);
+		}
+
+		auto icon = field("icon");
+		if (is_vector(icon)) {
+			spec->icon = to_point(icon);
 		}
 
 		auto effector = field("effector");
@@ -1119,16 +1188,6 @@ public:
 				spec->storeSetLower = to_bool(storeSetLower);
 			}
 
-			auto storeAnything = field("storeAnything");
-			if (is_bool(storeAnything)) {
-				spec->storeAnything = to_bool(storeAnything);
-			}
-
-			auto storeAnythingDefault = field("storeAnythingDefault");
-			if (is_bool(storeAnythingDefault)) {
-				spec->storeAnythingDefault = to_bool(storeAnythingDefault);
-			}
-
 			auto storeUpgradePreserve = field("storeUpgradePreserve");
 			if (is_bool(storeUpgradePreserve)) {
 				spec->storeUpgradePreserve = to_bool(storeUpgradePreserve);
@@ -1211,6 +1270,11 @@ public:
 		auto materialsMultiplyHill = field("materialsMultiplyHill");
 		if (is_number(materialsMultiplyHill)) {
 			spec->materialsMultiplyHill = to_number(materialsMultiplyHill);
+		}
+
+		auto placeOnWaterSurface = field("placeOnWaterSurface");
+		if (is_bool(placeOnWaterSurface)) {
+			spec->placeOnWaterSurface = to_bool(placeOnWaterSurface);
 		}
 
 		auto turret = field("turret");
@@ -2009,6 +2073,13 @@ ScenarioBase::ScenarioBase() {
 	rela = new RelaMod();
 }
 
+ScenarioBase::~ScenarioBase() {
+	delete rela;
+	// meshes handled by Mesh::reset()
+	// specs handled by Spec::reset()
+	// parts handled by Part::reset()
+}
+
 Mesh* ScenarioBase::mesh(const char* name) {
 	ensuref(meshes.count(name), "unknown mesh: %s", name);
 	return meshes[name];
@@ -2096,6 +2167,12 @@ void ScenarioBase::init() {
 	world.scenario.size = std::max(Config::mode.world, 4096);
 }
 
+void ScenarioBase::run(const std::vector<int>& mset) {
+	std::vector<int> rset = {rela->modules.common};
+	rset.insert(rset.end(), mset.begin(), mset.end());
+	rela->run(rset);
+}
+
 void ScenarioBase::create() {
 	generate();
 	rela->run({rela->modules.common, rela->modules.create});
@@ -2123,7 +2200,8 @@ void ScenarioBase::items() {
 	meshes["oreLD"] = new MeshSphere(0.6f);
 	meshes["unitCube"] = scene.unit.mesh.cube;
 	meshes["unitSphere"] = scene.unit.mesh.sphere;
-	rela->run({rela->modules.common, rela->modules.items});
+	rela->run({rela->modules.common, rela->modules.init});
+	run(rela->modules.items);
 }
 
 void ScenarioBase::fluids() {
@@ -2168,13 +2246,9 @@ void ScenarioBase::fluids() {
 	fluid->title = "Hydrofluoric Acid";
 	fluid->color = 0x00ffffff;
 
-	fluid = Fluid::create(Fluid::next(), "hydrogen");
-	fluid->title = "Liquid Hydrogen";
-	fluid->color = 0xee82eeff;
-
-	fluid = Fluid::create(Fluid::next(), "oxygen");
-	fluid->title = "Liquid Oxygen";
-	fluid->color = 0x87ceebff;
+	fluid = Fluid::create(Fluid::next(), "ammonia");
+	fluid->title = "Ammonia";
+	fluid->color = 0xccccffff;
 
 	fluid = Fluid::create(Fluid::next(), "hydrazine");
 	fluid->title = "Hydrazine";
@@ -2190,11 +2264,11 @@ void ScenarioBase::messages() {
 }
 
 void ScenarioBase::recipes() {
-	rela->run({rela->modules.common, rela->modules.recipes});
+	run(rela->modules.recipes);
 }
 
 void ScenarioBase::specifications() {
-	rela->run({rela->modules.common, rela->modules.specs});
+	run(rela->modules.specs);
 
 	for (auto [spec,upgrade]: specUpgrades) {
 		spec->upgrade = Spec::byName(upgrade);
@@ -2254,13 +2328,6 @@ void ScenarioBase::specifications() {
 
 	Spec::byName("container-provider")->upgrade = Spec::byName("container-buffer");
 
-	meshes["assemblerPiston"] = new Mesh("models/assembler-piston-hd.stl");
-	meshes["assemblerPistonLD"] = new Mesh("models/assembler-piston-ld.stl");
-
-	meshes["assemblerChassis"] = new Mesh("models/assembler-chassis-hd.stl");
-	meshes["assemblerChassisLD"] = new Mesh("models/assembler-chassis-ld.stl");
-	meshes["assemblerChassisVLD"] = new Mesh("models/assembler-chassis-vld.stl");
-
 	meshes["windTurbineTower"] = new Mesh("models/wind-turbine-tower-hd.stl");
 	meshes["windTurbineTowerLD"] = new Mesh("models/wind-turbine-tower-ld.stl");
 	meshes["windTurbineTowerVLD"] = new Mesh("models/wind-turbine-tower-vld.stl");
@@ -2279,7 +2346,7 @@ void ScenarioBase::specifications() {
 	spec->placeOnHillPlatform = 3.0f;
 	spec->windTurbine = true;
 	spec->generateElectricity = true;
-	spec->energyGenerate = Energy::kW(20);
+	spec->energyGenerate = Energy::kW(10);
 	spec->health = 150;
 	spec->enemyTarget = true;
 
@@ -2339,31 +2406,6 @@ void ScenarioBase::specifications() {
 	meshes["pipeGround"] = new Mesh("models/pipe-ground-hd.stl");
 	meshes["pipeGroundLD"] = new Mesh("models/pipe-ground-ld.stl");
 	meshes["pipeGroundVLD"] = new Mesh("models/pipe-ground-vld.stl");
-
-//	spec = new Spec("pipe-underground");
-//	spec->title = "Pipe (Underground)";
-//	spec->pipe = true;
-//	spec->pipeCapacity = Liquid::l(500);
-//	spec->pipeUnderground = true;
-//	spec->pipeUndergroundRange = 10.0f;
-//	spec->collision = {0, 0, 0, 1, 1, 1};
-//	spec->selection = spec->collision;
-//	spec->rotateGhost = true;
-//	spec->rotateExtant = true;
-//	spec->pipeConnections = {Point::North*0.5f};
-//	spec->health = 150;
-//
-//	spec->parts = {
-//		(new Part(0xffa500ff))
-//			->lod(mesh("pipeGround"), Part::HD, Part::SHADOW)
-//			->lod(mesh("pipeGroundLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("pipeGroundVLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(-90.0f))),
-//	};
-//
-//	spec->materials = {
-//		{ Item::byName("pipe")->id, 5 },
-//	};
 
 	auto rockVLD = new Mesh("models/rock-vld.stl");
 
@@ -2435,8 +2477,6 @@ void ScenarioBase::specifications() {
 	spec->droneSpeed = 0.2f;
 	spec->droneCargoSize = 5;
 	spec->collideBuild = false;
-
-//	Spec::byName("crawler")->depotDroneSpec = Spec::byName("drone");
 
 	meshes["armBase"] = new Mesh("models/arm-base-hd.stl");
 	meshes["armBaseLD"] = new Mesh("models/arm-base-ld.stl");
@@ -2600,6 +2640,7 @@ void ScenarioBase::specifications() {
 	spec->networkWifi = {0,-0.8,0};
 	spec->status = true;
 	spec->beacon = {0,-0.8,0};
+	spec->build = false;
 	spec->parts = {
 		(new Part(0xFF4500ff))
 			->lod(mesh("armBase"), Part::HD, Part::SHADOW)
@@ -2767,8 +2808,11 @@ void ScenarioBase::specifications() {
 	spec->recipeTags = {"reacting"};
 	spec->crafterRecipe = Recipe::byName("reacting");
 	spec->materials = {
-		{ Item::byName("brick")->id, 5 },
-		{ Item::byName("copper-sheet")->id, 3 },
+		{ Item::byName("brick")->id, 50 },
+		{ Item::byName("steel-frame")->id, 50 },
+		{ Item::byName("filter")->id, 50 },
+		{ Item::byName("electric-motor")->id, 50 },
+		{ Item::byName("computer")->id, 5 },
 	};
 
 	meshes["bwrBase"] = new Mesh("models/bwr-base-hd.stl");
@@ -3046,44 +3090,44 @@ void ScenarioBase::specifications() {
 	meshes["computerRack"] = new Mesh("models/computer-rack-hd.stl");
 	meshes["computerRackLD"] = new Mesh("models/computer-rack-ld.stl");
 
-	spec = new Spec("computer");
-	spec->title = "Computer";
-	spec->health = 150;
-	spec->rotateGhost = true;
-	spec->rotateExtant = true;
-	spec->computer = true;
-	spec->computerDataStackSize = 8;
-	spec->computerReturnStackSize = 8;
-	spec->computerRAMSize = 32;
-	spec->computerROMSize = 32;
-	spec->computerCyclesPerTick = 60;
-	spec->consumeElectricity = true;
-	spec->energyDrain = Energy::W(100);
-	spec->collision = {0, 0, 0, 1, 2, 1};
-	spec->selection = spec->collision;
-	spec->iconD = 1.5;
-	spec->iconV = 0;
-	spec->enable = true;
-	spec->networker = true;
-	spec->networkInterfaces = 2;
-	spec->networkWifi = {0,1,0};
-	spec->status = true;
-	spec->beacon = {0,1,0};
-	spec->parts = {
-		(new Part(0x888888ff))
-			->lod(mesh("computerRack"), Part::HD, Part::SHADOW)
-			->lod(mesh("computerRackLD"), Part::MD, Part::SHADOW)
-			->lod(mesh("computerRackLD"), Part::VLD, Part::NOSHADOW)
-			->transform(Mat4::translate(0,-1,0)),
-	};
-	spec->materials = {
-		{ Item::byName("steel-frame")->id, 1 },
-		{ Item::byName("copper-wire")->id, 10 },
-		{ Item::byName("solder")->id, 3 },
-		{ Item::byName("circuit-board")->id, 10 },
-		{ Item::byName("mother-board")->id, 1 },
-		{ Item::byName("battery")->id, 1 },
-	};
+//	spec = new Spec("computer");
+//	spec->title = "Computer";
+//	spec->health = 150;
+//	spec->rotateGhost = true;
+//	spec->rotateExtant = true;
+//	spec->computer = true;
+//	spec->computerDataStackSize = 8;
+//	spec->computerReturnStackSize = 8;
+//	spec->computerRAMSize = 32;
+//	spec->computerROMSize = 32;
+//	spec->computerCyclesPerTick = 60;
+//	spec->consumeElectricity = true;
+//	spec->energyDrain = Energy::W(100);
+//	spec->collision = {0, 0, 0, 1, 2, 1};
+//	spec->selection = spec->collision;
+//	spec->iconD = 1.5;
+//	spec->iconV = 0;
+//	spec->enable = true;
+//	spec->networker = true;
+//	spec->networkInterfaces = 2;
+//	spec->networkWifi = {0,1,0};
+//	spec->status = true;
+//	spec->beacon = {0,1,0};
+//	spec->parts = {
+//		(new Part(0x888888ff))
+//			->lod(mesh("computerRack"), Part::HD, Part::SHADOW)
+//			->lod(mesh("computerRackLD"), Part::MD, Part::SHADOW)
+//			->lod(mesh("computerRackLD"), Part::VLD, Part::NOSHADOW)
+//			->transform(Mat4::translate(0,-1,0)),
+//	};
+//	spec->materials = {
+//		{ Item::byName("steel-frame")->id, 1 },
+//		{ Item::byName("copper-wire")->id, 10 },
+//		{ Item::byName("solder")->id, 3 },
+//		{ Item::byName("circuit-board")->id, 10 },
+//		{ Item::byName("mother-board")->id, 1 },
+//		{ Item::byName("battery")->id, 1 },
+//	};
 
 	meshes["oilRigBase"] = new Mesh("models/oil-rig-base-hd.stl");
 	meshes["oilRigBaseLD"] = new Mesh("models/oil-rig-base-ld.stl");
@@ -3470,7 +3514,7 @@ void ScenarioBase::specifications() {
 	};
 
 	spec->materials = {
-		{ Item::byName("mother-board")->id, 3 },
+		{ Item::byName("computer")->id, 3 },
 		{ Item::byName("circuit-board")->id, 10 },
 		{ Item::byName("steel-sheet")->id, 10 },
 		{ Item::byName("steel-frame")->id, 5 },
@@ -3541,192 +3585,6 @@ void ScenarioBase::specifications() {
 		}
 	}
 
-	spec = new Spec("starship");
-	spec->title = "Starship";
-	spec->starship = true;
-	spec->health = 150;
-	spec->store = true;
-	spec->storeSetUpper = true;
-	spec->storeAnything = true;
-	spec->tipStorage = true;
-	spec->capacity = Mass::kg(10000);
-	spec->rotateGhost = true;
-	spec->rotateExtant = true;
-	spec->launcher = true;
-	spec->launcherFuel = {
-		{Fluid::byName("hydrogen")->id,10000},
-		{Fluid::byName("oxygen")->id,5000},
-	};
-	spec->enable = true;
-	spec->collision = {0, 0, 0, 20, 45, 20};
-	spec->selection = spec->collision;
-	spec->iconD = 15;
-	spec->iconV = 18;
-	spec->enemyTarget = true;
-	spec->pipeHints = true;
-	spec->pipeInputConnections = {
-		Point(10.0f, -22.0f, 6.5f).transform(Mat4::rotateY(glm::radians(0.0f))),
-		Point(10.0f, -22.0f, -6.5f).transform(Mat4::rotateY(glm::radians(0.0f))),
-		Point(10.0f, -22.0f, 6.5f).transform(Mat4::rotateY(glm::radians(180.0f))),
-		Point(10.0f, -22.0f, -6.5f).transform(Mat4::rotateY(glm::radians(180.0f))),
-	};
-
-	float starshipGloss = 4;
-
-	spec->networker = true;
-	spec->networkInterfaces = 1;
-	spec->networkWifi = {9.5,-19.5,9.5};
-
-	meshes["starshipNoseFin"] = new Mesh("models/starship-nosefin-hd.stl");
-	meshes["starshipNoseFinLD"] = new Mesh("models/starship-nosefin-ld.stl");
-	meshes["starshipTailFin"] = new Mesh("models/starship-tailfin-hd.stl");
-	meshes["starshipTailFinLD"] = new Mesh("models/starship-tailfin-ld.stl");
-	meshes["starshipRaptor"] = new Mesh("models/starship-raptor-hd.stl");
-	meshes["starshipRaptorLD"] = new Mesh("models/starship-raptor-ld.stl");
-	meshes["starshipPlume"] = new Mesh("models/starship-plume-hd.stl");
-	meshes["starshipPlumeLD"] = new Mesh("models/starship-plume-ld.stl");
-	meshes["starshipLaunchpad"] = new Mesh("models/starship-launchpad-hd.stl");
-	meshes["starshipLaunchpadLD"] = new Mesh("models/starship-launchpad-ld.stl");
-	meshes["starshipFrame"] = new Mesh("models/starship-frame-hd.stl");
-	meshes["starshipFrameLD"] = new Mesh("models/starship-frame-ld.stl");
-	meshes["starshipBody"] = new Mesh("models/starship-body-hd.stl");
-	meshes["starshipBodyLD"] = new Mesh("models/starship-body-ld.stl");
-	meshes["starshipNose"] = new Mesh("models/starship-nose-hd.stl");
-	meshes["starshipNoseLD"] = new Mesh("models/starship-nose-ld.stl");
-
-	auto starshipNoseFin = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipNoseFin"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipNoseFinLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipTailFin = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipTailFin"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipTailFinLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipRaptor = (new Part(0x111111ff))->gloss(starshipGloss)
-		->lod(mesh("starshipRaptor"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipRaptorLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipPlumeA = (new Part(0xFFA500ff))->translucent()
-		->lod(mesh("starshipPlume"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
-
-	auto starshipPlumeB = (new Part(0xffff00ff))->translucent()
-		->lod(mesh("starshipPlume"), Part::MD, Part::SHADOW)
-		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
-
-	spec->parts = {
-		(new Part(0x708090ff))->gloss(starshipGloss)
-			->lod(mesh("starshipLaunchpad"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipLaunchpadLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0x111111ff))->gloss(starshipGloss)
-			->lod(mesh("starshipFrame"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipFrameLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xA3C1DAff))->gloss(starshipGloss)
-			->lod(mesh("starshipBody"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipBodyLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xA3C1DAff))->gloss(starshipGloss)
-			->lod(mesh("starshipNose"), Part::MD, Part::SHADOW)
-			->lod(mesh("starshipNoseLD"), Part::VLD, Part::NOSHADOW),
-		starshipRaptor,
-		starshipRaptor,
-		starshipRaptor,
-		starshipNoseFin,
-		starshipNoseFin,
-		starshipTailFin,
-		starshipTailFin,
-		starshipPlumeB,
-		starshipPlumeB,
-		starshipPlumeB,
-		starshipPlumeA,
-		starshipPlumeA,
-		starshipPlumeA,
-	};
-
-	spec->parts[0]->filter = 1;
-
-	spec->highLOD = 10;
-
-	spec->materials = {
-		{ Item::byName("brick")->id, 100 },
-		{ Item::byName("steel-sheet")->id, 50 },
-		{ Item::byName("steel-frame")->id, 25 },
-		{ Item::byName("copper-sheet")->id, 50 },
-		{ Item::byName("circuit-board")->id, 50 },
-		{ Item::byName("pipe")->id, 50 },
-	};
-
-	{
-		Mat4 center = Mat4::translate(0,-22.5,0);
-
-		// @todo: make it belly-flop down :-)
-
-		auto fly = [&](float h, bool flame) {
-			int i = h;
-			h /= 100;
-			Mat4 up = Mat4::translate(0,h*h*h,0);
-			Mat4 spin = Mat4::rotateY(-glm::radians(h*h*h));
-
-			auto plumeScaleA = Mat4::scale((i%2 ? 0.9: 1.0), (i%2 ? 1.2: 1.3), (i%2 ? 0.9: 1.0));
-			auto plumeScaleB = Mat4::scale(0.75, (i%2 ? 1.1: 1.0), 0.75);
-
-			spec->states.push_back({
-				center,
-				center * Mat4::translate(0,1,0),
-				center * Mat4::translate(0,5,0) * up * spin,
-				center * Mat4::translate(0,35,0) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-0.0f)) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				center * Mat4::translate(2,3.25,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-				center * Mat4::rotateY(glm::radians(  -0.0f)) * Mat4::translate( 5,35,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(-180.0f)) * Mat4::translate(-5,35,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(  -0.0f)) * Mat4::translate( 5, 5,0) * up * spin,
-				center * Mat4::rotateY(glm::radians(-180.0f)) * Mat4::translate(-5, 5,0) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(  -0.0f)) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				plumeScaleB * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(  -0.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-120.0f)) * up * spin,
-				plumeScaleA * center * Mat4::translate(2,0,0) * Mat4::rotateY(glm::radians(-240.0f)) * up * spin,
-			});
-
-			spec->statesShow.push_back({
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				flame,
-				flame,
-				flame,
-				flame,
-				flame,
-				flame,
-			});
-		};
-
-		for (uint i = 0; i < 200; i++) {
-			fly(0, i > 150);
-		}
-
-		for (uint i = 0; i < 1000; i++) {
-			fly(i, true);
-		}
-
-		for (uint i = 1000; i > 0; i--) {
-			fly(i, true);
-		}
-
-		for (uint i = 0; i < 200; i++) {
-			fly(0, i < 50);
-		}
-	}
-
 	meshes["falconLaunchpad"] = new Mesh("models/falcon-launchpad-hd.stl");
 	meshes["falconLaunchpadLD"] = new Mesh("models/falcon-launchpad-ld.stl");
 	meshes["falconBody"] = new Mesh("models/falcon-body-hd.stl");
@@ -3740,17 +3598,18 @@ void ScenarioBase::specifications() {
 	meshes["falconBase"] = new Mesh("models/falcon-base-hd.stl");
 	meshes["falconBaseLD"] = new Mesh("models/falcon-base-ld.stl");
 
-	spec = new Spec("falcon");
+	spec = new Spec("rocket");
 	spec->title = "Rocket";
 	spec->starship = true;
 	spec->health = 150;
 	spec->store = true;
-	spec->storeSetUpper = true;
-	spec->storeAnything = true;
 	spec->tipStorage = true;
 	spec->capacity = Mass::kg(1000);
 	spec->rotateGhost = true;
 	spec->rotateExtant = true;
+	spec->networker = true;
+	spec->networkInterfaces = 1;
+	spec->networkWifi = {5.5,-11,5.5};
 	spec->launcher = true;
 	spec->launcherFuel = {
 		{Fluid::byName("hydrazine")->id,5000},
@@ -3779,16 +3638,23 @@ void ScenarioBase::specifications() {
 		{ Item::byName("pipe")->id, 10 },
 	};
 
-	auto falconFins = (new Part(0x222222ff))->gloss(starshipGloss)
-		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
-		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
-		->transform(Mat4::translate(0,5,0));
+	float falconGloss = 16;
 
-	auto falconLeg = (new Part(0x222222ff))->gloss(starshipGloss)
+//	auto falconFins = (new Part(0x222222ff))->gloss(falconGloss)
+//		->lod(mesh("falconFins"), Part::MD, Part::SHADOW)
+//		->lod(mesh("falconFinsLD"), Part::VLD, Part::NOSHADOW)
+//		->transform(Mat4::translate(0,5,0));
+
+	meshes["starshipRaptor"] = new Mesh("models/starship-raptor-hd.stl");
+	meshes["starshipRaptorLD"] = new Mesh("models/starship-raptor-ld.stl");
+	meshes["starshipPlume"] = new Mesh("models/starship-plume-hd.stl");
+	meshes["starshipPlumeLD"] = new Mesh("models/starship-plume-ld.stl");
+
+	auto falconLeg = (new Part(0x222222ff))->gloss(falconGloss)
 		->lod(mesh("falconLeg"), Part::MD, Part::SHADOW)
 		->lod(mesh("falconLegLD"), Part::VLD, Part::NOSHADOW);
 
-	auto falconRaptor = (new Part(0x111111ff))->gloss(starshipGloss)
+	auto falconRaptor = (new Part(0x111111ff))->gloss(falconGloss)
 		->lod(mesh("starshipRaptor"), Part::MD, Part::SHADOW)
 		->lod(mesh("starshipRaptorLD"), Part::VLD, Part::NOSHADOW);
 
@@ -3801,17 +3667,17 @@ void ScenarioBase::specifications() {
 		->lod(mesh("starshipPlumeLD"), Part::VLD, Part::NOSHADOW);
 
 	spec->parts = {
-		(new Part(0x708090ff))->gloss(starshipGloss)
+		(new Part(0x708090ff))->gloss(falconGloss)
 			->lod(mesh("falconLaunchpad"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconLaunchpadLD"), Part::VLD, Part::NOSHADOW),
-		(new Part(0xffffffff))->gloss(starshipGloss)
+		(new Part(0xffffffff))->gloss(falconGloss)
 			->lod(mesh("falconBody"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBodyLD"), Part::VLD, Part::NOSHADOW)
 			->transform(Mat4::translate(0,5,0)),
-		(new Part(0x333333ff))->gloss(starshipGloss)
+		(new Part(0x333333ff))->gloss(falconGloss)
 			->lod(mesh("falconBase"), Part::MD, Part::SHADOW)
 			->lod(mesh("falconBaseLD"), Part::VLD, Part::NOSHADOW),
-		falconFins,
+//		falconFins,
 		falconLeg,
 		falconLeg,
 		falconLeg,
@@ -3848,7 +3714,7 @@ void ScenarioBase::specifications() {
 				center,
 				center * rocket * up * spin,
 				Mat4::translate(0,5,0) * center * rocket * up * spin,
-				center * rocket * up * spin,
+//				center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(  0.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians( 90.0f)) * center * rocket * up * spin,
 				legRotate * Mat4::translate(1.8,5.25,0) * Mat4::rotateY(glm::radians(180.0f)) * center * rocket * up * spin,
@@ -3862,7 +3728,7 @@ void ScenarioBase::specifications() {
 				true,
 				true,
 				true,
-				true,
+//				true,
 				true,
 				true,
 				true,
@@ -4146,7 +4012,7 @@ void ScenarioBase::specifications() {
 			{ Item::byName("plastic-bar")->id, 100 },
 			{ Item::byName("electric-motor")->id, 100 },
 			{ Item::byName("battery")->id, 100 },
-			{ Item::byName("mother-board")->id, 5 },
+			{ Item::byName("computer")->id, 3 },
 		};
 
 		spec->highLOD = 10;
@@ -4259,142 +4125,6 @@ void ScenarioBase::specifications() {
 	}
 
 	blimpTier(1);
-//
-//	meshes["heavylifterBody"] = new Mesh("models/heavylifter-body-hd.stl");
-//	meshes["heavylifterBodyLD"] = new Mesh("models/heavylifter-body-ld.stl");
-//	meshes["heavylifterBodyVLD"] = new Mesh("models/heavylifter-body-vld.stl");
-//	meshes["heavylifterArm"] = new Mesh("models/heavylifter-arm-hd.stl");
-//	meshes["heavylifterEngineCowling"] = new Mesh("models/heavylifter-engine-cowling-hd.stl");
-//	meshes["heavylifterEngineCowlingLD"] = new Mesh("models/heavylifter-engine-cowling-ld.stl");
-//	meshes["heavylifterEngineShaft"] = new Mesh("models/heavylifter-engine-shaft-hd.stl");
-//	meshes["heavylifterFrame"] = new Mesh("models/heavylifter-frame-hd.stl");
-//	meshes["heavylifterMainWing"] = new Mesh("models/heavylifter-mainwing-hd.stl");
-//	meshes["heavylifterMainWingLD"] = new Mesh("models/heavylifter-mainwing-ld.stl");
-//	meshes["heavylifterTailWing"] = new Mesh("models/heavylifter-tailwing-hd.stl");
-//	meshes["heavylifterTailWingLD"] = new Mesh("models/heavylifter-tailwing-ld.stl");
-//	meshes["heavylifterTailFin"] = new Mesh("models/heavylifter-tailfin-hd.stl");
-//	meshes["heavylifterTailFinLD"] = new Mesh("models/heavylifter-tailfin-ld.stl");
-//
-//	spec = new Spec("heavylifter");
-//	spec->title = "Heavy Lifter";
-//	spec->collision = {0, 0, 0, 3, 3, 7};
-//	spec->selection = spec->collision;
-//	spec->place = Spec::Land;
-//
-//	spec->health = 500;
-//	spec->align = false;
-//	spec->forceDelete = true;
-//	spec->rotateGhost = true;
-//	spec->plan = false;
-//	spec->flightPath = true;
-//	spec->flightPathClearance = 20.0f;
-//	spec->flightPathSpeed = 0.5f;
-//	spec->flightLogistic = true;
-//
-//	spec->energyConsume = Energy::kW(250);
-//	spec->consumeCharge = true;
-//	spec->consumeChargeBuffer = Energy::MJ(10);
-//	spec->consumeChargeRate = Energy::kW(250);
-//	spec->store = true;
-//	spec->storeAnything = true;
-//	spec->tipStorage = true;
-//	spec->capacity = Mass::kg(5000);
-//	spec->forceDelete = true;
-//	spec->rotateGhost = true;
-//	spec->plan = false;
-//
-//	float up = 2.1;
-//
-//	spec->parts = {
-//		(new Part(0x444444ff))
-//			->lod(mesh("models/container-small-hd.stl"), Part::HD, Part::SHADOW)
-//			->lod(mesh("models/container-small-ld.stl"), Part::MD, Part::SHADOW)
-//			->lod(mesh("models/container-small-vld.stl"), Part::VLD, Part::NOSHADOW),
-//
-//		(new Part(0xffffffff))
-//			->lod(mesh("heavylifterBody"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterBodyLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterBodyVLD"), Part::VLD, Part::SHADOW)
-//			->transform(Mat4::translate(0,up,0)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterMainWing"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterMainWingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterMainWingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.9,0)),
-//
-//		(new Part(0x444444ff))
-// 			->lod(mesh("heavylifterTailWing"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailWingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailWingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.3,-4)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterTailFin"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailFinLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterTailFinLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,up+0.3,-1.75)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(3,up+0.4,0)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::translate(3,up+0.4,0)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(-3,up+0.4,0)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::translate(-3,up+0.4,0)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(-1.5,up+0.3,-4)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(-1.5,up+0.3,-4)),
-//
-//		(new Part(0x888888ff))->gloss(2)
-//			->lod(mesh("heavylifterEngineCowling"), Part::HD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("heavylifterEngineCowlingLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(1.5,up+0.3,-4)),
-//
-//		(new PartSpinner(0xccccccff))->gloss(2)
-//			->lod(mesh("heavylifterEngineShaft"), Part::HD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::East, glm::radians(90.0f)) * Mat4::translate(1.5,up+0.3,-4)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterFrame"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::translate(0,up-0.55,0)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(0.0f)) * Mat4::translate(1.6,up-0.55,-2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(180.0f)) * Mat4::translate(-1.6,up-0.55,-2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(0.0f)) * Mat4::translate(1.6,up-0.55,2)),
-//
-//		(new Part(0x444444ff))
-//			->lod(mesh("heavylifterArm"), Part::MD, Part::SHADOW)
-//			->transform(Mat4::rotate(Point::Up, glm::radians(180.0f)) * Mat4::translate(-1.6,up-0.55,2)),
-//	};
 }
 
 void ScenarioBase::blimpTier(int tier) {
@@ -4471,7 +4201,6 @@ void ScenarioBase::blimpTier(int tier) {
 		spec->consumeChargeBuffer = Energy::kJ(50*tier);
 		spec->consumeChargeRate = Energy::kW(50*tier);
 		spec->store = true;
-		spec->storeAnything = true;
 		spec->tipStorage = true;
 		spec->capacity = Mass::kg(300*tier);
 		spec->forceDelete = true;
@@ -4613,6 +4342,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->plan = false;
 	spec->clone = true;
 	spec->beacon = Point::Up*0.6 + Point::South*0.55;
+	spec->icon = Point::Up*1.25;
 	spec->cart = true;
 	spec->cartSpeed = 10000.0/(float)(60*60*60);
 	spec->cartWait = 120;
@@ -4624,7 +4354,6 @@ void ScenarioBase::cartTier(int tier) {
 	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
-	spec->storeAnything = true;
 	spec->storeSetUpper = true;
 	spec->capacity = Mass::kg(300*tier);
 
@@ -4691,6 +4420,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->plan = false;
 	spec->clone = true;
 	spec->beacon = Point::Up*0.6 + Point::South*0.55;
+	spec->icon = Point::Up*1.25;
 	spec->cart = true;
 	spec->cartSpeed = 10000.0/(float)(60*60*60);
 	spec->cartWait = 120;
@@ -4810,7 +4540,6 @@ void ScenarioBase::truckTier(int tier) {
 	spec->capacity = Mass::kg(1000*tier);
 	spec->storeSetLower = true;
 	spec->storeSetUpper = true;
-	spec->storeAnything = true;
 
 	spec->materials = {
 		{ Item::byName("electric-motor")->id, 6 },

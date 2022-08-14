@@ -153,14 +153,93 @@ void Depot::update() {
 
 	uint cargo = en->spec->depotDroneSpec->droneCargoSize;
 
+	auto supply = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!src.hint.providing) return false;
+		if (!dst.hint.requesting) return false;
+		for (auto& stack: src.stacks) {
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			uint have = src.countProviding(stack.iid);
+			if (!have) continue;
+			uint move = std::min(cargo,std::min(have,need));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
+		}
+		return false;
+	};
+
+	auto forceSupply = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!dst.hint.requesting) return false;
+		for (auto& stack: src.stacks) {
+			uint need = dst.countRequesting(stack.iid);
+			if (!need) continue;
+			uint have = src.countLessReserved(stack.iid);
+			if (!have) continue;
+			uint move = std::min(cargo,std::min(have,need));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
+		}
+		return false;
+	};
+
 	auto constructGhostLocal = [&]() {
 		for (auto& ghost: ghosts) {
 			if (!ghost.en->isConstruction()) continue;
-			Stack stack = ghost.store->forceSupplyFrom(en->store(), cargo);
-			if (stack.size) {
-				dispatch(id, id, ghost.en->id, stack);
-				return true;
-			}
+			if (forceSupply(en->store(), *ghost.store)) return true;
+		}
+		return false;
+	};
+
+	auto collect = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!dst.hint.accepting) return false;
+		if (!src.hint.activeproviding) return false;
+		for (auto& stack: src.stacks) {
+			uint have = src.countActiveProviding(stack.iid);
+			if (!have) continue;
+			uint space = dst.countAccepting(stack.iid);
+			if (!space) continue;
+			uint move = std::min(cargo,std::min(space,have));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
+		}
+		return false;
+	};
+
+	auto forceCollect = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!src.hint.activeproviding) return false;
+		for (auto& stack: src.stacks) {
+			uint have = src.countActiveProviding(stack.iid);
+			if (!have) continue;
+			uint space = dst.countSpace(stack.iid);
+			if (!space) continue;
+			uint move = std::min(cargo,std::min(space,have));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
+		}
+		return false;
+	};
+
+	auto overflow = [&](auto& src, auto& dst) {
+		if (!dst.overflow) return false;
+		return forceCollect(src, dst);
+	};
+
+	auto recycle = [&](auto& src, auto& dst) {
+		if (src.en == dst.en) return false;
+		if (!src.overflow) return false;
+		if (!dst.hint.accepting) return false;
+		for (auto& stack: src.stacks) {
+			uint have = src.countLessReserved(stack.iid);
+			if (!have) continue;
+			uint space = dst.countAccepting(stack.iid);
+			if (!space) continue;
+			uint move = std::min(cargo,std::min(space,have));
+			dispatch(id, src.en->id, dst.en->id, {stack.iid,move});
+			return true;
 		}
 		return false;
 	};
@@ -168,11 +247,7 @@ void Depot::update() {
 	auto deconstructGhostLocal = [&]() {
 		for (auto& ghost: ghosts) {
 			if (!ghost.en->isDeconstruction()) continue;
-			Stack stack = ghost.store->forceOverflowTo(en->store(), cargo);
-			if (stack.size) {
-				dispatch(id, ghost.en->id, id, stack);
-				return true;
-			}
+			if (forceCollect(*ghost.store, en->store())) return true;
 		}
 		return false;
 	};
@@ -195,29 +270,17 @@ void Depot::update() {
 		// first buffers or overflows
 		for (auto se: src) {
 			if (!se.en->spec->construction && !se.en->spec->overflow) continue;
-			auto& ss = *se.store;
 			for (auto de: ghosts) {
 				if (!de.en->isConstruction()) continue;
-				auto& gstore = *de.store;
-				Stack stack = gstore.forceSupplyFrom(ss, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
+				if (forceSupply(*se.store, *de.store)) return true;
 			}
 		}
 		// then other providers
 		for (auto se: src) {
 			if (se.en->spec->construction || se.en->spec->overflow) continue;
-			auto& ss = *se.store;
 			for (auto de: ghosts) {
 				if (!de.en->isConstruction()) continue;
-				auto& gstore = *de.store;
-				Stack stack = gstore.supplyFrom(ss, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
+				if (supply(*se.store, *de.store)) return true;
 			}
 		}
 		return false;
@@ -225,23 +288,13 @@ void Depot::update() {
 
 	auto deconstructGhost = [&](const minivec<EntityStore>& dst) {
 		if (!dst.size()) return false;
-		if (!ghosts.size()) return false;
 		for (auto se: ghosts) {
 			if (!se.en->isDeconstruction()) continue;
-			auto& ss = *se.store;
 			for (auto de: dst) {
-				Stack stack = ss.overflowTo(*de.store, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
+				if (collect(*se.store, *de.store)) return true;
 			}
 			for (auto de: dst) {
-				Stack stack = ss.overflowDefaultTo(*de.store, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
+				if (overflow(*se.store, *de.store)) return true;
 			}
 		}
 		return false;
@@ -250,10 +303,10 @@ void Depot::update() {
 	auto repairDamage = [&](const minivec<EntityStore>& src) {
 		for (auto se: src) {
 			auto& store = *se.store;
-//			if (!store.hint.providing) continue;
+			if (!store.hint.repairing) continue;
 			for (auto& stack: store.stacks) {
 				if (!Item::get(stack.iid)->repair) continue;
-				if (se.en->spec->construction || store.isProviding(stack.iid)) {
+				if (se.en->spec->construction || store.countProviding(stack.iid)) {
 					for (auto de: damaged) {
 						dispatch(id, se.en->id, de->id, {stack.iid,1}, FlightRepair);
 						return true;
@@ -267,31 +320,8 @@ void Depot::update() {
 	auto providerToRequester = [&](const minivec<EntityStore>& src, const minivec<EntityStore>& dst) {
 		if (!src.size()) return false;
 		if (!dst.size()) return false;
-		for (auto se: src) {
-			auto& ss = *se.store;
-			if (!ss.hint.providing || !ss.overflow) continue;
-			for (auto de: dst) {
-				if (de.en == se.en) continue;
-				if (!de.store->hint.requesting) continue;
-				Stack stack = de.store->supplyFrom(ss, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
-			}
-		}
-		for (auto se: src) {
-			auto& ss = *se.store;
-			if (!ss.hint.providing || ss.overflow) continue;
-			for (auto de: dst) {
-				if (de.en == se.en) continue;
-				if (!de.store->hint.requesting) continue;
-				Stack stack = de.store->supplyFrom(ss, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
-			}
+		for (auto se: src) for (auto de: dst) {
+			if (supply(*se.store, *de.store)) return true;
 		}
 		return false;
 	};
@@ -299,33 +329,20 @@ void Depot::update() {
 	auto providerBalance = [&](const minivec<EntityStore>& src, const minivec<EntityStore>& dst) {
 		if (!src.size()) return false;
 		if (!dst.size()) return false;
-		for (auto se: src) {
-			auto& ss = *se.store;
-			if (!ss.hint.activeproviding && !ss.overflow) continue;
-			for (auto de: dst) {
-				if (de.en == se.en) continue;
-				auto& ds = *de.store;
-				if (!ds.hint.accepting) continue;
-				Stack stack = ss.overflowTo(ds, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
-			}
+		for (auto se: src) for (auto de: dst) {
+			if (supply(*se.store, *de.store)) return true;
 		}
-		for (auto se: src) {
-			auto& ss = *se.store;
-			if (!ss.hint.activeproviding && !ss.overflow) continue;
-			for (auto de: dst) {
-				if (de.en == se.en) continue;
-				auto& ds = *de.store;
-				if (!ds.hint.accepting) continue;
-				Stack stack = ss.overflowDefaultTo(ds, cargo);
-				if (stack.size) {
-					dispatch(id, se.en->id, de.en->id, stack);
-					return true;
-				}
-			}
+		for (auto se: src) for (auto de: dst) {
+			if (overflow(*se.store, *de.store)) return true;
+		}
+		return false;
+	};
+
+	auto overflowRecycle = [&](const minivec<EntityStore>& src, const minivec<EntityStore>& dst) {
+		if (!src.size()) return false;
+		if (!dst.size()) return false;
+		for (auto se: src) for (auto de: dst) {
+			if (recycle(*se.store, *de.store)) return true;
 		}
 		return false;
 	};
@@ -351,14 +368,9 @@ void Depot::update() {
 
 		// buffer to local store
 		for (auto se: stores) {
-			if (se.en->id == id) continue;
 			if (se.en->isGhost()) continue;
 			if (!se.en->spec->construction) continue;
-			Stack stack = en->store().forceSupplyFrom(*se.store, cargo);
-			if (stack.size) {
-				dispatch(id, se.en->id, id, stack);
-				return;
-			}
+			if (forceSupply(*se.store, en->store())) return;
 		}
 	}
 
@@ -378,6 +390,9 @@ void Depot::update() {
 
 		// any local provider to any local provider
 		if (providerBalance(stores, stores)) return;
+
+		// any local overflow to any local provider
+		if (overflowRecycle(stores, stores)) return;
 
 		if (network && en->spec->networker) {
 			minivec<EntityStore> networkStores;
@@ -409,11 +424,17 @@ void Depot::update() {
 			// any network provider to any local requester
 			if (providerToRequester(networkStores, stores)) return;
 
+			// any local provider to any network provider
+			if (providerBalance(stores, networkStores)) return;
+
 			// any network provider to any local provider
 			if (providerBalance(networkStores, stores)) return;
 
-			// any local provider to any network provider
-			if (providerBalance(stores, networkStores)) return;
+			// any local overflow to any network provider
+			if (overflowRecycle(stores, networkStores)) return;
+
+			// any network overflow to any local provider
+			if (overflowRecycle(networkStores, stores)) return;
 		}
 	}
 

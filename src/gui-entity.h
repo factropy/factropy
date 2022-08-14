@@ -14,6 +14,9 @@ struct GuiFakeEntity;
 // shadow entity-component-system.
 
 struct GuiEntity {
+	static const uint32_t ELECTRICITY = 1<<16;
+	static const uint32_t BLOCKED = 1<<17;
+
 	uint id;
 	Spec* spec;
 	struct { int x; int y; int z; } _pos;
@@ -86,7 +89,11 @@ struct GuiEntity {
 	monorailState* monorail = nullptr;
 
 	struct powerpoleState {
-		minivec<Point> wires;
+		struct Wire {
+			Point target = Point::Zero;
+			bool render = false;
+		};
+		minivec<Wire> wires;
 		Point point;
 	};
 
@@ -144,6 +151,7 @@ struct GuiEntity {
 	void overlayDirecting();
 	void overlayRouting();
 	void overlayAlignment();
+	void icon();
 	Color cartRouteColor(int line);
 	Color monorailRouteColor(int line);
 	void waypointLine(int line, Point a, Point b, bool wide = false);

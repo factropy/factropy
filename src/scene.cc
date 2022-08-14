@@ -12,6 +12,17 @@
 
 Scene scene;
 
+void Scene::initGL() {
+	shader.part = Shader("shader/part.vs", "shader/part.fs");
+	shader.ghost = Shader("shader/ghost.vs", "shader/ghost.fs");
+	shader.water = Shader("shader/water.vs", "shader/water.fs");
+	shader.shadow = Shader("shader/shadow.vs", "shader/shadow.fs");
+	shader.terrain = Shader("shader/terrain.vs", "shader/terrain.fs");
+	shader.glow = Shader("shader/glow.vs", "shader/glow.fs");
+	shader.flame = Shader("shader/flame.vs", "shader/flame.fs");
+	shader.tree = Shader("shader/tree.vs", "shader/tree.fs");
+}
+
 void Scene::init() {
 	glGenFramebuffers(1, &shadowMapFrameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
@@ -29,20 +40,10 @@ void Scene::init() {
 
 	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "%s", glErr());
 
-	shader.part = Shader("shader/part.vs", "shader/part.fs");
-	shader.ghost = Shader("shader/ghost.vs", "shader/ghost.fs");
-	shader.water = Shader("shader/water.vs", "shader/water.fs");
-	shader.shadow = Shader("shader/shadow.vs", "shader/shadow.fs");
-	shader.terrain = Shader("shader/terrain.vs", "shader/terrain.fs");
-	shader.glow = Shader("shader/glow.vs", "shader/glow.fs");
-	shader.flame = Shader("shader/flame.vs", "shader/flame.fs");
-	shader.tree = Shader("shader/tree.vs", "shader/tree.fs");
-
 	unit.mesh.cube = new MeshCube(1.0f);
 	unit.mesh.sphere = new MeshSphere(1.0f);
 	unit.mesh.line = new MeshLine(1.0f, 0.01f);
 	unit.mesh.plane = new MeshPlane(1.0f);
-
 	unit.mesh.sphere2 = new MeshSphere(1.0f,2);
 	unit.mesh.sphere3 = new MeshSphere(1.0f,3);
 
@@ -53,10 +54,16 @@ void Scene::init() {
 	bits.beaconGlass = new Mesh("models/status-beacon-glass-hd.stl");
 	bits.chevron = new Mesh("models/chevron-hd.stl");
 	bits.flame = new Mesh("models/flame.stl");
+	bits.droplet = new Mesh("models/droplet.stl");
 
 	bits.pipeConnector = new Mesh("models/pipe-straight-hd.stl", glm::mat4(
 		Point::West.rotation() * Mat4::scale(1.0, 1.0, 0.1)
 	));
+
+	icon.triangle = new Mesh("models/icon-triangle.stl");
+	icon.tick = new Mesh("models/icon-tick.stl");
+	icon.exclaim = new Mesh("models/icon-exclaim.stl");
+	icon.electricity = new Mesh("models/icon-electricity.stl");
 
 	for (auto& packet: packets) packet = Sim::random() > 0.5f;
 
@@ -76,18 +83,84 @@ void Scene::init() {
 	perspective = glm::perspective(glm::radians(fovy), aspect, near, far);
 }
 
-void Scene::prepare() {
-	GuiEntity::prepareCaches();
+void Scene::reset() {
+	glDeleteFramebuffers(1, &shadowMapFrameBuffer);
+	glDeleteTextures(1, &shadowMapDepthTexture);
+
+	current = 0;
+	future = 1;
+	entityPools[0].clear();
+	entityPools[1].clear();
+	visibleCells.clear();
+
+	selecting = false;
+	selectingTypes = SelectAll;
+	selection.a = Point::Zero;
+	selection.b = Point::Zero;
+	selectionBox = {};
+	selectionBoxFuture = {};
+
+	delete hovering;
+	hovering = nullptr;
+	delete directing;
+	directing = nullptr;
+	delete connecting;
+	connecting = nullptr;
+	delete routing;
+	routing = nullptr;
+
+	routingHistory.clear();
+
+	hoveringFuture = 0;
+	directRevert = 0;
+
+	for (auto plan: plans) delete plan;
+	plans.clear();
+	placing = nullptr;
+	placingFits = false;
+
+	delete settings;
+	settings = nullptr;
+
+	frame = 0;
+	width = 0;
+	height = 0;
+	wheel = 0;
+
+	keys.clear();
+	keysLast.clear();
+
+	output.visible.clear();
+
+	for (auto& [_,sizes]: specIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+	for (auto& [_,sizes]: itemIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+	for (auto& [_,sizes]: fluidIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+
+	specIconTextures.clear();
+	itemIconTextures.clear();
+	fluidIconTextures.clear();
+
+	stats.update.clear();
+	stats.updateTerrain.clear();
+	stats.updateEntities.clear();
+	stats.updateEntitiesParts.clear();
+	stats.updateEntitiesFind.clear();
+	stats.updateEntitiesLoad.clear();
+	stats.updateEntitiesHover.clear();
+	stats.updateEntitiesInstances.clear();
+	stats.updateEntitiesItems.clear();
+	stats.updateCurrent.clear();
+	stats.updatePlacing.clear();
+	stats.render.clear();
+
+	risers.clear();
 }
 
-void Scene::destroy() {
-	delete unit.mesh.cube;
-	delete unit.mesh.sphere;
-	delete unit.mesh.line;
-	delete unit.mesh.plane;
-
-	delete unit.mesh.sphere2;
-	delete unit.mesh.sphere3;
+void Scene::prepare() {
+	GuiEntity::prepareCaches();
 }
 
 void Scene::view(Point pos) {
@@ -172,8 +245,35 @@ void Scene::square(const Point& centroid, float half, const Color& color, float 
 	line(d, a, color, pen);
 }
 
+void Scene::warning(Mesh* symbol, Point pos) {
+	float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+	float bob = std::sin(glm::radians(spin));
+	auto rot = Mat4::rotateY(glm::radians(spin));
+	auto trx = (pos + Point::Up*(0.25f*bob) + scene.offset).translation();
+	scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, Color(0xffff00ff), 2.0);
+	symbol->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+}
+
+void Scene::alert(Mesh* symbol, Point pos) {
+	float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+	float bob = std::sin(glm::radians(spin));
+	auto rot = Mat4::rotateY(glm::radians(spin));
+	auto trx = (pos + Point::Up*(0.25f*bob) + scene.offset).translation();
+	scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, Color(0xff0000ff), 2.0);
+	symbol->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+}
+
+void Scene::tick(Point pos) {
+	risers.push_back({pos, icon.tick, 0x00ff00ff, Sim::tick});
+}
+
+void Scene::exclaim(Point pos) {
+	risers.push_back({pos, icon.exclaim, 0xff0000ff, Sim::tick});
+}
+
 void Scene::updateMouse() {
 	MouseState last = mouse;
+	if (SDL_GetMouseFocus() != sdlWindow()) return;
 
 	int mx, my;
 	uint32_t buttons = SDL_GetMouseState(&mx, &my);
@@ -184,7 +284,7 @@ void Scene::updateMouse() {
 	mouse.dy = my - last.y;
 
 	if (mouse.dx || mouse.dy)
-		mouse.moved = Sim::tick;
+		mouse.moved = frame;
 
 	mouse.wheel = wheel;
 	wheel = 0;
@@ -262,7 +362,7 @@ std::pair<bool,Point> Scene::collisionRayGround(const Ray& ray, float level) {
 
 		if (distance > 0.0) {
 			Point hit = ray.position + (ray.direction * distance);
-			return std::pair<bool,Point>(true, {hit.x,0,hit.z});
+			return std::pair<bool,Point>(true, {hit.x,level,hit.z});
 		}
 	}
 
@@ -270,13 +370,24 @@ std::pair<bool,Point> Scene::collisionRayGround(const Ray& ray, float level) {
 }
 
 Point Scene::groundTarget(float level) {
-	auto [_,hit] = collisionRayGround(Ray(position, direction), 0);
+	auto [_,hit] = collisionRayGround(Ray(position, direction), level);
 	return hit;
 }
 
 Point Scene::mouseGroundTarget(float level) {
-	auto [_,hit] = collisionRayGround(mouse.ray, 0);
+	auto [_,hit] = collisionRayGround(mouse.ray, level);
 	return hit;
+}
+
+Point Scene::mouseTerrainTarget() {
+	Point pos = mouseGroundTarget();
+	while (world.elevation(pos) > pos.y)
+		pos += -mouse.ray.direction;
+	return pos;
+}
+
+Point Scene::mouseWaterSurfaceTarget() {
+	return mouseGroundTarget(-4.0f);
 }
 
 bool Scene::keyDown(int key) {
@@ -470,11 +581,14 @@ void Scene::updateCamera() {
 	if (selecting && mouse.left.clicked) {
 		selection = {Point::Zero, Point::Zero};
 		selecting = false;
-		selectingTypes = SelectAll;
 	}
 
 	if (selecting) {
 		selectionBox = Box(selection.a + (Point::Down*1000.0f), selection.b + (Point::Up*1000.0f));
+	}
+
+	if (!selecting) {
+		selectingTypes = SelectAll;
 	}
 }
 
@@ -633,6 +747,7 @@ void Scene::updateEntities() {
 						continue;
 					}
 					ge->instance();
+					ge->icon();
 				}
 			}
 
@@ -920,10 +1035,15 @@ void Scene::updatePlacing() {
 		bool placingMoved = false;
 
 		if (placing->entities.size() == 1 && placing->entities[0]->spec->placeOnHill) {
-			auto pos = mouseGroundTarget();
+			auto pos = mouseTerrainTarget();
 			auto pe = placing->entities[0];
 			Box box = pe->spec->placeOnHillBox(pos);
 			placing->move(Point(pos.x, world.hillPlatform(box), pos.z));
+			placingMoved = true;
+		}
+		else
+		if (placing->entities.size() == 1 && placing->entities[0]->spec->placeOnWaterSurface) {
+			placing->move(mouseWaterSurfaceTarget());
 			placingMoved = true;
 		}
 		else
@@ -1225,7 +1345,24 @@ void Scene::update(uint w, uint h, float f) {
 		routing->overlayAlignment();
 	}
 
-	bool showTip = keyDown(SDLK_SPACE);
+	for (auto it = risers.begin(); it != risers.end(); ) {
+		auto& riser = *it;
+
+		if (Sim::tick > riser.tick+60) {
+			it = risers.erase(it);
+			continue;
+		}
+
+		float spin = 360.0f * ((float)(Sim::tick%60)/60.0f);
+		auto rot = Mat4::rotateY(glm::radians(spin));
+		auto rise = Point::Up * ((float)(Sim::tick-riser.tick) * 0.02);
+		auto trx = (riser.start + rise + scene.offset).translation();
+		scene.icon.triangle->instance(scene.shader.ghost.id(), rot * trx, riser.color, 2.0);
+		riser.icon->instance(scene.shader.glow.id(), rot * trx, Color(0x000000ff), 2.0);
+		++it;
+	}
+
+	bool showTip = keyDown(SDLK_SPACE) || (Config::mode.autotip && (frame-mouse.moved) > fps);
 
 	if (focused && showTip && !(selecting || placing || hovering)) {
 		auto box = mouseGroundTarget().box().grow(0.5);
@@ -1723,7 +1860,7 @@ void Scene::update(uint w, uint h, float f) {
 			}
 		}
 
-		if (gui.controlHints.size()) {
+		auto controlHints = [&](auto& controls) {
 			ImGui::Spacing();
 			ImGui::Separator();
 			struct kv {
@@ -1731,7 +1868,7 @@ void Scene::update(uint w, uint h, float f) {
 				std::string blurb;
 			};
 			std::vector<kv> pairs;
-			for (auto [combo,blurb]: gui.controlHints) {
+			for (auto [combo,blurb]: controls) {
 				pairs.push_back({combo,blurb});
 			}
 			std::sort(pairs.begin(), pairs.end(), [](const auto& a, const auto& b) {
@@ -1742,7 +1879,17 @@ void Scene::update(uint w, uint h, float f) {
 				ImGui::SameLine();
 				ImGui::PrintRight(fmtc("[%s]", kv.combo.c_str()));
 			}
-		}
+		};
+
+		if (gui.controlHintsSpecific.size()) controlHints(gui.controlHintsSpecific);
+		if (gui.controlHintsRelated.size()) controlHints(gui.controlHintsRelated);
+		if (gui.controlHintsGeneral.size()) controlHints(gui.controlHintsGeneral);
+
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Print("Show this window");
+		ImGui::SameLine();
+		ImGui::PrintRight("[SpaceBar]");
 
 		tipEnd();
 	}
@@ -1995,10 +2142,10 @@ void Scene::renderLoading() {
 	glEnable(GL_CULL_FACE);
 }
 
-bool Scene::renderIcon() {
+bool Scene::renderSpecIcon() {
 	Spec* spec = nullptr;
 	for (auto [_,s]: Spec::all) {
-		if (!iconTextures.count(s)) {
+		if (!specIconTextures.count(s)) {
 			spec = s;
 			break;
 		}
@@ -2139,7 +2286,316 @@ bool Scene::renderIcon() {
 		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		iconTextures[spec].push_back(iconTexture);
+		specIconTextures[spec].push_back(iconTexture);
+
+		glDeleteFramebuffers(1, &iconFrameBuffer);
+	}
+
+	glDeleteRenderbuffers(1, &iconDepthBufferMS);
+	glDeleteFramebuffers(1, &iconFrameBufferMS);
+	glDeleteTextures(1, &iconTextureMS);
+
+	position = savePosition;
+	direction = saveDirection;
+	return true;
+}
+
+bool Scene::renderItemIcon() {
+	Item* item = nullptr;
+	for (auto [_,i]: Item::names) {
+		if (!itemIconTextures.count(i->id)) {
+			item = i;
+			break;
+		}
+	}
+
+	if (!item) return false;
+
+	Mesh::resetAll();
+	Part::resetAll();
+
+	Point savePosition = position;
+	Point saveDirection = direction;
+
+	position = Point(0.5,1,1).normalize() * 0.6;
+
+	direction = (-position).normalize();
+
+	offset = Point::Zero;
+
+	aspect = 1.0f;
+	fovy = 45.0f;
+
+	camera = (position - groundTarget());
+	viewCamera = glm::lookAt(glm::vec3(camera), glm::vec3(glm::origin), glm::vec3(glm::up));
+	viewWorld = glm::lookAt(glm::dvec3(position), glm::dvec3(groundTarget()), glm::up);
+	range = camera.length();
+
+	float top = range;
+	float right = top*aspect;
+
+	perspective = glm::ortho<float>(-right,right,-top,top,0.0f,range*100);
+
+	glm::vec3 sunDir = glm::normalize(glm::point(3,4,0));
+	glm::vec3 sun = sunDir * range;
+
+	glm::mat4 sunView = glm::lookAt(sun, glm::vec3(glm::origin), glm::vec3(glm::up));
+	glm::mat4 orthographic = glm::ortho<float>(-right,right,-top,top,0.0f,range*2);
+
+	float distance = Point::Zero.distance(position);
+	auto trx = Point::South.rotation() * (Point(0,item->armV-0.4,0) + offset).translation();
+
+	for (uint i = 0, l = item->parts.size(); i < l; i++) {
+		auto part = item->parts[i];
+		if (!part->show(Point::Zero, Point::South)) continue;
+		GLuint group = scene.shader.part.id();
+		part->instance(group, distance, trx);
+	}
+
+	Mesh::prepareAll();
+
+	int pixels = 128;
+
+	GLuint iconFrameBufferMS = 0;
+	GLuint iconDepthBufferMS = 0;
+	GLuint iconTextureMS = 0;
+	GLuint iconFrameBuffer = 0;
+	GLuint iconTexture = 0;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+	glViewport(0, 0, 4096, 4096);
+	glDrawBuffer(GL_NONE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glGenTextures(1, &iconTextureMS);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+	glGenRenderbuffers(1, &iconDepthBufferMS);
+	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+
+	glGenFramebuffers(1, &iconFrameBufferMS);
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+
+	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glViewport(0, 0, pixels, pixels);
+	glClearColor(0,0,0,0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_MULTISAMPLE);
+
+	glm::mat4 p = perspective;
+	glm::mat4 v = viewCamera;
+	glm::mat4 l = orthographic * sunView;
+	glm::vec3 c = camera;
+	Color sunColor = 0xffffffff;
+	float fogOffset = (float)Config::window.fog;
+
+	glUseProgram(shader.part.id());
+
+	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+
+	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+
+	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+
+	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
+		glGenTextures(1, &iconTexture);
+		glBindTexture(GL_TEXTURE_2D, iconTexture);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+		glGenFramebuffers(1, &iconFrameBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, iconTexture, 0);
+
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, iconFrameBufferMS);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, iconFrameBuffer);
+
+		glDrawBuffer(GL_BACK);
+		glBlitFramebuffer(0, 0, pixels, pixels, 0, 0, pixels, pixels, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		itemIconTextures[item->id].push_back(iconTexture);
+
+		glDeleteFramebuffers(1, &iconFrameBuffer);
+	}
+
+	glDeleteRenderbuffers(1, &iconDepthBufferMS);
+	glDeleteFramebuffers(1, &iconFrameBufferMS);
+	glDeleteTextures(1, &iconTextureMS);
+
+	position = savePosition;
+	direction = saveDirection;
+	return true;
+}
+
+bool Scene::renderFluidIcon() {
+	Fluid* fluid = nullptr;
+	for (auto [_,i]: Fluid::names) {
+		if (!fluidIconTextures.count(i->id)) {
+			fluid = i;
+			break;
+		}
+	}
+
+	if (!fluid) return false;
+
+	Mesh::resetAll();
+	Part::resetAll();
+
+	Point savePosition = position;
+	Point saveDirection = direction;
+
+	position = Point(0.5,1,1).normalize() * 0.6;
+
+	direction = (-position).normalize();
+
+	offset = Point::Zero;
+
+	aspect = 1.0f;
+	fovy = 45.0f;
+
+	camera = (position - groundTarget());
+	viewCamera = glm::lookAt(glm::vec3(camera), glm::vec3(glm::origin), glm::vec3(glm::up));
+	viewWorld = glm::lookAt(glm::dvec3(position), glm::dvec3(groundTarget()), glm::up);
+	range = camera.length();
+
+	float top = range;
+	float right = top*aspect;
+
+	perspective = glm::ortho<float>(-right,right,-top,top,0.0f,range*100);
+
+	glm::vec3 sunDir = glm::normalize(glm::point(3,4,0));
+	glm::vec3 sun = sunDir * range;
+
+	glm::mat4 sunView = glm::lookAt(sun, glm::vec3(glm::origin), glm::vec3(glm::up));
+	glm::mat4 orthographic = glm::ortho<float>(-right,right,-top,top,0.0f,range*2);
+
+//	float distance = Point::Zero.distance(position);
+	auto trx = Point::South.rotation() * (Point(0,-0.25,0) + offset).translation();
+
+	scene.bits.droplet->instance(scene.shader.part.id(), trx, fluid->color, 0.0f, Part::NOSHADOW);
+
+	Mesh::prepareAll();
+
+	int pixels = 128;
+
+	GLuint iconFrameBufferMS = 0;
+	GLuint iconDepthBufferMS = 0;
+	GLuint iconTextureMS = 0;
+	GLuint iconFrameBuffer = 0;
+	GLuint iconTexture = 0;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+	glViewport(0, 0, 4096, 4096);
+	glDrawBuffer(GL_NONE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glGenTextures(1, &iconTextureMS);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+	glGenRenderbuffers(1, &iconDepthBufferMS);
+	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+
+	glGenFramebuffers(1, &iconFrameBufferMS);
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+
+	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+	glViewport(0, 0, pixels, pixels);
+	glClearColor(0,0,0,0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_MULTISAMPLE);
+
+	glm::mat4 p = perspective;
+	glm::mat4 v = viewCamera;
+	glm::mat4 l = orthographic * sunView;
+	glm::vec3 c = camera;
+	Color sunColor = 0xffffffff;
+	float fogOffset = (float)Config::window.fog;
+
+	glUseProgram(shader.part.id());
+
+	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+
+	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+
+	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+
+	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
+		glGenTextures(1, &iconTexture);
+		glBindTexture(GL_TEXTURE_2D, iconTexture);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+		glGenFramebuffers(1, &iconFrameBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, iconTexture, 0);
+
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, iconFrameBufferMS);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, iconFrameBuffer);
+
+		glDrawBuffer(GL_BACK);
+		glBlitFramebuffer(0, 0, pixels, pixels, 0, 0, pixels, pixels, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBuffer);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		fluidIconTextures[fluid->id].push_back(iconTexture);
 
 		glDeleteFramebuffers(1, &iconFrameBuffer);
 	}
@@ -2185,31 +2641,7 @@ void Scene::print(std::string m) {
 }
 
 Scene::Texture Scene::loadTexture(const char* path) {
-	int width, height, components;
-	unsigned char *data = stbi_load(path, &width, &height, &components, 0);
-	ensuref(data, "texture invalid or missing: %s", path);
-
-	GLuint id = 0;
-	GLenum format;
-
-	switch (components) {
-		case 1: format = GL_RED; break;
-		case 3: format = GL_RGB; break;
-		case 4: format = GL_RGBA; break;
-		default: ensuref(0, "texture invalid components: %d", components);
-	}
-
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	stbi_image_free(data);
-
-	return {.id = id, .w = width, .h = height};
+	return Popup::loadTexture(path);
 }
 
 void Scene::planPush(Plan* plan) {

@@ -1,0 +1,196 @@
+function()
+	height = 12.0
+	add_spec({
+		name = "monorail",
+		title = "Monorail Tower",
+		cycle = "monorail-stop",
+		upward = "monorail-tall",
+		toolbar = "a-f",
+		collision = [0, 0, 0, 3, height, 3],
+		iconD = height*0.6,
+		iconV = -1.0,
+		rotateGhost = true,
+		monorail = true,
+		monorailSpan = 50*1000, // mm
+		monorailArrive = north*5.0 + up*(height/2.0),
+		monorailDepart = south*5.0 + up*(height/2.0),
+		monorailAngle = 2.0, // degrees
+		place = [placement.land, placement.hill],
+		placeOnHill = true,
+		placeOnHillPlatform = 2,
+		health = 150,
+		materials = {
+			"brick" = 5,
+			"steel-sheet" = 5,
+		},
+		parts = [
+			{
+				color = colors.steelDark,
+				gloss = gloss.metallic,
+				filter = filter.powdercoat,
+				translate = [0,-height/2.0,0],
+				lods = [
+					["models/monorail-tower-hd.stl", high, shadow],
+					["models/monorail-tower-ld.stl", medium, shadow],
+					["models/monorail-tower-vld.stl", verylow, noshadow],
+				],
+			},
+		],
+	})
+end()
+
+function()
+	height = 18.0
+	add_spec({
+		name = "monorail-tall",
+		title = "Monorail Tower",
+		downward = "monorail",
+		build = false,
+		toolbar = "a-f",
+		collision = [0, 0, 0, 3, height, 3],
+		iconD = height*0.6,
+		iconV = -1.0,
+		rotateGhost = true,
+		monorail = true,
+		monorailSpan = 50*1000, // mm
+		monorailArrive = north*5.0 + up*(height/2.0),
+		monorailDepart = south*5.0 + up*(height/2.0),
+		monorailAngle = 2.0, // degrees
+		place = [placement.land, placement.hill],
+		placeOnHill = true,
+		placeOnHillPlatform = 2,
+		health = 150,
+		materials = {
+			"brick" = 5,
+			"steel-sheet" = 5,
+		},
+		parts = [
+			{
+				color = colors.steelDark,
+				gloss = gloss.metallic,
+				filter = filter.powdercoat,
+				translate = [0,-height/2.0,0],
+				lods = [
+					["models/monorail-tower-tall-hd.stl", high, shadow],
+					["models/monorail-tower-tall-ld.stl", medium, shadow],
+					["models/monorail-tower-tall-vld.stl", verylow, noshadow],
+				],
+			},
+		],
+	})
+end()
+
+function()
+	height = 12.0
+	add_spec({
+		name = "monorail-stop",
+		title = "Monorail Stop",
+		toolbar = "a-f",
+		collision = [0, 0, 0, 3, height, 11],
+		iconD = height*0.75,
+		iconV = 0,
+		rotateGhost = true,
+		monorail = true,
+		monorailSpan = 50*1000, // mm
+		monorailArrive = north*5.0 + up*(height/2.0),
+		monorailDepart = south*5.0 + up*(height/2.0),
+		monorailAngle = 2.0, // degrees
+		monorailStop = true,
+		monorailStopUnload = up*(height/2.0) + up*1.5 + west*3.0 + up*0.5,
+		monorailStopEmpty = down*(height/2.0) + up*1.5 + west*3.0,
+		monorailStopFill = down*(height/2.0) + up*1.5 + east*3.0,
+		monorailStopLoad = up*(height/2.0) + up*1.5 + east*3.0 + up*0.5,
+		enemyTarget = true,
+		consumeElectricity = true,
+		energyConsume = kW(300),
+		cycle = "monorail",
+		networker = true,
+		networkInterfaces = 1,
+		networkWifi = up*(height/2.0) + down*0.25 + south*4.25 + east*4.0,
+		health = 150,
+		materials = {
+			"brick" = 10,
+			"steel-frame" = 8,
+			"gear-wheel" = 8,
+			"electric-motor" = 8,
+			"mother-board" = 1,
+		},
+		parts = [
+			{
+				color = colors.steelDark,
+				gloss = gloss.metallic,
+				filter = filter.powdercoat,
+				translate = [0,-height/2.0,0],
+				lods = [
+					["models/monorail-stop-hd.stl", high, shadow],
+					["models/monorail-stop-ld.stl", medium, shadow],
+					["models/monorail-stop-vld.stl", verylow, noshadow],
+				]
+			}
+		]
+	})
+end()
+
+function()
+	add_spec({
+		name = "monocar",
+		title = "Monorail Car",
+		toolbar = "a-f",
+		collision = [0, 0, 0, 3, 3, 10],
+		iconD = 5,
+		iconV = 0,
+		rotateGhost = true,
+		showItem = true,
+		showItemPos = [0,0.5,-4.3],
+		health = 150,
+		place = [placement.monorail],
+		plan = false,
+		clone = true,
+		monocar = true,
+		monocarContainer = up*0.5,
+		monocarBogieA = 4.0,
+		monocarBogieB = -4.0,
+		monocarSpeed = 0.5,
+		consumeCharge = true,
+		consumeChargeBuffer = MJ(1),
+		consumeChargeRate = kW(250),
+		energyConsume = kW(250),
+		align = false,
+		materials = {
+			"aluminium-frame" = 5,
+			"plastic-bar" = 5,
+			"battery" = 2,
+			"mother-board" = 1,
+		},
+		parts = [
+			{
+				color = 0xffffffff,
+				rotate = [up,-90],
+				lods = [
+					["models/monocar-chassis-hd.stl", high, shadow],
+					["models/monocar-chassis-ld.stl", medium, shadow],
+					["models/monocar-chassis-ld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xffffffff,
+				autoColor = true,
+				gloss = gloss.shiny,
+				rotate = [up,-90],
+				lods = [
+					["models/monocar-stripe-hd.stl", high, shadow],
+					["models/monocar-stripe-ld.stl", medium, noshadow],
+				],
+			},
+		],
+		monocarRoute = {
+			color = 0xffffffff,
+			rotate = [up,-90],
+			lods = [
+				["models/monocar-cab-hd.stl", high, shadow],
+				["models/monocar-cab-ld.stl", medium, noshadow],
+			],
+		},
+	})
+end()
+

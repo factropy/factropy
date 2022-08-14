@@ -1,0 +1,29 @@
+
+add_recipe({
+	name = "ammo1",
+	title = "Ammunition",
+	energy = kJ(900),
+	tags = tags.crafting,
+	input = { "steel-ingot" = 1, "copper-sheet" = 1 },
+	output = { "ammo1" = 1 },
+})
+
+add_recipe({
+	name = "ammo2",
+	title = "Ammunition (Polymer)",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = { "ammo1" = 2, "plastic-bar" = 1 },
+	output = { "ammo2" = 1 },
+})
+
+add_recipe({
+	name = "uranium-ammo",
+	title = "Ammunition (Uranium)",
+	energy = kJ(7500),
+	tags = tags.crafting,
+	input = { "uranium-238" = 1, "ammo2" = 15 },
+	output = { "ammo3" = 10 },
+})
+
+

@@ -1,0 +1,209 @@
+function()
+	add_spec({
+		name = "pipe-straight",
+		title = "Pipe",
+		cycle = "pipe-elbow",
+		downward = "pipe-underground",
+		pipe = true,
+		pipeCapacity = L(100),
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		rotations = [south,west],
+		pipeConnections = [north*0.5,south*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 1,
+		},
+		parts = [{
+			color = colors.pipe,
+			rotate = [up,-90.0],
+			lods = [
+				["models/pipe-straight-hd.stl", high, shadow],
+				["models/pipe-straight-ld.stl", medium, shadow],
+				["models/pipe-straight-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+
+	add_spec({
+		name = "pipe-cross",
+		title = "Pipe (Cross)",
+		cycle = "pipe-straight",
+		build = false,
+		pipe = true,
+		pipeCapacity = L(100),
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		rotations = [south],
+		pipeConnections = [north*0.5,south*0.5,east*0.5,west*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 1,
+		},
+		parts = [{
+			color = colors.pipe,
+			lods = [
+				["models/pipe-cross-hd.stl", high, shadow],
+				["models/pipe-cross-ld.stl", medium, shadow],
+				["models/pipe-cross-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+
+	add_spec({
+		name = "pipe-tee",
+		title = "Pipe (Tee)",
+		cycle = "pipe-cross",
+		build = false,
+		pipe = true,
+		pipeCapacity = L(100),
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		pipeConnections = [south*0.5,east*0.5,west*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 1,
+		},
+		parts = [{
+			color = colors.pipe,
+			rotate = [up,-90.0],
+			lods = [
+				["models/pipe-tee-hd.stl", high, shadow],
+				["models/pipe-tee-ld.stl", medium, shadow],
+				["models/pipe-tee-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+
+	add_spec({
+		name = "pipe-elbow",
+		title = "Pipe (Corner)",
+		cycle = "pipe-tee",
+		build = false,
+		pipe = true,
+		pipeCapacity = L(100),
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		pipeConnections = [south*0.5,east*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 1,
+		},
+		parts = [{
+			color = colors.pipe,
+			rotate = [up,-90.0],
+			lods = [
+				["models/pipe-elbow-hd.stl", high, shadow],
+				["models/pipe-elbow-ld.stl", medium, shadow],
+				["models/pipe-elbow-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+
+	add_spec({
+		name = "pipe-underground",
+		title = "Pipe (Underground)",
+		upward = "pipe-straight",
+		downward = "pipe-underwater",
+		pipe = true,
+		pipeCapacity = L(500),
+		pipeUnderground = true,
+		pipeUndergroundRange = 10.0,
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		pipeConnections = [north*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 5,
+		},
+		parts = [{
+			color = colors.pipe,
+			rotate = [up,-90.0],
+			lods = [
+				["models/pipe-ground-hd.stl", high, shadow],
+				["models/pipe-ground-ld.stl", medium, shadow],
+				["models/pipe-ground-vld.stl", verylow, noshadow],
+			],
+		}],
+	})
+
+	add_spec({
+		name = "pipe-underwater",
+		title = "Pipe (Underwater)",
+		upward = "pipe-underground",
+		pipe = true,
+		pipeCapacity = L(1000),
+		pipeUnderwater = true,
+		pipeUnderwaterRange = 100.0,
+		place = [placement.water],
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		pipeConnections = [north*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 10,
+		},
+		parts = [
+			{
+				color = 0xFF4500ff,
+				rotate = [up,-90.0],
+				lods = [
+					["models/pipe-ground-hd.stl", high, shadow],
+					["models/pipe-ground-ld.stl", medium, shadow],
+					["models/pipe-ground-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xFF4500ff,
+				transform = matrix_scale(15,1,1) * matrix_rotate(south, -90.0) * matrix_translate(0,-8,0),
+				lods = [
+					["models/pipe-straight-hd.stl", high, shadow],
+					["models/pipe-straight-ld.stl", medium, shadow],
+					["models/pipe-straight-vld.stl", verylow, noshadow],
+				],
+			},
+		],
+	})
+
+	add_spec({
+		name = "pipe-valve",
+		title = "Pipe (Valve)",
+		pipe = true,
+		pipeValve = true,
+		pipeCapacity = L(100),
+		collision = [0, 0, 0, 1, 1, 1],
+		rotateGhost = true,
+		rotateExtant = true,
+		pipeConnections = [north*0.5,south*0.5],
+		health = 150,
+		materials = {
+			"pipe" = 2,
+			"circuit-board" = 1,
+		},
+		parts = [
+			{
+				color = colors.pipe,
+				rotate = [up,-90.0],
+				lods = [
+					["models/pipe-valve-hd.stl", high, shadow],
+					["models/pipe-valve-ld.stl", medium, shadow],
+					["models/pipe-straight-vld.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0xB22222ff,
+				rotate = [up,-90],
+				lods = [
+					["models/pipe-chevron-hd.stl", high, shadow],
+				],
+			}
+		],
+	})
+end()
+

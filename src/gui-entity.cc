@@ -187,6 +187,13 @@ void GuiEntity::load(const Entity& en) {
 		Item* item = Item::get(iid);
 		color = item->parts.front()->color;
 	}
+
+	if (!ghost && spec->generateElectricity && !en.electricityProducer().connected()) flags |= ELECTRICITY;
+	if (!ghost && spec->consumeElectricity && !en.electricityConsumer().connected()) flags |= ELECTRICITY;
+	if (!ghost && spec->consumeCharge && !en.charger().powered()) flags |= ELECTRICITY;
+
+	// special case: tubes can draw power from their line, so only the last tube tower needs to be connected
+	if (spec->tube && (flags&ELECTRICITY) && en.tube().next) flags ^= ELECTRICITY;
 }
 
 void GuiEntity::loadConveyor(const Entity& en) {
@@ -280,6 +287,8 @@ void GuiEntity::loadCart() {
 		else if (cart.fueled < 0.99) status = Status::Warning;
 		else status = Status::Ok;
 		cartLine = cart.line;
+
+		if (cart.blocked) flags |= BLOCKED;
 	}
 }
 
@@ -423,13 +432,15 @@ void GuiEntity::loadPowerPole() {
 
 		for (auto& sid: pole.links) {
 			auto& sibling = PowerPole::get(sid);
-			powerpole->wires.push_back(sibling.point());
+			auto end = sibling.point();
+			powerpole->wires.push_back({end, powerpole->point < end});
 		}
 
 		if (ghost) {
 			for (auto sid: pole.siblings()) {
 				auto& sibling = PowerPole::get(sid);
-				powerpole->wires.push_back(sibling.point());
+				auto end = sibling.point();
+				powerpole->wires.push_back({end, powerpole->point < end});
 			}
 		}
 	}
@@ -865,12 +876,12 @@ void GuiEntity::instanceCables() {
 	};
 
 	if (spec->powerpole && powerpole) {
-		for (auto& end: powerpole->wires) {
+		for (auto& wire: powerpole->wires) {
 			// The electricity grid is a doubly-linked loom, so render each wire only once
 			// Ghosts that are fake entities being placed have no real wires, so force those
-			if (!ghost && powerpole->point < end) continue;
+			if (!ghost && !wire.render) continue;
 			Point posA = powerpole->point;
-			Point posB = end;
+			Point posB = wire.target;
 			Point dirAB = (posB-posA).normalize();
 			float distance = posA.distance(posB);
 			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
@@ -1427,6 +1438,18 @@ void GuiEntity::overlayAlignment() {
 	scene.line(origin + south*far + west*far, origin + north*far + east*far, color);
 }
 
+void GuiEntity::icon() {
+	if (flags & ELECTRICITY) {
+		scene.alert(scene.icon.electricity, spec->iconPoint(pos(), dir()));
+		return;
+	}
+
+	if (flags & BLOCKED) {
+		scene.warning(scene.icon.exclaim, spec->iconPoint(pos(), dir()));
+		return;
+	}
+}
+
 Color GuiEntity::cartRouteColor(int line) {
 	Color color = 0xaa0000ff;
 	if (line == CartWaypoint::Blue) color = 0x0000ddff;
@@ -1556,18 +1579,25 @@ GuiFakeEntity::~GuiFakeEntity() {
 }
 
 GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en) {
-	if (en.spec != spec) return this;
+	if (en.spec != spec) {
+		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
+		return this;
+	}
 	delete settings;
 	settings = en.settings();
 	status = settings->enabled ? Status::None: Status::Warning;
 	color = settings->color;
+	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
 	return this;
 }
 
 GuiFakeEntity* GuiFakeEntity::setConfig(Entity& en) {
-	if (en.spec != spec) return this;
-	if (!settings) return this;
+	if (en.spec != spec || !settings) {
+		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
+		return this;
+	}
 	en.setup(settings);
+	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
 	return this;
 }
 
@@ -1693,7 +1723,7 @@ GuiFakeEntity* GuiFakeEntity::update() {
 				auto& sibling = PowerPole::get(se->id);
 				if (!sibling.range().contains(powerpole->point)) continue;
 				if (!range.contains(sibling.point())) continue;
-				powerpole->wires.push_back(sibling.point());
+				powerpole->wires.push_back({sibling.point(), powerpole->point < sibling.point()});
 			}
 		});
 	}

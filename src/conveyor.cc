@@ -24,11 +24,12 @@ void Conveyor::reset() {
 	managed.clear();
 	unmanaged.clear();
 	leadersStraight.clear();
+	leadersStraightSide.clear();
+	leadersStraightNoSide.clear();
 	leadersCircular.clear();
 	changed.clear();
-	for (auto belt: ConveyorBelt::all) {
-		delete belt;
-	}
+	extant.clear();
+	for (auto belt: ConveyorBelt::all) delete belt;
 	ConveyorBelt::all.clear();
 	ConveyorBelt::changed.clear();
 }

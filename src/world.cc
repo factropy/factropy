@@ -27,6 +27,16 @@ uint64_t World::memory() {
 }
 
 void World::reset() {
+	std::free(flags);
+	flags = nullptr;
+
+	tiles.clear();
+	features.clear();
+	changes.clear();
+	nextHill = 1;
+	nextLake = -1;
+	ready = false;
+	game++;
 }
 
 void World::init() {
@@ -277,11 +287,11 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 		def.push(fmt("%u", (uint)tilesSave.size()));
 
 		for (auto& tile: tilesSave) {
-			def.push(fmt("%f %d %d %u %u",
+			def.push(fmt("%f %d %d %s %u",
 				tile.elevation,
 				tile.x,
 				tile.y,
-				tile.resource,
+				tile.resource ? Item::get(tile.resource)->name: "_",
 				tile.count
 			));
 		}
@@ -336,7 +346,11 @@ void World::load(const char* name) {
 		ensure(isspace(*ptr));
 		int y = strtol(++ptr, &ptr, 10);
 		ensure(isspace(*ptr));
-		uint resource = strtoul(++ptr, &ptr, 10);
+		char* start = ++ptr;
+		while (!isspace(*ptr)) ptr++;
+		char *end = ptr;
+		auto name = std::string(start, end-start);
+		uint resource = name == "_" ? 0: Item::byName(name)->id;
 		ensure(isspace(*ptr));
 		uint count = strtoul(++ptr, &ptr, 10);
 		ensure(!*ptr);
@@ -495,7 +509,13 @@ World::Tile* World::get(const XY& at) {
 		XY at = {0,0};
 		uint offset = 0;
 		bool ok = false;
+		uint game = 0;
 	} cache;
+
+	if (cache.game != game) {
+		cache.ok = false;
+		cache.game = game;
+	}
 
 	if (within(at) && flag(at)) {
 		if (cache.ok && cache.at == at) {

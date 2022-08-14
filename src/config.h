@@ -9,6 +9,8 @@
 #include <set>
 #include <map>
 
+extern SDL_Window* sdlWindow();
+
 namespace Config {
 	struct Version {
 		int major = 0;
@@ -46,7 +48,7 @@ namespace Config {
 		Color ground = 0xc2b280ff;
 		Color groundSand = 0xc2b280ff;
 		Color groundGrass = 0x8ca66eff;
-		Color grid = 0x888888ff;
+		Color grid = 0xaa9966ff;
 		Color gridSand = 0xaa9966ff;
 		Color gridGrass = 0x778877ff;
 		uint sdlFlags = 0;
@@ -142,18 +144,25 @@ namespace Config {
 	extern Popup popup;
 
 	struct Mode {
+		minivec<int64_t> seeds = {60464830,60555982,60670951,60841977,60900622,52778587,60252849};
+
 		bool pause = false;
-		bool load = false;
 		bool restart = false;
 		bool restartNew = false;
 		bool grid = true;
 		bool alignment = false;
 		bool cardinalSnap = false;
+		bool autotip = true;
 
 		std::string dataPath;
 		std::string saveName;
 
+		bool load = false;
+		bool fresh = false;
+		uint freshSeed = 0;
+
 		int autosave = 15;
+		int autosaveN = 0;
 
 		bool shadowmap = true;
 		bool itemShadows = true;

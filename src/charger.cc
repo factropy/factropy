@@ -19,6 +19,7 @@ Charger& Charger::create(uint id) {
 	charger.id = id;
 	charger.en = &Entity::get(id);
 	charger.energy = 0;
+	charger.connected = false;
 	charger.buffer = charger.en->spec->consumeChargeBuffer;
 	return charger;
 }
@@ -37,11 +38,14 @@ Energy Charger::chargeRate() {
 }
 
 void Charger::charge() {
+	connected = false;
 	if (en->isGhost()) return;
 	if (!en->isEnabled()) return;
 
 	auto pole = PowerPole::covering(en->box());
 	auto network = pole ? pole->network: nullptr;
+
+	connected = network != nullptr;
 
 	if (network && energy < buffer) {
 		Energy require = std::min(chargeRate(), buffer-energy);
@@ -60,3 +64,6 @@ float Charger::level() {
 	return energy.portion(buffer);
 }
 
+bool Charger::powered() {
+	return connected || energy > Energy(0);
+}

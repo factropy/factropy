@@ -29,7 +29,7 @@ Loader& Loader::create(uint id) {
 	loader.loading = !en.spec->loaderUnload;
 	loader.monitor = Monitor::Store;
 	loader.pause = 0;
-	loader.force = false;
+	loader.ignore = false;
 	loader.cache.point = Point::Zero;
 	loader.cache.refresh = 0;
 	return loader;
@@ -50,7 +50,6 @@ LoaderSettings* Loader::settings() {
 LoaderSettings::LoaderSettings(Loader& loader) {
 	filter = loader.filter;
 	loading = loader.loading;
-	force = loader.force;
 	monitor = loader.monitor;
 	condition = loader.condition;
 }
@@ -58,7 +57,6 @@ LoaderSettings::LoaderSettings(Loader& loader) {
 void Loader::setup(LoaderSettings* settings) {
 	filter = settings->filter;
 	loading = settings->loading;
-	force = settings->force;
 	monitor = settings->monitor;
 	condition = settings->condition;
 }
@@ -68,81 +66,50 @@ Point Loader::point() {
 }
 
 Stack Loader::transferBeltToStore(Store& dst, Stack stack) {
-	Entity& de = Entity::get(dst.id);
+	Entity& de = *dst.en; // Entity::get(dst.id);
 
-	if (de.isGhost()) {
-		return {0,0};
-	}
+	if (de.isGhost()) return {0,0};
+	if (filter.size() && !filter.count(stack.iid)) return {0,0};
 
-	if (filter.size()) {
-		if (filter.count(stack.iid) && dst.isAccepting(stack.iid)) {
-			return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+	if (dst.strict()) {
+		if (dst.hint.accepting && dst.countAccepting(stack.iid)) {
+			return {stack.iid, std::min(stack.size, dst.countAccepting(stack.iid))};
 		}
 		return {0,0};
 	}
 
-	if (dst.isAccepting(stack.iid)) {
-		return {stack.iid, std::min(stack.size, dst.countAcceptable(stack.iid))};
+	if (!ignore && dst.hint.accepting && dst.countAccepting(stack.iid)) {
+		return {stack.iid, std::min(stack.size, dst.countAccepting(stack.iid))};
 	}
 
-	// loaders can override requester containers
-	if (force && !dst.isFull()) {
-		return stack;
+	if ((ignore || !dst.level(stack.iid)) && dst.countSpace(stack.iid)) {
+		return {stack.iid, std::min(stack.size, dst.countSpace(stack.iid))};
 	}
 
 	return {0,0};
 }
 
 Stack Loader::transferStoreToBelt(Store& src) {
-	Entity& se = Entity::get(src.id);
+	Entity& se = *src.en; //Entity::get(src.id);
 
 	if (se.isGhost()) {
 		return {0,0};
 	}
 
-	if (filter.size()) {
-		Stack stack = {src.wouldRemoveAny(filter),1};
-		if (!stack.iid) {
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isActiveProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-			for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.isProviding(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
-			// loaders can override requester containers
-			if (force) for (Stack& ss: src.stacks) {
-				if (filter.count(ss.iid) && src.countNet(ss.iid)) {
-					return {ss.iid, 1};
-				}
-			}
+	if (src.strict() && src.hint.providing) {
+		for (auto& stack: src.stacks) {
+			if (filter.size() && !filter.count(stack.iid)) continue;
+			if (src.countProviding(stack.iid)) return {stack.iid,1};
 		}
-		return stack;
 	}
 
-	Stack stack = {src.wouldRemoveAny(),1};
-	if (!stack.iid) {
-		for (Stack& ss: src.stacks) {
-			if (src.isActiveProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		for (Stack& ss: src.stacks) {
-			if (src.isProviding(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
-		// loaders can override requester containers
-		if (force) for (Stack& ss: src.stacks) {
-			if (src.countNet(ss.iid)) {
-				return {ss.iid, 1};
-			}
-		}
+	for (auto& ss: src.stacks) {
+		if (filter.size() && !filter.count(ss.iid)) continue;
+		if (!ignore && src.hint.providing && src.countProviding(ss.iid)) return {ss.iid,1};
+		if ((ignore || !src.level(ss.iid)) && src.countLessReserved(ss.iid)) return {ss.iid,1};
 	}
-	return stack;
+
+	return {0,0};
 }
 
 // check network
@@ -177,8 +144,8 @@ void Loader::update() {
 
 	auto& conveyor = en->conveyor();
 
-	if (!conveyor.blocked() && !conveyor.empty()) {
-		en->consume(en->spec->energyConsume);
+	if (!conveyor.empty()) {
+		if (en->consume(en->spec->energyConsume) == Energy(0)) return;
 	}
 
 	if (loading && !conveyor.left.offloading() && !conveyor.right.offloading()) {

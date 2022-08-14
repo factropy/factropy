@@ -1,0 +1,17 @@
+
+add_item({
+	name = "log",
+	title = "Log",
+	category = "resources",
+	group = "ore",
+	order = "z",
+	fuel = [ "chemical", MJ(10) ],
+	show = true,
+	free = true,
+	parts = [{
+		color = colors.wood,
+		scale = 0.5,
+		lods = [["models/wood.stl", high, shadow]],
+	}],
+})
+

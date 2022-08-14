@@ -1,0 +1,36 @@
+
+add_recipe({
+	name = "drill-oil",
+	title = "Oil Drilling",
+	energy = kJ(200),
+	tags = ["drilling"],
+	drill = "oil",
+})
+
+add_recipe({
+	name = "oil-refining",
+	title = "Oil Refining",
+	energy = MJ(2),
+	tags = ["refining"],
+	input = { "oil" = 100 },
+	output = { "fuel-oil" = 35, "naphtha" = L(45) },
+})
+
+add_recipe({
+	name = "oil-cracking",
+	title = "Fuel Oil Cracking",
+	energy = MJ(4),
+	tags = ["refining"],
+	input = { "fuel-oil" = L(100), "steam" = L(100) },
+	output = { "naphtha" = L(50) },
+})
+
+add_recipe({
+	name = "sulfur",
+	title = "Sulfur Extraction",
+	energy = kJ(900),
+	tags = tags.chemistry,
+	input = { "naphtha" = L(40), "water" = L(40) },
+	output = { "sulfur" = 4 },
+	fluid = "naphtha",
+})

@@ -116,3 +116,4 @@
 
 //---- Tip: You can add extra functions within the ImGui:: namespace, here or in your own headers files.
 
+#define ImTextureID uint64_t

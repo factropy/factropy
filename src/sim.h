@@ -71,11 +71,9 @@ namespace Sim {
 	extern Alerts alerts;
 	extern const std::vector<const char*> customIcons;
 
+	void init(int64_t seed);
 	void reset();
-	void save();
-	void load();
 
-	void reseed(int64_t seed);
 	float random();
 	int choose(int range);
 	std::mt19937* urng();

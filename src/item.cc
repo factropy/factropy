@@ -1,7 +1,6 @@
 #include "common.h"
 #include "sim.h"
 #include "item.h"
-#include "recipe.h"
 
 Fuel::Fuel() {
 	energy = 0;
@@ -26,6 +25,11 @@ Stack::Stack(std::initializer_list<uint> l) {
 void Item::reset() {
 	all.clear();
 	names.clear();
+	sequence = 0;
+	mining.clear();
+	supplied.clear();
+	categories.clear();
+	display.clear();
 }
 
 uint Item::next() {
@@ -83,15 +87,25 @@ uint Item::bestAmmo() {
 	return ammoId;
 }
 
+miniset<Recipe*> Item::recipes() {
+	miniset<Recipe*> out;
+	for (auto& [_,recipe]: Recipe::names) {
+		if (!recipe->licensed) continue;
+		if (recipe->mine == id) out.insert(recipe);
+		if (recipe->outputItems.count(id)) out.insert(recipe);
+	}
+	return out;
+}
+
 bool Item::manufacturable() {
+	if (free) return true;
 	for (auto& [_,recipe]: Recipe::names) {
 		if (!recipe->licensed) continue;
 		if (recipe->mine == id) return true;
-		for (auto [iid,_]: recipe->outputItems) {
-			if (iid == id) {
-				return true;
-			}
-		}
+		if (recipe->outputItems.count(id)) return true;
+	}
+	for (auto& [_,spec]: Spec::all) {
+		if (spec->licensed && spec->source && spec->sourceItem == this) return true;
 	}
 	return false;
 }
@@ -116,5 +130,4 @@ bool Item::hasLOD(float distance) {
 	for (auto part: parts) if (part->distanceLOD(distance)) return true;
 	return false;
 }
-
 

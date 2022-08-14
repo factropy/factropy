@@ -1,0 +1,129 @@
+add_spec({
+	name = "flight-pad-depot",
+	title = "Flight Pad (Depot)",
+	cycle = "flight-pad-load",
+	rotateGhost = true,
+	health = 150,
+	collision = [0,0,0,10,3,10],
+	iconD = 6,
+	iconV = 0,
+	enemyTarget = true,
+	flightPad = true,
+	flightPadHome = [0,1.5,0],
+	flightPadDepot = true,
+	materials = {
+		"steel-frame" = 10,
+		"aluminium-frame" = 10,
+		"mother-board" = 5,
+		"brick" = 50,
+	},
+	parts = [
+		{
+			color = 0x666666ff,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-base-hd.stl", high, shadow],
+				["models/flight-pad-base-ld.stl", medium, shadow],
+				["models/flight-pad-base-ld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.overflow,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-hd.stl", high, noshadow],
+				["models/flight-pad-ld.stl", verylow, noshadow],
+			],
+		},
+	],
+})
+
+add_spec({
+	name = "flight-pad-load",
+	title = "Flight Pad (Load)",
+	cycle = "flight-pad-unload",
+	rotateGhost = true,
+	health = 150,
+	collision = [0,0,0,10,3,10],
+	iconD = 6,
+	iconV = 0,
+	enemyTarget = true,
+	flightPad = true,
+	flightPadHome = [0,1.5,0],
+	flightPadSend = true,
+	store = true,
+	tipStorage = true,
+	storeSetUpper = true,
+	storeAnything = true,
+	capacity = kg(5000),
+	materials = {
+		"steel-frame" = 10,
+		"aluminium-frame" = 10,
+		"mother-board" = 5,
+		"brick" = 50,
+	},
+	parts = [
+		{
+			color = 0x666666ff,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-base-hd.stl", high, shadow],
+				["models/flight-pad-base-ld.stl", medium, shadow],
+				["models/flight-pad-base-ld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.provider,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-hd.stl", high, noshadow],
+				["models/flight-pad-ld.stl", verylow, noshadow],
+			],
+		},
+	],
+})
+
+add_spec({
+	name = "flight-pad-unload",
+	title = "Flight Pad (Unload)",
+	cycle = "flight-pad-depot",
+	rotateGhost = true,
+	health = 150,
+	collision = [0,0,0,10,3,10],
+	iconD = 6,
+	iconV = 0,
+	enemyTarget = true,
+	flightPad = true,
+	flightPadHome = [0,1.5,0],
+	flightPadRecv = true,
+	store = true,
+	tipStorage = true,
+	storeSetUpper = true,
+	capacity = kg(5000),
+	materials = {
+		"steel-frame" = 10,
+		"aluminium-frame" = 10,
+		"mother-board" = 5,
+		"brick" = 50,
+	},
+	parts = [
+		{
+			color = 0x666666ff,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-base-hd.stl", high, shadow],
+				["models/flight-pad-base-ld.stl", medium, shadow],
+				["models/flight-pad-base-ld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.requester,
+			translate = [0,-1.5,0],
+			lods = [
+				["models/flight-pad-hd.stl", high, noshadow],
+				["models/flight-pad-ld.stl", verylow, noshadow],
+			],
+		},
+	],
+})
+

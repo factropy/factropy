@@ -1,0 +1,227 @@
+function chemplant(name, title, toolbar, upgrade, color, energy, materials)
+	pipeInput = [3.0,-1.5,1.5]
+	pipeOutput = [3.0,-1.5,-1.5]
+
+	parts = [
+		{
+			color = color,
+			filter = filter.powdercoat,
+			gloss = gloss.metallic,
+			translate = [0,-0.5,0],
+			lods = [
+				["models/chemical-plant-base-hd.stl", high, shadow],
+				["models/chemical-plant-base-ld.stl", medium, shadow],
+				["models/chemical-plant-base-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			translate = [-1,-0.5,-1],
+			lods = [
+				["models/chemical-plant-storage-tank-hd.stl", high, shadow],
+				["models/chemical-plant-storage-tank-ld.stl", medium, shadow],
+				["models/chemical-plant-storage-tank-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			translate = [-1,-0.5,1],
+			lods = [
+				["models/chemical-plant-storage-tank-hd.stl", high, shadow],
+				["models/chemical-plant-storage-tank-ld.stl", medium, shadow],
+				["models/chemical-plant-storage-tank-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			gloss = gloss.metallic,
+			translate = [-1,-0.5,-1],
+			lods = [
+				["models/chemical-plant-pipe-hd.stl", high, shadow],
+				["models/chemical-plant-pipe-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.pipe,
+			gloss = gloss.metallic,
+			translate = [-1,-0.5,1],
+			lods = [
+				["models/chemical-plant-pipe-hd.stl", high, shadow],
+				["models/chemical-plant-pipe-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			gloss = gloss.shiny,
+			translate = [1.15,-0.45,0],
+			lods = [
+				["models/chemical-plant-mixing-tank-hd.stl", high, shadow],
+				["models/chemical-plant-mixing-tank-ld.stl", medium, shadow],
+				["models/chemical-plant-mixing-tank-vld.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			spinner = true,
+			gloss = gloss.metallic,
+			translate = [1.15,-0.45,1],
+			lods = [
+				["models/chemical-plant-agitator-hd.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.steel,
+			spinner = true,
+			gloss = gloss.metallic,
+			translate = [1.15,-0.45,-1],
+			lods = [
+				["models/chemical-plant-agitator-hd.stl", medium, noshadow],
+			],
+		},
+		{
+			color = "recipe",
+			translucent = true,
+			translate = [1.15,-1.55,0],
+			lods = [
+				["models/chemical-plant-mixing-tank-fluid-hd.stl", medium, noshadow],
+			],
+		},
+	]
+
+	for z in [-1,1]
+		parts[#parts] = {
+			color = 0xffffffff,
+			smoke = {
+				direction = up,
+				particlesMax = 180,
+				particlesPerTick = 2,
+				particleRadius = 0.02,
+				emitRadius = 0.8,
+				spreadFactor = 0.0,
+				tickRadiusFactor = 0.005,
+				tickDirectionFactor = 0.03,
+				tickDecayFactor = 0.99,
+				tickLifeLower = 60,
+				tickLifeUpper = 60,
+			},
+			translate = [1.15,-1.8,z],
+		}
+	end
+
+	function multiple(v,n)
+		batch = []
+		for i in n batch[#batch] = v end
+		return batch
+	end
+
+	states = [
+		[
+			multiple(identity, 9)...,
+			multiple(identity, 2)...,
+		],
+	]
+
+	states_show = [
+		[
+			multiple(true, 9)...,
+			multiple(false, 2)...,
+		],
+	]
+
+	speed = -3.6
+
+	// turn on, fill tank
+	for i in 40
+		states[#states] = [
+			multiple(identity, 6)...,
+			multiple(matrix_rotate(up, speed*i), 2)...,
+			multiple(matrix_translate([0,0.025*i,0]), 3)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 9)...,
+			multiple(true, 2)...,
+		]
+	end
+
+	// normal running, full tank with bubbles
+	for i in 120
+		states[#states] = [
+			multiple(identity, 6)...,
+			multiple(matrix_rotate(up, (i+40)*speed), 2)...,
+			multiple(matrix_translate([0,0.025*40,0]), 3)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 9)...,
+			multiple(true, 2)...,
+		]
+	end
+
+	// turn off, empty tank
+	for i in 40
+		states[#states] = [
+			multiple(identity, 6)...,
+			multiple(matrix_rotate(up, (i+160)*speed), 2)...,
+			multiple(matrix_translate([0,0.025*(40-i),0]), 3)...,
+		]
+		states_show[#states_show] = [
+			multiple(true, 9)...,
+			multiple(true, 2)...,
+		]
+	end
+
+	add_spec({
+		name = name,
+		title = title,
+		toolbar = toolbar,
+		upgrade = upgrade,
+		health = 150,
+		store = true,
+		capacity = kg(100),
+		priority = 10,
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterProgress = true,
+		enable = true,
+		recipeTags = tags.chemistry,
+		consumeElectricity = true,
+		energyConsume = energy,
+		energyDrain = 0+(0.03*energy),
+		collision = [0, 0, 0, 6, 4, 6],
+		iconD = 4,
+		iconV = 0.25,
+		status = true,
+		beacon = [-1,1.75,0.5],
+		enemyTarget = true,
+		materials = materials,
+		pipeHints = true,
+		pipeInputConnections = [
+			point_rotate(pipeInput, up, 0.0),
+			point_rotate(pipeInput, up, 90.0),
+			point_rotate(pipeInput, up, 180.0),
+			point_rotate(pipeInput, up, 270.0),
+		],
+		pipeOutputConnections = [
+			point_rotate(pipeOutput, up, 0.0),
+			point_rotate(pipeOutput, up, 90.0),
+			point_rotate(pipeOutput, up, 180.0),
+			point_rotate(pipeOutput, up, 270.0),
+		],
+		states = states,
+		statesShow = states_show,
+		parts = parts,
+	})
+end
+
+chemplant("chemplant1", "Chemical Plant", "$(toolbar.crafting)-c", nil, colors.crafter2, kW(200), {
+	"steel-sheet" = 4,
+	"copper-sheet" = 4,
+	"pipe" = 4,
+	"steel-frame" = 4,
+	"circuit-board" = 4,
+})
+

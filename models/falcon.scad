@@ -84,7 +84,16 @@ module bodyHD($fn=hd) {
 	}
 }
 
-//translate([10,0,0]) bodyHD();
+//bodyHD();
+
+module bodyLD($fn=ld) {
+	hull() {
+		translate([0,0,20]) nose($fn=hd);
+		body($fn=hd);
+	}
+}
+
+//bodyLD();
 
 module bodyHD2($fn=hd) {
 	union() {
@@ -119,7 +128,7 @@ module finsHD() {
 	}
 }
 
-finsHD();
+//finsHD();
 
 module bodyLD2($fn=ld) {
 	union() {
@@ -142,5 +151,5 @@ module bodyLD2($fn=ld) {
 
 //raptor($fn=ld);
 //launchpad($fn=ld);
-//translate([-1.8,0,-0.25]) leg($fn=ld/2);
+translate([-1.8,0,-0.25]) leg($fn=ld/2);
 //base($fn=hd);

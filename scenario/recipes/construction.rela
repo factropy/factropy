@@ -1,0 +1,201 @@
+
+add_recipe({
+	name = "copper-sheet",
+	title = "Copper Sheeting",
+	input = { "copper-ingot" = 1 },
+	output = { "copper-sheet" = 2 },
+	tags = tags.crafting,
+	energy = energy.crafting,
+})
+
+add_recipe({
+	name = "steel-sheet",
+	title = "Steel Sheeting",
+	input = { "steel-ingot" = 1 },
+	output = { "steel-sheet" = 2 },
+	tags = tags.crafting,
+	energy = energy.crafting,
+})
+
+add_recipe({
+	name = "copper-wire"
+	title = "Copper Wire Extrusion",
+	input = { "copper-ingot" = 1 },
+	output = { "copper-wire" = 2 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "gold-wire"
+	title = "Gold Wire Extrusion",
+	input = { "gold-ingot" = 1 },
+	output = { "gold-wire" = 2 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "solder"
+	title = "Solder Extrusion",
+	input = { "tin-ingot" = 1, "lead-ingot" = 1 },
+	output = { "solder" = 3 },
+	energy = energy.crafting,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "gear-wheel"
+	title = "Gear Wheel Cutting",
+	input = { "steel-ingot" = 2, "silicon-ingot" = 1 },
+	output = { "gear-wheel" = 4 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "pipe"
+	title = "Pipe Rolling",
+	input = { "copper-ingot" = 1, "solder" = 1 },
+	output = { "pipe" = 1 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "steel-frame"
+	title = "Steel Framing",
+	input = { "steel-ingot" = 2, "tin-ingot" = 1 },
+	output = { "steel-frame" = 2 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "aluminium-frame",
+	title = "Aluminium Frame",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = { "aluminium-ingot" = 1 },
+	output = { "aluminium-frame" = 1 },
+})
+
+add_recipe({
+	name = "circuit-board"
+	title = "Circuit Board Printing",
+	input = {
+		"silicon-ingot" = 1,
+		"copper-wire" = 1,
+		"solder" = 1,
+	},
+	output = { "circuit-board" = 4 },
+	energy = energy.crafting*2,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "plastic-bar",
+	title = "Plastic Molding",
+	energy = kJ(300),
+	tags = tags.chemistry,
+	input = { "coal" = 1, "naphtha" = L(40) },
+	output = { "plastic-bar" = 2 },
+	fluid = "naphtha",
+})
+
+add_recipe({
+	name = "mother-board",
+	title = "Mother Board Layering",
+	energy = kJ(1200),
+	tags = tags.crafting,
+	input = { "circuit-board" = 4, "plastic-bar" = 2, "solder" = 2, "copper-wire" = 2 },
+	output = { "mother-board" = 1 },
+})
+
+add_recipe({
+	name = "battery"
+	title = "Batteries",
+	input = {
+		"steel-sheet" = 1,
+		"copper-sheet" = 1,
+		"lead-ingot" = 1,
+		"sulfuric-acid" = L(20),
+	},
+	output = { "battery" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.chemistry,
+	fluid = "sulfuric-acid",
+})
+
+add_recipe({
+	name = "electric-motor"
+	title = "Electric Motors",
+	input = {
+		"steel-sheet" = 1,
+		"circuit-board" = 1,
+		"copper-wire" = 1,
+		"gear-wheel" = 1,
+	},
+	output = { "electric-motor" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.crafting,
+})
+
+add_recipe({
+	name = "filter"
+	title = "Filters",
+	input = {
+		"copper-sheet" = 1,
+		"plastic-bar" = 1,
+		"coal" = 1,
+		"steam" = L(20),
+	},
+	output = { "filter" = 1 },
+	energy = energy.crafting*3,
+	tags = tags.crafting_with_fluid,
+	fluid = "water",
+})
+
+add_recipe({
+	name = "heatsink"
+	title = "Heat Sink Machining",
+	input = {
+		"copper-sheet" = 1,
+		"aluminium-ingot" = 1,
+		"steam" = L(20),
+	},
+	output = { "heatsink" = 2 },
+	energy = energy.crafting*3,
+	tags = tags.crafting_with_fluid,
+	fluid = "water",
+})
+
+add_recipe({
+	name = "processor",
+	title = "Processor Lithography",
+	energy = MJ(5),
+	tags = tags.chemistry,
+	input = {
+		"silicon-ingot" = 1,
+		"gold-wire" = 2,
+		"hydrofluoric-acid" = L(50),
+	},
+	output = { "processor" = 1 },
+	fluid = "hydrofluoric-acid",
+})
+
+add_recipe({
+	name = "computer",
+	title = "Computer Assembly",
+	energy = kJ(600),
+	tags = tags.crafting,
+	input = {
+		"mother-board" = 1,
+		"processor" = 1,
+		"heatsink" = 1,
+		"aluminium-frame" = 1,
+	},
+	output = { "computer" = 1 },
+})
+
+
