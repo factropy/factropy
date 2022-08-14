@@ -368,7 +368,7 @@ namespace Config {
 
 		window.sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
 		if (window.fullscreen) window.sdlFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		if (window.resizable && !window.fullscreen) window.sdlFlags |= SDL_WINDOW_RESIZABLE;
+		if (window.resizable) window.sdlFlags |= SDL_WINDOW_RESIZABLE;
 	}
 
 	void profile() {
@@ -441,12 +441,6 @@ namespace Config {
 
 		Config::toolbar.icon.size = scale() < 1.1 ? 0: 1;
 
-//notef("WindowPadding: %f,%f", style.WindowPadding.x, style.WindowPadding.y);
-//notef("FramePadding: %f,%f", style.FramePadding.x, style.FramePadding.y);
-//notef("ItemSpacing: %f,%f", style.ItemSpacing.x, style.ItemSpacing.y);
-//notef("ItemInnerSpacing: %f,%f", style.ItemInnerSpacing.x, style.ItemInnerSpacing.y);
-//notef("CellPadding: %f,%f", style.CellPadding.x, style.CellPadding.y);
-
 		style.FrameRounding = style.FramePadding.x;
 		style.WindowRounding = style.FrameRounding;
 		style.TabRounding = style.FrameRounding;
@@ -457,7 +451,16 @@ namespace Config {
 	void autoscale(SDL_Window* win) {
 		int w = 0, h = 0;
 		SDL_GetWindowSize(win, &w, &h);
-		if (w != window.width) {
+		bool rescale = w != window.width;
+
+		int hr = BASELINE_WINDOW_HEIGHT * ((float)w/BASELINE_WINDOW_WIDTH);
+		if (!window.resizable && !window.fullscreen && h != hr) {
+			h = hr;
+			rescale = true;
+			SDL_SetWindowSize(win, w, h);
+		}
+
+		if (rescale) {
 			window.width = w;
 			window.height = h;
 			imgui();

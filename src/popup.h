@@ -89,8 +89,10 @@ struct StartScreen : Popup {
 
 	StartScreen();
 	~StartScreen();
-	void prepare() override;
 	void draw() override;
+	void drawLoad();
+	void drawNew();
+	void drawVideo();
 };
 
 struct SignalsPopup : Popup {

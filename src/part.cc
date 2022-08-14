@@ -10,9 +10,16 @@
 
 Part::Part(const Color& c) {
 	color = c;
+	all.insert(this);
 }
 
 Part::~Part() {
+	all.erase(this);
+}
+
+void Part::reset() {
+	std::vector<Part*> copy = {all.begin(), all.end()};
+	for (auto part: copy) delete part;
 }
 
 void Part::resetAll() {

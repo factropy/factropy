@@ -16,6 +16,11 @@ namespace {
 	thread_local std::map<Mesh*,std::map<GLuint,Mesh::renderGroup>> lgroups;
 }
 
+void Mesh::reset() {
+	std::vector<Mesh*> copy = {all.begin(), all.end()};
+	for (auto mesh: copy) delete mesh;
+}
+
 void Mesh::resetAll() {
 	const std::lock_guard<std::mutex> lock(allMutex);
 	current = current ? 0:1; // toggle

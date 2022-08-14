@@ -35,14 +35,6 @@ namespace {
 			notef("openURL failed");
 	#endif
 	}
-
-	template <typename TP>
-	std::time_t to_time_t(TP tp)
-	{
-		using namespace std::chrono;
-		auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now() + system_clock::now());
-		return system_clock::to_time_t(sctp);
-	}
 }
 
 Popup::Popup() {
@@ -669,16 +661,17 @@ void Popup::goalRateChart(Goal* goal, Goal::Rate& rate, float h) {
 	PushFont(Config::sidebar.font.imgui);
 
 	PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0,0));
-	BeginTable(fmtc("#goal-sums-%s-%u", goal->name, rate.iid), goal->period/hour);
-	for (int i = 0, l = goal->period/hour; i < l; i++) {
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+	if (BeginTable(fmtc("#goal-sums-%s-%u", goal->name, rate.iid), goal->period/hour)) {
+		for (int i = 0, l = goal->period/hour; i < l; i++) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+		}
+		for (int i = 0, l = goal->period/hour; i < l; i++) {
+			TableNextColumn();
+			TableSetBgColor(ImGuiTableBgTarget_RowBg0, head);
+			TextCentered(formatCount(intervalCounts[i]).c_str());
+		}
+		EndTable();
 	}
-	for (int i = 0, l = goal->period/hour; i < l; i++) {
-		TableNextColumn();
-		TableSetBgColor(ImGuiTableBgTarget_RowBg0, head);
-		TextCentered(formatCount(intervalCounts[i]).c_str());
-	}
-	EndTable();
 	PopStyleVar(1);
 
 	uint ymax = 0;
@@ -737,225 +730,21 @@ void Popup::goalRateChart(Goal* goal, Goal::Rate& rate, float h) {
 	SetCursorPos(ImVec2(top.x, top.y + h + gap*2));
 
 	PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0,0));
-	BeginTable(fmtc("#goal-hours-%s-%u", goal->name, rate.iid), goal->period/hour);
-	for (uint64_t tick = 0; tick < goal->period; tick += hour) {
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+	if (BeginTable(fmtc("#goal-hours-%s-%u", goal->name, rate.iid), goal->period/hour)) {
+		for (uint64_t tick = 0; tick < goal->period; tick += hour) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+		}
+		for (uint64_t tick = 0; tick < goal->period; tick += hour) {
+			TableNextColumn();
+			TableSetBgColor(ImGuiTableBgTarget_RowBg0, head);
+			TextCentered(fmtc("-%dh", (goal->period-tick)/hour));
+		}
+		EndTable();
 	}
-	for (uint64_t tick = 0; tick < goal->period; tick += hour) {
-		TableNextColumn();
-		TableSetBgColor(ImGuiTableBgTarget_RowBg0, head);
-		TextCentered(fmtc("-%dh", (goal->period-tick)/hour));
-	}
-	EndTable();
 	PopStyleVar(1);
 
 	SpacingV();
 	PopFont();
-}
-
-StartScreen::StartScreen() : Popup() {
-	banner = loadTexture("assets/banner.png");
-
-	auto todayMS = []() {
-		auto now = std::chrono::system_clock::now();
-		time_t tnow = std::chrono::system_clock::to_time_t(now);
-		tm *date = std::localtime(&tnow);
-		date->tm_hour = 0;
-		date->tm_min = 0;
-		date->tm_sec = 0;
-		auto midnight = std::chrono::system_clock::from_time_t(std::mktime(date));
-		return std::chrono::duration_cast<std::chrono::milliseconds>(now-midnight).count();
-	};
-
-	for (int i = 1; ; i++) {
-		snprintf(name, sizeof(name), "game%d", i);
-		auto str = std::string(name);
-		if (Config::saveNameOk(name) && Config::saveNameFree(name)) break;
-	}
-
-	snprintf(seed, sizeof(seed), "%u", Config::mode.seeds[todayMS() % Config::mode.seeds.size()]);
-
-	try {
-		for (auto& entry: std::filesystem::directory_iterator{Config::dataPath("saves")}) {
-			if (!std::filesystem::is_directory(entry)) continue;
-			auto simjson = fmt("%s/sim.json", entry.path().string());
-			if (!std::filesystem::exists(simjson)) continue;
-			screen = Screen::Load;
-			break;
-		}
-	}
-	catch (std::filesystem::filesystem_error& e) {
-		infof("%s", e.what());
-	}
-}
-
-StartScreen::~StartScreen() {
-	freeTexture(banner);
-}
-
-void StartScreen::prepare() {
-}
-
-void StartScreen::draw() {
-	small();
-	Begin("Factropy", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-	PushID("start-screen");
-
-	ImageBanner(banner.id, banner.w, banner.h);
-
-	BeginTable("##layout", 2);
-	TableSetupColumn("##layout-left", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.25));
-	TableSetupColumn("##layout-right", ImGuiTableColumnFlags_WidthStretch, relativeWidth(0.25));
-
-	TableNextColumn();
-		BeginChild("##layout-left-group");
-
-		PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::Load ? ImGuiCol_ButtonActive: ImGuiCol_Button));
-		if (Button(" Load Game ", ImVec2(-1,0))) screen = Screen::Load;
-		PopStyleColor();
-
-		PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::New ? ImGuiCol_ButtonActive: ImGuiCol_Button));
-		if (Button(" New Game ", ImVec2(-1,0))) screen = Screen::New;
-		PopStyleColor();
-
-		if (Button(" Exit ", ImVec2(-1,0))) exit(0);
-
-		EndChild();
-
-	TableNextColumn();
-		BeginChild("##layout-right-group");
-
-		switch (screen) {
-			case Screen::New: {
-				bool ok = true;
-
-				if (!Config::saveNameOk(name)) {
-					Warning("Invalid save name: _ a-z A-Z 0-9");
-					ok = false;
-				}
-
-				if (!Config::saveNameFree(std::string(name))) {
-					Warning(fmtc("Save '%s' already exists.", name));
-					ok = false;
-				}
-
-				if (!strtoul(seed, nullptr, 10)) {
-					Warning(fmtc("Seed invalid.", name));
-					ok = false;
-				}
-
-				InputText("Name##name", name, sizeof(name));
-				InputText("Seed##seed", seed, sizeof(seed));
-
-				if (Button(" Start ") && ok) {
-					Config::mode.fresh = true;
-					Config::mode.freshSeed = strtoul(seed, nullptr, 10);
-					Config::mode.saveName = std::string(name);
-				}
-
-				break;
-			}
-
-			case Screen::Load: {
-				struct Save {
-					std::string name;
-					char date[32];
-					char time[32];
-				};
-
-				std::vector<Save> saves;
-
-				try {
-					for (auto& entry: std::filesystem::directory_iterator{Config::dataPath("saves")}) {
-						if (!std::filesystem::is_directory(entry)) continue;
-						auto simjson = fmt("%s/sim.json", entry.path().string());
-						if (!std::filesystem::exists(simjson)) continue;
-						std::string name = entry.path().filename().string();
-						std::time_t cftime = to_time_t(std::filesystem::last_write_time(simjson));
-						auto& save = saves.emplace_back();
-						save.name = name;
-						std::strftime(save.date, sizeof(save.date), "%b %d", std::localtime(&cftime));
-						std::strftime(save.time, sizeof(save.time), "%H:%M", std::localtime(&cftime));
-					}
-				}
-				catch (std::filesystem::filesystem_error& e) {
-					Alert("Error listing saves");
-					Print(fmtc("%s", e.what()));
-					saves.clear();
-				}
-
-				std::sort(saves.begin(), saves.end(), [](const auto& a, const auto& b) { return a.name < b.name; });
-				games.resize(saves.size());
-
-				if (!saves.size()) {
-					Print("(no saved games)");
-				}
-
-				float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
-				float width = GetContentRegionAvail().x*0.2;
-
-				for (int i = 0, l = saves.size(); i < l; i++) {
-					auto name = saves[i].name;
-					BeginTable("##load-list", 4);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
-						TableNextRow();
-						TableNextColumn();
-						Checkbox(fmtc("##check-%s", name), &games[i]);
-						TableNextColumn();
-						if (Button(fmtc("%s##open-%d", ICON_FA_FOLDER_OPEN, i), ImVec2(button,0))) {
-							Config::mode.load = true;
-							Config::mode.saveName = name;
-						}
-						if (IsItemHovered()) tip("Open game");
-						TableNextColumn();
-						Print(name.c_str());
-						TableNextColumn();
-						PushFont(Config::sidebar.font.imgui);
-						PrintRight(fmtc("%s %s", saves[i].date, saves[i].time));
-						PopFont();
-					EndTable();
-					Separator();
-				}
-
-				int selected = 0; for (auto flag: games) if (flag) selected++;
-
-				if (!selected) {
-					PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
-				}
-
-				if (Button("Delete Selected") && selected) {
-					for (int i = 0, l = saves.size(); i < l; i++) {
-						if (games[i]) Config::saveDelete(saves[i].name);
-					}
-					games.clear();
-				}
-
-				if (!selected) {
-					PopStyleColor(1);
-				}
-
-				break;
-			}
-
-			case Screen::Video: {
-				break;
-			}
-		}
-
-
-		EndChild();
-
-	EndTable();
-
-	PopID();
-
-	mouseOver = IsWindowHovered();
-	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
-	End();
 }
 
 LoadingPopup::LoadingPopup() : Popup() {
@@ -967,33 +756,22 @@ LoadingPopup::~LoadingPopup() {
 }
 
 void LoadingPopup::draw() {
-
-	big();
-	Begin("Loading", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	small();
+	Begin(fmtc("%s##loading", Config::mode.saveName), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
 	ImageBanner(banner.id, banner.w, banner.h);
+	if (progress < 1.0) SmallBar(std::max(0.01f, progress));
 
-	for (auto msg: log) Print(msg);
-	SetScrollHereY();
+	BeginChild("##messages");
+		PushFont(Config::sidebar.font.imgui);
+		for (auto msg: log) Print(msg);
+		SetScrollHereY();
+		PopFont();
+	EndChild();
 
 	mouseOver = IsWindowHovered();
 	subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
 	End();
-
-	if (progress > 0) {
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration
-			| ImGuiWindowFlags_NoMove
-			| ImGuiWindowFlags_NoSavedSettings
-			| ImGuiWindowFlags_NoFocusOnAppearing
-			| ImGuiWindowFlags_NoNav
-			| ImGuiWindowFlags_NoSavedSettings;
-
-		SetNextWindowSize(ImVec2((float)Config::width(0.6f),0));
-		Begin("##progress", nullptr, flags);
-			SmallBar(std::max(0.01f, progress));
-		SetWindowPos(ImVec2(((float)Config::window.width - GetWindowSize().x)/2.0f, (float)Config::window.height - GetWindowSize().y), ImGuiCond_Always);
-		End();
-	}
 }
 
 void LoadingPopup::print(std::string msg) {
@@ -1041,25 +819,26 @@ void StatsPopup2::draw() {
 			Warning("Imagine an old-school under-construction gif here :)");
 
 			SpacingV();
-			BeginTable("##prod-form", 2);
-			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x/4.0);
-			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x/4.0);
+			if (BeginTable("##prod-form", 2)) {
+				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x/4.0);
+				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x/4.0);
 
-			TableNextColumn();
-			PushItemWidth(-1);
-			InputTextWithHint("##prod-filter", "filter items", filter, sizeof(filter));
-			inputFocused = IsItemActive();
-			PopItemWidth();
+				TableNextColumn();
+				PushItemWidth(-1);
+				InputTextWithHint("##prod-filter", "filter items", filter, sizeof(filter));
+				inputFocused = IsItemActive();
+				PopItemWidth();
 
-			TableNextColumn();
-			PushItemWidth(-1);
-			if (BeginCombo("##prod-filter-mode", any ? "Match any word": "Match all words")) {
-				if (Selectable("Match any word", any)) any = true;
-				if (Selectable("Match all words", !any)) any = false;
-				EndCombo();
+				TableNextColumn();
+				PushItemWidth(-1);
+				if (BeginCombo("##prod-filter-mode", any ? "Match any word": "Match all words")) {
+					if (Selectable("Match any word", any)) any = true;
+					if (Selectable("Match all words", !any)) any = false;
+					EndCombo();
+				}
+				PopItemWidth();
+				EndTable();
 			}
-			PopItemWidth();
-			EndTable();
 
 			double prod[61];
 			double cons[61];
@@ -1105,31 +884,32 @@ void StatsPopup2::draw() {
 					ensure(item->title.size());
 					if (needle.size() && !match(item->title)) continue;
 
-					BeginTable(fmtc("#item-prod-%u", item->id), 2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+					if (BeginTable(fmtc("#item-prod-%u", item->id), 2)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, column);
 
-					TableNextColumn();
-					TextCentered(fmtc("%s / min", item->title));
-					chart60([&]() {
-						int i = Sim::tick <= hour ? (hour-Sim::tick)/minute: 0;
-						for (uint64_t tick = Sim::tick <= hour ? 0: Sim::tick-hour; tick < Sim::tick; tick += minute, i++) {
-							prod[i] = item->production.minutes[item->production.minute(tick)];
-							cons[i] = item->consumption.minutes[item->consumption.minute(tick)];
-						}
-					});
+						TableNextColumn();
+						TextCentered(fmtc("%s / min", item->title));
+						chart60([&]() {
+							int i = Sim::tick <= hour ? (hour-Sim::tick)/minute: 0;
+							for (uint64_t tick = Sim::tick <= hour ? 0: Sim::tick-hour; tick < Sim::tick; tick += minute, i++) {
+								prod[i] = item->production.minutes[item->production.minute(tick)];
+								cons[i] = item->consumption.minutes[item->consumption.minute(tick)];
+							}
+						});
 
-					TableNextColumn();
-					TextCentered(fmtc("%s / sec", item->title));
-					chart60([&]() {
-						int i = Sim::tick <= minute ? (minute-Sim::tick)/second: 0;
-						for (uint64_t tick = Sim::tick <= minute ? 0: Sim::tick-minute; tick < Sim::tick; tick += second, i++) {
-							prod[i] = item->production.seconds[item->production.second(tick)];
-							cons[i] = item->consumption.seconds[item->consumption.second(tick)];
-						}
-					});
+						TableNextColumn();
+						TextCentered(fmtc("%s / sec", item->title));
+						chart60([&]() {
+							int i = Sim::tick <= minute ? (minute-Sim::tick)/second: 0;
+							for (uint64_t tick = Sim::tick <= minute ? 0: Sim::tick-minute; tick < Sim::tick; tick += second, i++) {
+								prod[i] = item->production.seconds[item->production.second(tick)];
+								cons[i] = item->consumption.seconds[item->consumption.second(tick)];
+							}
+						});
 
-					EndTable();
+						EndTable();
+					}
 				}
 			});
 
@@ -1281,103 +1061,102 @@ void StatsPopup2::draw() {
 				return fmt("%llu GB", bytes/K/K/K);
 			};
 
-			BeginTable("memory", 3, ImGuiTableFlags_RowBg);
+			if (BeginTable("memory", 3, ImGuiTableFlags_RowBg)) {
+				TableSetupColumn("component");
+				TableSetupColumn("memory");
+				TableSetupColumn("extant");
 
-			TableSetupColumn("component");
-			TableSetupColumn("memory");
-			TableSetupColumn("extant");
+				TableHeadersRow();
 
-			TableHeadersRow();
-
-			TableNextRow();
-			TableNextColumn();
-			Print("World");
-			TableNextColumn();
-			Print(readable(world.memory()).c_str());
-			TableNextColumn();
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Chunk");
-			TableNextColumn();
-			Print(readable(Chunk::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Chunk::all.size()));
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Entity");
-			TableNextColumn();
-			Print(readable(Entity::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Entity::all.size()));
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Arm");
-			TableNextColumn();
-			Print(readable(Arm::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Arm::all.size()));
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Conveyor");
-			TableNextColumn();
-			Print(readable(Conveyor::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Conveyor::managed.size() + Conveyor::unmanaged.size()));
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Loader");
-			TableNextColumn();
-			Print(readable(Loader::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Loader::all.size()));
-
-			TableNextRow();
-			TableNextColumn();
-			Print("Store");
-			TableNextColumn();
-			Print(readable(Store::memory()).c_str());
-			TableNextColumn();
-			Print(fmtc("%d", Store::all.size()));
-
-			EndTable();
-
-			BeginTable("recipes", 3, ImGuiTableFlags_RowBg);
-
-			TableSetupColumn("recipe");
-			TableSetupColumn("total energy");
-			TableSetupColumn("raw materials");
-
-			TableHeadersRow();
-
-			std::vector<Recipe*> recipes;
-			for (auto [_,recipe]: Recipe::names) recipes.push_back(recipe);
-			reorder(recipes, [&](auto a, auto b) { return a->title < b->title; });
-
-			for (auto recipe: recipes) {
 				TableNextRow();
-
 				TableNextColumn();
-				Print(recipe->title.c_str());
-
+				Print("World");
 				TableNextColumn();
-				Print(recipe->totalEnergy().format().c_str());
-
+				Print(readable(world.memory()).c_str());
 				TableNextColumn();
-				for (auto stack: recipe->totalRawItems()) {
-					Print(fmt("%s(%u)", Item::get(stack.iid)->name, stack.size));
-				}
-				for (auto amount: recipe->totalRawFluids()) {
-					Print(fmt("%s(%u)", Fluid::get(amount.fid)->name, amount.size));
-				}
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Chunk");
+				TableNextColumn();
+				Print(readable(Chunk::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Chunk::all.size()));
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Entity");
+				TableNextColumn();
+				Print(readable(Entity::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Entity::all.size()));
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Arm");
+				TableNextColumn();
+				Print(readable(Arm::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Arm::all.size()));
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Conveyor");
+				TableNextColumn();
+				Print(readable(Conveyor::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Conveyor::managed.size() + Conveyor::unmanaged.size()));
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Loader");
+				TableNextColumn();
+				Print(readable(Loader::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Loader::all.size()));
+
+				TableNextRow();
+				TableNextColumn();
+				Print("Store");
+				TableNextColumn();
+				Print(readable(Store::memory()).c_str());
+				TableNextColumn();
+				Print(fmtc("%d", Store::all.size()));
+
+				EndTable();
 			}
 
-			EndTable();
+			if (BeginTable("recipes", 3, ImGuiTableFlags_RowBg)) {
+				TableSetupColumn("recipe");
+				TableSetupColumn("total energy");
+				TableSetupColumn("raw materials");
 
+				TableHeadersRow();
+
+				std::vector<Recipe*> recipes;
+				for (auto [_,recipe]: Recipe::names) recipes.push_back(recipe);
+				reorder(recipes, [&](auto a, auto b) { return a->title < b->title; });
+
+				for (auto recipe: recipes) {
+					TableNextRow();
+
+					TableNextColumn();
+					Print(recipe->title.c_str());
+
+					TableNextColumn();
+					Print(recipe->totalEnergy().format().c_str());
+
+					TableNextColumn();
+					for (auto stack: recipe->totalRawItems()) {
+						Print(fmt("%s(%u)", Item::get(stack.iid)->name, stack.size));
+					}
+					for (auto amount: recipe->totalRawFluids()) {
+						Print(fmt("%s(%u)", Fluid::get(amount.fid)->name, amount.size));
+					}
+				}
+
+				EndTable();
+			}
 			EndTabItem();
 		}
 
@@ -1544,25 +1323,26 @@ void EntityPopup2::draw() {
 
 		auto signalConstant = [&](int id, Signal& signal, bool lone = true) {
 			float space = GetContentRegionAvail().x;
-			BeginTable(fmtc("##signal-const-%d", id), lone ? 3: 2);
-			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.25);
-			if (lone) TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.334);
+			if (BeginTable(fmtc("##signal-const-%d", id), lone ? 3: 2)) {
+				TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.25);
+				if (lone) TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.334);
 
-			TableNextColumn();
-			SetNextItemWidth(-1);
-			signalKey(id, signal.key, false);
-
-			TableNextColumn();
-			SetNextItemWidth(-1);
-			InputInt(fmtc("##val%d", id), &signal.value);
-
-			if (lone) {
 				TableNextColumn();
-				Print("Constant Signal");
-			}
+				SetNextItemWidth(-1);
+				signalKey(id, signal.key, false);
 
-			EndTable();
+				TableNextColumn();
+				SetNextItemWidth(-1);
+				InputInt(fmtc("##val%d", id), &signal.value);
+
+				if (lone) {
+					TableNextColumn();
+					Print("Constant Signal");
+				}
+
+				EndTable();
+			}
 		};
 
 		auto signalCondition = [&](int id, Signal::Condition& condition, bool lone, std::function<bool(void)> check = nullptr) {
@@ -1882,149 +1662,149 @@ void EntityPopup2::draw() {
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
 
 					SpacingV();
-					BeginTable(fmtc("##store-levels-%u", id++), en.spec->crafter ? 10: 9);
+					if (BeginTable(fmtc("##store-levels-%u", id++), en.spec->crafter ? 10: 9)) {
+						TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, GetFontSize());
+						TableSetupColumn("Item", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, width*0.1f);
+						TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
+						TableSetupColumn("Lower", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+						TableSetupColumn("Upper", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+						TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
+						TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
+						TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
 
-					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, GetFontSize());
-					TableSetupColumn("Item", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, width*0.1f);
-					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
-					TableSetupColumn("Lower", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
-					TableSetupColumn("Upper", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
-					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
-					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
-					TableSetupColumn(fmtc("##%d", id++), ImGuiTableColumnFlags_WidthFixed, width*0.04f);
-
-					TableNextRow(ImGuiTableRowFlags_Headers);
-					TableNextColumn();
-					TableHeader("");
-
-					TableNextColumn();
-					TableHeader("Item");
-					if (IsItemClicked()) store.sortAlpha();
-
-					TableNextColumn();
-					TableHeader("#");
-					TableNextColumn();
-					TableHeader("");
-					TableNextColumn();
-					TableHeader("Lower");
-					TableNextColumn();
-					TableHeader("Upper");
-					TableNextColumn();
-					TableHeader("");
-					TableNextColumn();
-					TableHeader("");
-
-					if (en.spec->crafter) {
+						TableNextRow(ImGuiTableRowFlags_Headers);
 						TableNextColumn();
-						TableHeader("craft");
-					}
-
-					for (auto& level: store.levels) {
-						Item *item = Item::get(level.iid);
-						TableNextRow();
-
-						int limit = (int)std::max(level.upper, (uint)store.limit().value/item->mass.value);
-						int step  = (int)std::max(1U, (uint)limit/100);
+						TableHeader("");
 
 						TableNextColumn();
-						itemIcon(item);
+						TableHeader("Item");
+						if (IsItemClicked()) store.sortAlpha();
 
 						TableNextColumn();
-						Print(fmtc("%s", item->title));
-
+						TableHeader("#");
 						TableNextColumn();
-						Print(fmtc("%d", store.count(level.iid)));
-
+						TableHeader("");
 						TableNextColumn();
-						if (store.isRequesting(level.iid)) {
-							Print("r"); if (IsItemHovered()) tip("requesting");
-						} else
-						if (store.isActiveProviding(level.iid)) {
-							Print("a"); if (IsItemHovered()) tip("actively providing");
-						} else
-						if (store.isProviding(level.iid)) {
-							Print("p"); if (IsItemHovered()) tip("passively providing");
-						}
-
-						int lower = level.lower;
-						int upper = level.upper;
-
+						TableHeader("Lower");
 						TableNextColumn();
-						if (en.spec->storeSetLower) {
-							SetNextItemWidth(width*0.2f);
-							if (InputIntClamp(fmtc("##%d", id++), &lower, 0, limit, step, step*10)) {
-								store.levelSet(level.iid, lower, upper);
-							}
-						}
-
+						TableHeader("Upper");
 						TableNextColumn();
-						if (en.spec->storeSetUpper) {
-							SetNextItemWidth(width*0.2f);
-							if (InputIntClamp(fmtc("##%d", id++), &upper, 0, limit, step, step*10)) {
-								store.levelSet(level.iid, lower, upper);
-							}
-						}
-
+						TableHeader("");
 						TableNextColumn();
-						if (Button(fmtc("%s##%d", ICON_FA_THERMOMETER_FULL, id++), ImVec2(-1,0))) {
-							store.levelSet(level.iid, lower, limit);
-						}
-						if (IsItemHovered()) tip("maximum upper limit");
-
-						TableNextColumn();
-						if (Button(fmtc("%s##%d", ICON_FA_LEVEL_DOWN, id++), ImVec2(-1,0))) {
-							down = level.iid;
-						}
-						if (IsItemHovered()) tip("move row to bottom");
-
-						TableNextColumn();
-						if (Button(fmtc("%s##%d", ICON_FA_TIMES, id++), ImVec2(-1,0))) {
-							clear = level.iid;
-						}
-						if (IsItemHovered()) tip("remove row limits");
-					}
-
-					for (Stack stack: store.stacks) {
-						if (store.level(stack.iid) != nullptr) continue;
-						Item *item = Item::get(stack.iid);
-
-						int limit = (uint)store.limit().value/item->mass.value;
-						int step  = (int)std::max(1U, (uint)limit/100);
-
-						TableNextRow();
-
-						TableNextColumn();
-						itemIcon(item);
-
-						TableNextColumn();
-						Print(fmtc("%s", item->title));
-
-						TableNextColumn();
-						Print(fmtc("%d", store.count(stack.iid)));
-
-						TableNextColumn();
-						TableNextColumn();
-
-						TableNextColumn();
-						if (Button(fmtc("+##%d", id++), ImVec2(-1,0))) {
-							uint size = stack.size%step ? stack.size+step-(stack.size%step): stack.size;
-							store.levelSet(stack.iid, 0, size);
-						}
-						if (IsItemHovered()) tip(
-							"Limit item"
-						);
-
-						TableNextColumn();
-						TableNextColumn();
-						TableNextColumn();
+						TableHeader("");
 
 						if (en.spec->crafter) {
 							TableNextColumn();
+							TableHeader("craft");
 						}
-					}
 
-					EndTable();
+						for (auto& level: store.levels) {
+							Item *item = Item::get(level.iid);
+							TableNextRow();
+
+							int limit = (int)std::max(level.upper, (uint)store.limit().value/item->mass.value);
+							int step  = (int)std::max(1U, (uint)limit/100);
+
+							TableNextColumn();
+							itemIcon(item);
+
+							TableNextColumn();
+							Print(fmtc("%s", item->title));
+
+							TableNextColumn();
+							Print(fmtc("%d", store.count(level.iid)));
+
+							TableNextColumn();
+							if (store.isRequesting(level.iid)) {
+								Print("r"); if (IsItemHovered()) tip("requesting");
+							} else
+							if (store.isActiveProviding(level.iid)) {
+								Print("a"); if (IsItemHovered()) tip("actively providing");
+							} else
+							if (store.isProviding(level.iid)) {
+								Print("p"); if (IsItemHovered()) tip("passively providing");
+							}
+
+							int lower = level.lower;
+							int upper = level.upper;
+
+							TableNextColumn();
+							if (en.spec->storeSetLower) {
+								SetNextItemWidth(width*0.2f);
+								if (InputIntClamp(fmtc("##%d", id++), &lower, 0, limit, step, step*10)) {
+									store.levelSet(level.iid, lower, upper);
+								}
+							}
+
+							TableNextColumn();
+							if (en.spec->storeSetUpper) {
+								SetNextItemWidth(width*0.2f);
+								if (InputIntClamp(fmtc("##%d", id++), &upper, 0, limit, step, step*10)) {
+									store.levelSet(level.iid, lower, upper);
+								}
+							}
+
+							TableNextColumn();
+							if (Button(fmtc("%s##%d", ICON_FA_THERMOMETER_FULL, id++), ImVec2(-1,0))) {
+								store.levelSet(level.iid, lower, limit);
+							}
+							if (IsItemHovered()) tip("maximum upper limit");
+
+							TableNextColumn();
+							if (Button(fmtc("%s##%d", ICON_FA_LEVEL_DOWN, id++), ImVec2(-1,0))) {
+								down = level.iid;
+							}
+							if (IsItemHovered()) tip("move row to bottom");
+
+							TableNextColumn();
+							if (Button(fmtc("%s##%d", ICON_FA_TIMES, id++), ImVec2(-1,0))) {
+								clear = level.iid;
+							}
+							if (IsItemHovered()) tip("remove row limits");
+						}
+
+						for (Stack stack: store.stacks) {
+							if (store.level(stack.iid) != nullptr) continue;
+							Item *item = Item::get(stack.iid);
+
+							int limit = (uint)store.limit().value/item->mass.value;
+							int step  = (int)std::max(1U, (uint)limit/100);
+
+							TableNextRow();
+
+							TableNextColumn();
+							itemIcon(item);
+
+							TableNextColumn();
+							Print(fmtc("%s", item->title));
+
+							TableNextColumn();
+							Print(fmtc("%d", store.count(stack.iid)));
+
+							TableNextColumn();
+							TableNextColumn();
+
+							TableNextColumn();
+							if (Button(fmtc("+##%d", id++), ImVec2(-1,0))) {
+								uint size = stack.size%step ? stack.size+step-(stack.size%step): stack.size;
+								store.levelSet(stack.iid, 0, size);
+							}
+							if (IsItemHovered()) tip(
+								"Limit item"
+							);
+
+							TableNextColumn();
+							TableNextColumn();
+							TableNextColumn();
+
+							if (en.spec->crafter) {
+								TableNextColumn();
+							}
+						}
+
+						EndTable();
+					}
 					PopStyleVar();
 
 					if (clear) {
@@ -2161,106 +1941,133 @@ void EntityPopup2::draw() {
 					if (crafter.recipe->inputItems.size() || crafter.recipe->inputFluids.size()) {
 
 						SpacingV();
-						BeginTable("inputs", 4);
+						if (BeginTable("inputs", 4)) {
+							TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+							TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
+							TableSetupColumn("Consumes", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+							TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
 
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-						TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
-						TableSetupColumn("Consumes", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
-						TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+							TableHeadersRow();
 
-						TableHeadersRow();
+							auto atLeast = [&](int limit, int have, std::string s) {
+								if (have < limit) {
+									TextColored(0xff0000ff, s.c_str());
+								}
+								else {
+									Print(s.c_str());
+								}
+								if (IsItemHovered()) tip(
+									"Resource input buffers allow for 2x recipe consumption."
+									" To avoid production stalling keep input buffers full."
+								);
+							};
 
-						auto atLeast = [&](int limit, int have, std::string s) {
-							if (have < limit) {
-								TextColored(0xff0000ff, s.c_str());
+							if (crafter.recipe->inputItems.size() && en.spec->store) {
+								for (auto& stack: crafter.inputItemsState()) {
+									TableNextRow();
+
+									std::string& name = Item::get(stack.iid)->title;
+									int consume = crafter.recipe->inputItems[stack.iid];
+									int have = stack.size;
+
+									TableNextColumn();
+									itemIcon(Item::get(stack.iid));
+
+									TableNextColumn();
+									Print(name.c_str());
+
+									TableNextColumn();
+									Print(fmtc("%d", consume));
+
+									TableNextColumn();
+									atLeast(consume, have, fmt("%d", have));
+								}
 							}
-							else {
-								Print(s.c_str());
+
+							if (crafter.recipe->inputFluids.size()) {
+								for (auto& amount: crafter.inputFluidsState()) {
+									TableNextRow();
+
+									std::string& name = Fluid::get(amount.fid)->title;
+									int consume = crafter.recipe->inputFluids[amount.fid];
+									int have = amount.size;
+
+									TableNextColumn();
+									fluidIcon(Fluid::get(amount.fid));
+
+									TableNextColumn();
+									Print(name.c_str());
+
+									TableNextColumn();
+									Print(Liquid(consume).format());
+
+									TableNextColumn();
+									atLeast(consume, have, Liquid(have).format());
+								}
 							}
-							if (IsItemHovered()) tip(
-								"Resource input buffers allow for 2x recipe consumption."
-								" To avoid production stalling keep input buffers full."
-							);
-						};
 
-						if (crafter.recipe->inputItems.size() && en.spec->store) {
-							for (auto& stack: crafter.inputItemsState()) {
-								TableNextRow();
-
-								std::string& name = Item::get(stack.iid)->title;
-								int consume = crafter.recipe->inputItems[stack.iid];
-								int have = stack.size;
-
-								TableNextColumn();
-								itemIcon(Item::get(stack.iid));
-
-								TableNextColumn();
-								Print(name.c_str());
-
-								TableNextColumn();
-								Print(fmtc("%d", consume));
-
-								TableNextColumn();
-								atLeast(consume, have, fmt("%d", have));
-							}
+							EndTable();
 						}
-
-						if (crafter.recipe->inputFluids.size()) {
-							for (auto& amount: crafter.inputFluidsState()) {
-								TableNextRow();
-
-								std::string& name = Fluid::get(amount.fid)->title;
-								int consume = crafter.recipe->inputFluids[amount.fid];
-								int have = amount.size;
-
-								TableNextColumn();
-								fluidIcon(Fluid::get(amount.fid));
-
-								TableNextColumn();
-								Print(name.c_str());
-
-								TableNextColumn();
-								Print(Liquid(consume).format());
-
-								TableNextColumn();
-								atLeast(consume, have, Liquid(have).format());
-							}
-						}
-
-						EndTable();
 					}
 
 					if (crafter.recipe->outputItems.size() || crafter.recipe->outputFluids.size() || crafter.recipe->mine || crafter.recipe->drill) {
 
 						SpacingV();
-						BeginTable("outputs", 4);
+						if (BeginTable("outputs", 4)) {
+							TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+							TableSetupColumn("Product", ImGuiTableColumnFlags_WidthStretch);
+							TableSetupColumn("Produces", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+							TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
 
-						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-						TableSetupColumn("Product", ImGuiTableColumnFlags_WidthStretch);
-						TableSetupColumn("Produces", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
-						TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+							TableHeadersRow();
 
-						TableHeadersRow();
+							auto atMost = [&](int limit, int have, std::string s) {
+								if (have && have >= limit) {
+									TextColored(0xff0000ff, s.c_str());
+								}
+								else {
+									Print(s.c_str());
+								}
+							};
 
-						auto atMost = [&](int limit, int have, std::string s) {
-							if (have && have >= limit) {
-								TextColored(0xff0000ff, s.c_str());
+							if (crafter.recipe->outputItems.size() && en.spec->store) {
+								for (auto& stack: crafter.outputItemsState()) {
+									TableNextRow();
+
+									std::string& name = Item::get(stack.iid)->title;
+									int produce = crafter.recipe->outputItems[stack.iid];
+									int have = stack.size;
+
+									TableNextColumn();
+									itemIcon(Item::get(stack.iid));
+
+									TableNextColumn();
+									Print(name.c_str());
+
+									TableNextColumn();
+									Print(fmtc("%d", produce));
+
+									TableNextColumn();
+									atMost(produce+1, have, fmt("%d", have));
+									if (IsItemHovered()) {
+										tip("Product output buffers are capped at 2x production, and"
+											" a run will not start if there is insufficient space."
+											" To avoid production stalling keep output buffers empty."
+										);
+									}
+								}
 							}
-							else {
-								Print(s.c_str());
-							}
-						};
 
-						if (crafter.recipe->outputItems.size() && en.spec->store) {
-							for (auto& stack: crafter.outputItemsState()) {
+							if (crafter.recipe->mine && en.spec->store) {
 								TableNextRow();
 
-								std::string& name = Item::get(stack.iid)->title;
-								int produce = crafter.recipe->outputItems[stack.iid];
-								int have = stack.size;
+								std::string& name = Item::get(crafter.recipe->mine)->title;
+								int produce = 1;
+								int have = en.store().count(crafter.recipe->mine);
+								int limit = en.store().limit().items(crafter.recipe->mine);
 
 								TableNextColumn();
-								itemIcon(Item::get(stack.iid));
+								itemIcon(Item::get(crafter.recipe->mine));
 
 								TableNextColumn();
 								Print(name.c_str());
@@ -2269,52 +2076,54 @@ void EntityPopup2::draw() {
 								Print(fmtc("%d", produce));
 
 								TableNextColumn();
-								atMost(produce+1, have, fmt("%d", have));
-								if (IsItemHovered()) {
-									tip("Product output buffers are capped at 2x production, and"
-										" a run will not start if there is insufficient space."
-										" To avoid production stalling keep output buffers empty."
+								atMost(limit, have, fmtc("%d", have));
+								if (IsItemHovered() && crafter.recipe->mine) {
+									tip(
+										"Mining product output buffers are capped by the entity storage capacity."
 									);
 								}
 							}
-						}
 
-						if (crafter.recipe->mine && en.spec->store) {
-							TableNextRow();
+							if (crafter.recipe->outputFluids.size()) {
+								for (auto& amount: crafter.outputFluidsState()) {
+									TableNextRow();
 
-							std::string& name = Item::get(crafter.recipe->mine)->title;
-							int produce = 1;
-							int have = en.store().count(crafter.recipe->mine);
-							int limit = en.store().limit().items(crafter.recipe->mine);
+									std::string& name = Fluid::get(amount.fid)->title;
+									int produce = crafter.recipe->outputFluids[amount.fid];
+									int have = amount.size;
 
-							TableNextColumn();
-							itemIcon(Item::get(crafter.recipe->mine));
+									TableNextColumn();
+									fluidIcon(Fluid::get(amount.fid));
 
-							TableNextColumn();
-							Print(name.c_str());
+									TableNextColumn();
+									Print(name.c_str());
 
-							TableNextColumn();
-							Print(fmtc("%d", produce));
+									TableNextColumn();
+									Print(Liquid(produce).format().c_str());
 
-							TableNextColumn();
-							atMost(limit, have, fmtc("%d", have));
-							if (IsItemHovered() && crafter.recipe->mine) {
-								tip(
-									"Mining product output buffers are capped by the entity storage capacity."
-								);
+									TableNextColumn();
+									atMost(produce+1, have, Liquid(have).format());
+									if (IsItemHovered()) {
+										tip(
+											"Fluid product buffers must be flushed to a pipe network before the next run starts."
+										);
+									}
+								}
 							}
-						}
 
-						if (crafter.recipe->outputFluids.size()) {
-							for (auto& amount: crafter.outputFluidsState()) {
+							if (crafter.recipe->drill) {
 								TableNextRow();
 
-								std::string& name = Fluid::get(amount.fid)->title;
-								int produce = crafter.recipe->outputFluids[amount.fid];
-								int have = amount.size;
+								std::string& name = Fluid::get(crafter.recipe->drill)->title;
+								int produce = 100;
+								int have = 0;
+
+								for (auto& amount: crafter.exportFluids) {
+									if (amount.fid == crafter.recipe->drill) have = amount.size;
+								}
 
 								TableNextColumn();
-								fluidIcon(Fluid::get(amount.fid));
+								fluidIcon(Fluid::get(crafter.recipe->drill));
 
 								TableNextColumn();
 								Print(name.c_str());
@@ -2323,45 +2132,16 @@ void EntityPopup2::draw() {
 								Print(Liquid(produce).format().c_str());
 
 								TableNextColumn();
-								atMost(produce+1, have, Liquid(have).format());
-								if (IsItemHovered()) {
+								atMost(0, have, Liquid(have).format());
+								if (IsItemHovered() && crafter.recipe->drill) {
 									tip(
-										"Fluid product buffers must be flushed to a pipe network before the next run starts."
+										"Drilling product buffers must be flushed to a pipe network before the next run starts."
 									);
 								}
 							}
+
+							EndTable();
 						}
-
-						if (crafter.recipe->drill) {
-							TableNextRow();
-
-							std::string& name = Fluid::get(crafter.recipe->drill)->title;
-							int produce = 100;
-							int have = 0;
-
-							for (auto& amount: crafter.exportFluids) {
-								if (amount.fid == crafter.recipe->drill) have = amount.size;
-							}
-
-							TableNextColumn();
-							fluidIcon(Fluid::get(crafter.recipe->drill));
-
-							TableNextColumn();
-							Print(name.c_str());
-
-							TableNextColumn();
-							Print(Liquid(produce).format().c_str());
-
-							TableNextColumn();
-							atMost(0, have, Liquid(have).format());
-							if (IsItemHovered() && crafter.recipe->drill) {
-								tip(
-									"Drilling product buffers must be flushed to a pipe network before the next run starts."
-								);
-							}
-						}
-
-						EndTable();
 					}
 
 					if (crafter.en->spec->crafterTransmitResources && crafter.recipe->mine) {
@@ -2585,44 +2365,45 @@ void EntityPopup2::draw() {
 					auto& redirection = waypoint.redirections[i];
 
 					float space = GetContentRegionAvail().x;
-					BeginTable(fmtc("##signal-cond-%d", i), 6);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.15);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
+					if (BeginTable(fmtc("##signal-cond-%d", i), 6)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.15);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
 
-					signalCondition(i, redirection.condition, false);
+						signalCondition(i, redirection.condition, false);
 
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (BeginCombo(fmtc("##route%d", i), route(redirection.line))) {
-						if (Selectable("Red", redirection.line == CartWaypoint::Red)) {
-							redirection.line = CartWaypoint::Red;
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (BeginCombo(fmtc("##route%d", i), route(redirection.line))) {
+							if (Selectable("Red", redirection.line == CartWaypoint::Red)) {
+								redirection.line = CartWaypoint::Red;
+							}
+							if (Selectable("Blue", redirection.line == CartWaypoint::Blue)) {
+								redirection.line = CartWaypoint::Blue;
+							}
+							if (Selectable("Green", redirection.line == CartWaypoint::Green)) {
+								redirection.line = CartWaypoint::Green;
+							}
+							EndCombo();
 						}
-						if (Selectable("Blue", redirection.line == CartWaypoint::Blue)) {
-							redirection.line = CartWaypoint::Blue;
+
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (Button(fmtc("%s##down%d", ICON_FA_LEVEL_DOWN, i), ImVec2(-1,0))) {
+							down = i;
 						}
-						if (Selectable("Green", redirection.line == CartWaypoint::Green)) {
-							redirection.line = CartWaypoint::Green;
+
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (Button(fmtc("%s##clear%d", ICON_FA_TRASH, i), ImVec2(-1,0))) {
+							clear = i;
 						}
-						EndCombo();
-					}
 
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (Button(fmtc("%s##down%d", ICON_FA_LEVEL_DOWN, i), ImVec2(-1,0))) {
-						down = i;
+						EndTable();
 					}
-
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (Button(fmtc("%s##clear%d", ICON_FA_TRASH, i), ImVec2(-1,0))) {
-						clear = i;
-					}
-
-					EndTable();
 				}
 
 				PopStyleVar(1);
@@ -2689,44 +2470,45 @@ void EntityPopup2::draw() {
 					auto& redirection = waypoint.redirections[i];
 
 					float space = GetContentRegionAvail().x;
-					BeginTable(fmtc("##signal-cond-%d", i), 6);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.15);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
+					if (BeginTable(fmtc("##signal-cond-%d", i), 6)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.15);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
 
-					signalCondition(i, redirection.condition, false);
+						signalCondition(i, redirection.condition, false);
 
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (BeginCombo(fmtc("##route%d", i), route(redirection.line))) {
-						if (Selectable("Red", redirection.line == Monorail::Red)) {
-							redirection.line = Monorail::Red;
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (BeginCombo(fmtc("##route%d", i), route(redirection.line))) {
+							if (Selectable("Red", redirection.line == Monorail::Red)) {
+								redirection.line = Monorail::Red;
+							}
+							if (Selectable("Blue", redirection.line == Monorail::Blue)) {
+								redirection.line = Monorail::Blue;
+							}
+							if (Selectable("Green", redirection.line == Monorail::Green)) {
+								redirection.line = Monorail::Green;
+							}
+							EndCombo();
 						}
-						if (Selectable("Blue", redirection.line == Monorail::Blue)) {
-							redirection.line = Monorail::Blue;
+
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (Button(fmtc("%s##down%d", ICON_FA_LEVEL_DOWN, i), ImVec2(-1,0))) {
+							down = i;
 						}
-						if (Selectable("Green", redirection.line == Monorail::Green)) {
-							redirection.line = Monorail::Green;
+
+						TableNextColumn();
+						SetNextItemWidth(-1);
+						if (Button(fmtc("%s##clear%d", ICON_FA_TRASH, i), ImVec2(-1,0))) {
+							clear = i;
 						}
-						EndCombo();
-					}
 
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (Button(fmtc("%s##down%d", ICON_FA_LEVEL_DOWN, i), ImVec2(-1,0))) {
-						down = i;
+						EndTable();
 					}
-
-					TableNextColumn();
-					SetNextItemWidth(-1);
-					if (Button(fmtc("%s##clear%d", ICON_FA_TRASH, i), ImVec2(-1,0))) {
-						clear = i;
-					}
-
-					EndTable();
 				}
 
 				PopStyleVar(1);
@@ -2778,21 +2560,22 @@ void EntityPopup2::draw() {
 				if (IsWindowAppearing()) checks.clear();
 				checks.resize(monocar.constants.size());
 
-				BeginTable("##constant-signals", 2);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+				if (BeginTable("##constant-signals", 2)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
-				int i = 0;
-				for (auto& signal: monocar.constants) {
-					TableNextRow();
-					TableNextColumn();
-					Checkbox(fmtc("##check%d", i), &checks[i]);
-					TableNextColumn();
-					signalConstant(i, signal, false);
-					i++;
+					int i = 0;
+					for (auto& signal: monocar.constants) {
+						TableNextRow();
+						TableNextColumn();
+						Checkbox(fmtc("##check%d", i), &checks[i]);
+						TableNextColumn();
+						signalConstant(i, signal, false);
+						i++;
+					}
+
+					EndTable();
 				}
-
-				EndTable();
 
 				if (Button("Add Signal##add-signal")) {
 					monocar.constants.resize(monocar.constants.size()+1);
@@ -2851,55 +2634,56 @@ void EntityPopup2::draw() {
 
 				PushID("computer");
 
-				BeginTable("##toggles", 3);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.33);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.33);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.34);
+				if (BeginTable("##toggles", 3)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.33);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.33);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.34);
 
-				TableNextColumn();
-				bool enabled = en.isEnabled();
-				if (Checkbox("Power On", &enabled)) {
-					en.setEnabled(enabled);
-					computer.reboot();
-				}
+					TableNextColumn();
+					bool enabled = en.isEnabled();
+					if (Checkbox("Power On", &enabled)) {
+						en.setEnabled(enabled);
+						computer.reboot();
+					}
 
-				TableNextColumn();
-				if (Checkbox("Debug Mode", &computer.debug)) {
-					computer.reboot();
-				}
+					TableNextColumn();
+					if (Checkbox("Debug Mode", &computer.debug)) {
+						computer.reboot();
+					}
 
-				TableNextColumn();
-				switch (computer.err) {
-					case Computer::Ok: {
-						Print("System Ready");
-						break;
+					TableNextColumn();
+					switch (computer.err) {
+						case Computer::Ok: {
+							Print("System Ready");
+							break;
+						}
+						case Computer::What: {
+							Print("Report a Bug!");
+							if (IsItemHovered()) tip(
+								"The entity is in a state that should be impossible."
+								" Please report a bug in the game and attach your program!"
+							);
+							break;
+						}
+						case Computer::StackUnderflow: {
+							Print("Stack Underflow");
+							break;
+						}
+						case Computer::StackOverflow: {
+							Print("Stack Overflow");
+							break;
+						}
+						case Computer::OutOfBounds: {
+							Print("Out of Bounds");
+							break;
+						}
+						case Computer::Syntax: {
+							Print("Syntax Error");
+							break;
+						}
 					}
-					case Computer::What: {
-						Print("Report a Bug!");
-						if (IsItemHovered()) tip(
-							"The entity is in a state that should be impossible."
-							" Please report a bug in the game and attach your program!"
-						);
-						break;
-					}
-					case Computer::StackUnderflow: {
-						Print("Stack Underflow");
-						break;
-					}
-					case Computer::StackOverflow: {
-						Print("Stack Overflow");
-						break;
-					}
-					case Computer::OutOfBounds: {
-						Print("Out of Bounds");
-						break;
-					}
-					case Computer::Syntax: {
-						Print("Syntax Error");
-						break;
-					}
+					EndTable();
 				}
-				EndTable();
 
 				if (BeginCombo("##source", nullptr)) {
 					for (const auto& file: std::filesystem::directory_iterator("programs/")) {
@@ -2929,56 +2713,57 @@ void EntityPopup2::draw() {
 					uint env = 0;
 					std::vector<Signal::Key> drop;
 
-					BeginTable("##environment", 2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.6);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+					if (BeginTable("##environment", 2)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.6);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
-					for (auto& signal: computer.env) {
+						for (auto& signal: computer.env) {
+							TableNextRow();
+							TableNextColumn();
+							signalConstant(env, signal, false);
+							TableNextColumn();
+							if (Button(fmtc("Remove##forget-%u", env))) {
+								drop.push_back(signal.key);
+							}
+							if (IsItemHovered()) {
+								tip("Remove this environment signal");
+							}
+							env++;
+						}
 						TableNextRow();
 						TableNextColumn();
-						signalConstant(env, signal, false);
+						signalConstant(env, computer.add, false);
 						TableNextColumn();
-						if (Button(fmtc("Remove##forget-%u", env))) {
-							drop.push_back(signal.key);
+						if (Button("Create##define-env")) {
+							computer.env[computer.add.key].value = computer.add.value;
+							computer.add.key.type = Signal::Type::Stack;
+							computer.add.key.id = 0;
+							computer.add.value = 0;
 						}
 						if (IsItemHovered()) {
-							tip("Remove this environment signal");
+							tip("Add or overwrite an environment signal");
 						}
-						env++;
-					}
-					TableNextRow();
-					TableNextColumn();
-					signalConstant(env, computer.add, false);
-					TableNextColumn();
-					if (Button("Create##define-env")) {
-						computer.env[computer.add.key].value = computer.add.value;
-						computer.add.key.type = Signal::Type::Stack;
-						computer.add.key.id = 0;
-						computer.add.value = 0;
-					}
-					if (IsItemHovered()) {
-						tip("Add or overwrite an environment signal");
-					}
 
-					EndTable();
+						EndTable();
+					}
 					for (auto& key: drop) {
 						computer.env.erase(key);
 					}
 				}
 
 				auto memory = [&](int id, minivec<int>& mem) {
-					BeginTable(fmtc("##memory%d", id), 9);
+					if (BeginTable(fmtc("##memory%d", id), 9)) {
+						for (uint i = 0; i < mem.size(); ) {
+							TableNextRow();
+							Print(fmtc("%03d", i));
 
-					for (uint i = 0; i < mem.size(); ) {
-						TableNextRow();
-						Print(fmtc("%03d", i));
-
-						for (uint j = 0; j < 8 && i < mem.size(); j++, i++) {
-							TableNextColumn();
-							Print(fmt("%d", mem[i]));
+							for (uint j = 0; j < 8 && i < mem.size(); j++, i++) {
+								TableNextColumn();
+								Print(fmt("%d", mem[i]));
+							}
 						}
+						EndTable();
 					}
-					EndTable();
 				};
 
 				Section("RAM");
@@ -3227,128 +3012,130 @@ void EntityPopup2::draw() {
 						Section(title);
 					}
 
-					BeginTable(fmtc("##table%d", ++i), 5);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.225);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
+					if (BeginTable(fmtc("##table%d", ++i), 5)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.1);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.2);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.225);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.05);
 
-					signalCondition(++i, rule.condition, false, check);
+						signalCondition(++i, rule.condition, false, check);
 
-					TableNextColumn();
-					if (Button(fmtc("%s##clear%d", ICON_FA_TRASH), ImVec2(-1,0))) {
-						clear = &rule - router.rules.data();
+						TableNextColumn();
+						if (Button(fmtc("%s##clear%d", ICON_FA_TRASH), ImVec2(-1,0))) {
+							clear = &rule - router.rules.data();
+						}
+						EndTable();
 					}
-					EndTable();
 					SpacingV();
 
-					BeginTable(fmtc("##table%d", ++i), 2);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.63);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+					if (BeginTable(fmtc("##table%d", ++i), 2)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.63);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
-					const char* selectedMode = nullptr;
-					switch (rule.mode) {
-						case Router::Rule::Mode::Forward: selectedMode = "Forward signal"; break;
-						case Router::Rule::Mode::Generate: selectedMode = "Generate signal"; break;
-						case Router::Rule::Mode::Alert: selectedMode = "Raise alert"; break;
-					}
-					TableNextColumn();
-					PushItemWidth(-1);
-					if (BeginCombo(fmtc("##rule%d", ++i), selectedMode)) {
-						if (Selectable("Forward signal", rule.mode == Router::Rule::Mode::Forward)) rule.mode = Router::Rule::Mode::Forward;
-						if (Selectable("Generate signal", rule.mode == Router::Rule::Mode::Generate)) rule.mode = Router::Rule::Mode::Generate;
-						if (Selectable("Raise alert", rule.mode == Router::Rule::Mode::Alert)) rule.mode = Router::Rule::Mode::Alert;
-						EndCombo();
-					}
-					PopItemWidth();
-					SpacingV();
-					TableNextColumn();
-					Print("Action when true");
-
-					if (rule.condition.key != Signal::Key(Signal::Meta::Now)) {
+						const char* selectedMode = nullptr;
+						switch (rule.mode) {
+							case Router::Rule::Mode::Forward: selectedMode = "Forward signal"; break;
+							case Router::Rule::Mode::Generate: selectedMode = "Generate signal"; break;
+							case Router::Rule::Mode::Alert: selectedMode = "Raise alert"; break;
+						}
 						TableNextColumn();
 						PushItemWidth(-1);
-						wifiConnection(++i, &rule.nicSrc);
+						if (BeginCombo(fmtc("##rule%d", ++i), selectedMode)) {
+							if (Selectable("Forward signal", rule.mode == Router::Rule::Mode::Forward)) rule.mode = Router::Rule::Mode::Forward;
+							if (Selectable("Generate signal", rule.mode == Router::Rule::Mode::Generate)) rule.mode = Router::Rule::Mode::Generate;
+							if (Selectable("Raise alert", rule.mode == Router::Rule::Mode::Alert)) rule.mode = Router::Rule::Mode::Alert;
+							EndCombo();
+						}
 						PopItemWidth();
 						SpacingV();
 						TableNextColumn();
-						Print("Input network");
-					}
+						Print("Action when true");
 
-					switch (rule.mode) {
-						case Router::Rule::Mode::Forward: {
+						if (rule.condition.key != Signal::Key(Signal::Meta::Now)) {
 							TableNextColumn();
 							PushItemWidth(-1);
-							wifiConnection(++i, &rule.nicDst);
+							wifiConnection(++i, &rule.nicSrc);
 							PopItemWidth();
 							SpacingV();
 							TableNextColumn();
-							Print("Output network");
-							break;
+							Print("Input network");
 						}
-						case Router::Rule::Mode::Generate: {
-							TableNextColumn();
-							PushItemWidth(-1);
-							wifiConnection(++i, &rule.nicDst);
-							PopItemWidth();
-							SpacingV();
-							TableNextColumn();
-							Print("Output network");
 
-							TableNextColumn();
-							PushItemWidth(space*0.397);
-							signalKey(++i, rule.signal.key, false);
-							PopItemWidth();
-							SetNextItemWidth(-1);
-							SameLine();
-							InputInt(fmtc("##int%d", ++i), &rule.signal.value);
-							PopItemWidth();
-							SpacingV();
-							TableNextColumn();
-							Print("Output signal");
-							break;
-						}
-						case Router::Rule::Mode::Alert: {
-							const char* selectedAlert = nullptr;
-							switch (rule.alert) {
-								case Router::Rule::Alert::Notice: selectedAlert = "Notice"; break;
-								case Router::Rule::Alert::Warning: selectedAlert = "Warning"; break;
-								case Router::Rule::Alert::Critical: selectedAlert = "Critical"; break;
+						switch (rule.mode) {
+							case Router::Rule::Mode::Forward: {
+								TableNextColumn();
+								PushItemWidth(-1);
+								wifiConnection(++i, &rule.nicDst);
+								PopItemWidth();
+								SpacingV();
+								TableNextColumn();
+								Print("Output network");
+								break;
 							}
-							TableNextColumn();
-							PushItemWidth(-1);
-							if (BeginCombo(fmtc("##alert-level-%d", ++i), selectedAlert)) {
-								if (Selectable("Notice", rule.alert == Router::Rule::Alert::Notice)) rule.alert = Router::Rule::Alert::Notice;
-								if (Selectable("Warning", rule.alert == Router::Rule::Alert::Warning)) rule.alert = Router::Rule::Alert::Warning;
-								if (Selectable("Critical", rule.alert == Router::Rule::Alert::Critical)) rule.alert = Router::Rule::Alert::Critical;
-								EndCombo();
-							}
-							PopItemWidth();
-							SpacingV();
-							TableNextColumn();
-							Print("Alert level");
+							case Router::Rule::Mode::Generate: {
+								TableNextColumn();
+								PushItemWidth(-1);
+								wifiConnection(++i, &rule.nicDst);
+								PopItemWidth();
+								SpacingV();
+								TableNextColumn();
+								Print("Output network");
 
-							TableNextColumn();
-							int r = i;
-							float s = GetFontSize() * 1.5;
-							auto size = ImVec2(s, s);
-							for (int i = 1, l = Sim::customIcons.size(); i < l; i++) {
-								auto& icon = Sim::customIcons[i];
-								bool active = i == rule.icon;
-								if (GetContentRegionAvail().x < size.x) { NewLine(); SpacingV(); }
-								if (active) PushStyleColor(ImGuiCol_Button, Color(0x009900ff));
-								if (Button(fmtc("%s##icon-%d-%d", icon, r, i), size)) rule.icon = i;
-								if (active) PopStyleColor(1);
+								TableNextColumn();
+								PushItemWidth(space*0.397);
+								signalKey(++i, rule.signal.key, false);
+								PopItemWidth();
+								SetNextItemWidth(-1);
 								SameLine();
+								InputInt(fmtc("##int%d", ++i), &rule.signal.value);
+								PopItemWidth();
+								SpacingV();
+								TableNextColumn();
+								Print("Output signal");
+								break;
 							}
-							NewLine();
-							TableNextColumn();
-							Print("Alert icon");
-							break;
+							case Router::Rule::Mode::Alert: {
+								const char* selectedAlert = nullptr;
+								switch (rule.alert) {
+									case Router::Rule::Alert::Notice: selectedAlert = "Notice"; break;
+									case Router::Rule::Alert::Warning: selectedAlert = "Warning"; break;
+									case Router::Rule::Alert::Critical: selectedAlert = "Critical"; break;
+								}
+								TableNextColumn();
+								PushItemWidth(-1);
+								if (BeginCombo(fmtc("##alert-level-%d", ++i), selectedAlert)) {
+									if (Selectable("Notice", rule.alert == Router::Rule::Alert::Notice)) rule.alert = Router::Rule::Alert::Notice;
+									if (Selectable("Warning", rule.alert == Router::Rule::Alert::Warning)) rule.alert = Router::Rule::Alert::Warning;
+									if (Selectable("Critical", rule.alert == Router::Rule::Alert::Critical)) rule.alert = Router::Rule::Alert::Critical;
+									EndCombo();
+								}
+								PopItemWidth();
+								SpacingV();
+								TableNextColumn();
+								Print("Alert level");
+
+								TableNextColumn();
+								int r = i;
+								float s = GetFontSize() * 1.5;
+								auto size = ImVec2(s, s);
+								for (int i = 1, l = Sim::customIcons.size(); i < l; i++) {
+									auto& icon = Sim::customIcons[i];
+									bool active = i == rule.icon;
+									if (GetContentRegionAvail().x < size.x) { NewLine(); SpacingV(); }
+									if (active) PushStyleColor(ImGuiCol_Button, Color(0x009900ff));
+									if (Button(fmtc("%s##icon-%d-%d", icon, r, i), size)) rule.icon = i;
+									if (active) PopStyleColor(1);
+									SameLine();
+								}
+								NewLine();
+								TableNextColumn();
+								Print("Alert icon");
+								break;
+							}
 						}
+						EndTable();
 					}
-					EndTable();
 				}
 
 				if (clear >= 0) {
@@ -3615,36 +3402,36 @@ void EntityPopup2::draw() {
 
 					SpacingV();
 					SpacingV();
-					BeginTable("list", 2);
+					if (BeginTable("list", 2)) {
+						float column = GetContentRegionAvail().x/2;
+						TableSetupColumn("Consumers", ImGuiTableColumnFlags_WidthFixed, column);
+						TableSetupColumn("Producers", ImGuiTableColumnFlags_WidthFixed, column);
+						TableHeadersRow();
 
-					float column = GetContentRegionAvail().x/2;
-					TableSetupColumn("Consumers", ImGuiTableColumnFlags_WidthFixed, column);
-					TableSetupColumn("Producers", ImGuiTableColumnFlags_WidthFixed, column);
-					TableHeadersRow();
-
-					TableNextColumn();
-					SpacingV();
-					for (auto& [spec,energy]: consumption) {
-						Print(spec->title.c_str());
-						SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
-						PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
-						SmallBar(energy.portion(network->demand));
-						PopStyleColor(1);
+						TableNextColumn();
 						SpacingV();
-					}
+						for (auto& [spec,energy]: consumption) {
+							Print(spec->title.c_str());
+							SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
+							PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
+							SmallBar(energy.portion(network->demand));
+							PopStyleColor(1);
+							SpacingV();
+						}
 
-					TableNextColumn();
-					SpacingV();
-					for (auto& [spec,energy]: production) {
-						Print(spec->title.c_str());
-						SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
-						PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
-						SmallBar(energy.portion(network->supply));
-						PopStyleColor(1);
+						TableNextColumn();
 						SpacingV();
-					}
+						for (auto& [spec,energy]: production) {
+							Print(spec->title.c_str());
+							SameLine(); PrintRight(fmtc("%s", energy.formatRate()));
+							PushStyleColor(ImGuiCol_PlotHistogram, Color(0xaaaaaaff));
+							SmallBar(energy.portion(network->supply));
+							PopStyleColor(1);
+							SpacingV();
+						}
 
-					EndTable();
+						EndTable();
+					}
 				}
 
 				PopID();
@@ -3748,71 +3535,71 @@ void RecipePopup::draw() {
 		float column = GetContentRegionAvail().x/4.0;
 
 		PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemSpacing.x/2,0));
-		BeginTable("list", 4, ImGuiTableFlags_BordersInnerV);
+		if (BeginTable("list", 4, ImGuiTableFlags_BordersInnerV)) {
+			TableSetupColumn("##items", ImGuiTableColumnFlags_WidthFixed, column);
+			TableSetupColumn("##recipes", ImGuiTableColumnFlags_WidthFixed, column);
+			TableSetupColumn("##specs", ImGuiTableColumnFlags_WidthFixed, column);
+			TableSetupColumn("##goals", ImGuiTableColumnFlags_WidthFixed, column);
 
-		TableSetupColumn("##items", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("##recipes", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("##specs", ImGuiTableColumnFlags_WidthFixed, column);
-		TableSetupColumn("##goals", ImGuiTableColumnFlags_WidthFixed, column);
+			TableNextColumn();
 
-		TableNextColumn();
+				Header("Items & Fluids", false);
+				if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-items-fluids"))) showUnavailableItemsFluids = !showUnavailableItemsFluids;
+				if (IsItemHovered()) tip("Toggle locked items & fluids");
 
-			Header("Items & Fluids", false);
-			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-items-fluids"))) showUnavailableItemsFluids = !showUnavailableItemsFluids;
-			if (IsItemHovered()) tip("Toggle locked items & fluids");
-
-			BeginChild("list-items-and-fluids"); {
-				for (auto category: Item::display) {
-					bool show = false;
-					for (auto group: category->display) {
-						for (auto item: group->display) show = show || showItem(item);
-					}
-					if (show) {
-						Section(category->title, false);
+				BeginChild("list-items-and-fluids"); {
+					for (auto category: Item::display) {
+						bool show = false;
 						for (auto group: category->display) {
-							for (auto item: group->display) drawItem(item);
+							for (auto item: group->display) show = show || showItem(item);
+						}
+						if (show) {
+							Section(category->title, false);
+							for (auto group: category->display) {
+								for (auto item: group->display) drawItem(item);
+							}
 						}
 					}
+					bool show = false;
+					for (auto& fluid: sorted.fluids) {
+						show = show || showFluid(fluid);
+					}
+					if (show) {
+						Section("Fluids", false);
+						for (auto& fluid: sorted.fluids) drawFluid(fluid);
+					}
 				}
-				bool show = false;
-				for (auto& fluid: sorted.fluids) {
-					show = show || showFluid(fluid);
-				}
-				if (show) {
-					Section("Fluids", false);
-					for (auto& fluid: sorted.fluids) drawFluid(fluid);
-				}
-			}
-			EndChild();
+				EndChild();
 
-		TableNextColumn();
+			TableNextColumn();
 
-			Header("Recipes", false);
-			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-recipes"))) showUnavailableRecipes = !showUnavailableRecipes;
-			if (IsItemHovered()) tip("Toggle locked recipes");
+				Header("Recipes", false);
+				if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-recipes"))) showUnavailableRecipes = !showUnavailableRecipes;
+				if (IsItemHovered()) tip("Toggle locked recipes");
 
-			BeginChild("list-recipes");
-			for (auto& recipe: sorted.recipes) drawRecipe(recipe);
-			EndChild();
+				BeginChild("list-recipes");
+				for (auto& recipe: sorted.recipes) drawRecipe(recipe);
+				EndChild();
 
-		TableNextColumn();
+			TableNextColumn();
 
-			Header("Structures & Vehicles", false);
-			if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-specs"))) showUnavailableSpecs = !showUnavailableSpecs;
-			if (IsItemHovered()) tip("Toggle locked structures & vehicles");
+				Header("Structures & Vehicles", false);
+				if (SmallButtonInlineRight(fmtc(" %s ##%s", ICON_FA_LOCK, "toggle-specs"))) showUnavailableSpecs = !showUnavailableSpecs;
+				if (IsItemHovered()) tip("Toggle locked structures & vehicles");
 
-			BeginChild("list-specs");
-			for (auto& spec: sorted.specs) drawSpec(spec);
-			EndChild();
+				BeginChild("list-specs");
+				for (auto& spec: sorted.specs) drawSpec(spec);
+				EndChild();
 
-		TableNextColumn();
+			TableNextColumn();
 
-			Header("Goals", false);
-			BeginChild("list-goals");
-			for (auto& goal: sorted.goals) drawGoal(goal);
-			EndChild();
+				Header("Goals", false);
+				BeginChild("list-goals");
+				for (auto& goal: sorted.goals) drawGoal(goal);
+				EndChild();
 
-		EndTable();
+			EndTable();
+		}
 		PopStyleVar(1);
 
 		mouseOver = IsWindowHovered();
@@ -4259,29 +4046,29 @@ void RecipePopup::drawSpec(Spec* spec) {
 	if (expanded.spec[spec]) {
 
 		if (spec->licensed) {
-			BeginTable(fmtc("##buttons-%s", spec->name), spec->wiki.size() ? 3: 2);
+			if (BeginTable(fmtc("##buttons-%s", spec->name), spec->wiki.size() ? 3: 2)) {
+				TableNextColumn();
+				if (Button(fmtc("build##%s", spec->name), ImVec2(-1,0))) {
+					scene.build(spec);
+					show(false);
+				}
 
-			TableNextColumn();
-			if (Button(fmtc("build##%s", spec->name), ImVec2(-1,0))) {
-				scene.build(spec);
-				show(false);
-			}
+				TableNextColumn();
+				if (gui.toolbar->has(spec) && Button(fmtc("-toolbar##d%s", spec->name), ImVec2(-1,0))) {
+					gui.toolbar->drop(spec);
+				}
+				else
+				if (!gui.toolbar->has(spec) && Button(fmtc("+toolbar##a%s", spec->name), ImVec2(-1,0))) {
+					gui.toolbar->add(spec);
+				}
 
-			TableNextColumn();
-			if (gui.toolbar->has(spec) && Button(fmtc("-toolbar##d%s", spec->name), ImVec2(-1,0))) {
-				gui.toolbar->drop(spec);
-			}
-			else
-			if (!gui.toolbar->has(spec) && Button(fmtc("+toolbar##a%s", spec->name), ImVec2(-1,0))) {
-				gui.toolbar->add(spec);
-			}
+				TableNextColumn();
+				if (spec->wiki.size() && Button("wiki", ImVec2(-1,0))) {
+					openURL(spec->wiki);
+				}
 
-			TableNextColumn();
-			if (spec->wiki.size() && Button("wiki", ImVec2(-1,0))) {
-				openURL(spec->wiki);
+				EndTable();
 			}
-
-			EndTable();
 		}
 
 		minivec<Spec*> iconSpecs;
@@ -4469,76 +4256,76 @@ void UpgradePopup::draw() {
 		small();
 		Begin(fmtc("Upgrade (%d)##upgrade", Goal::chits), &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-		BeginTable("##upgrades", 2);
+		if (BeginTable("##upgrades", 2)) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+			struct Rate {
+				const char* title;
+				float* rate;
+				float maxRate;
+				float bump;
+				std::vector<float> splits;
+				std::vector<ImU32> colors;
+			};
 
-		struct Rate {
-			const char* title;
-			float* rate;
-			float maxRate;
-			float bump;
-			std::vector<float> splits;
-			std::vector<ImU32> colors;
-		};
+			std::vector<float> splits3 = {
+				0.33f, 0.66f, 1.0f,
+			};
 
-		std::vector<float> splits3 = {
-			0.33f, 0.66f, 1.0f,
-		};
+			std::vector<ImU32> colors3 = {
+				ImColorSRGB(0x00aa00ff),
+				ImColorSRGB(0x0000ffff),
+				ImColorSRGB(0xaa0000ff),
+			};
 
-		std::vector<ImU32> colors3 = {
-			ImColorSRGB(0x00aa00ff),
-			ImColorSRGB(0x0000ffff),
-			ImColorSRGB(0xaa0000ff),
-		};
+			std::vector<float> splits2 = {
+				0.5f, 1.0f,
+			};
 
-		std::vector<float> splits2 = {
-			0.5f, 1.0f,
-		};
+			std::vector<ImU32> colors2 = {
+				ImColorSRGB(0x00aa00ff),
+				ImColorSRGB(0xaa0000ff),
+			};
 
-		std::vector<ImU32> colors2 = {
-			ImColorSRGB(0x00aa00ff),
-			ImColorSRGB(0xaa0000ff),
-		};
+			std::vector<Rate> rates = {
+				{"Mining", &Recipe::miningRate, 3.0f, 0.1f, splits3, colors3},
+				{"Drilling", &Recipe::drillingRate, 3.0f, 0.1f, splits3, colors3},
+				{"Crushing", &Recipe::crushingRate, 3.0f, 0.1f, splits3, colors3},
+				{"Smelting", &Recipe::smeltingRate, 3.0f, 0.1f, splits3, colors3},
+				{"Crafting", &Recipe::craftingRate, 3.0f, 0.1f, splits3, colors3},
+				{"Refining", &Recipe::refiningRate, 3.0f, 0.1f, splits3, colors3},
+				{"Centrifuging", &Recipe::centrifugingRate, 3.0f, 0.1f, splits3, colors3},
+				{"Drones", &Drone::speedFactor, 2.0f, 0.1f, splits2, colors2},
+				{"Arm", &Arm::speedFactor, 2.0f, 0.1f, splits2, colors2},
+			};
 
-		std::vector<Rate> rates = {
-			{"Mining", &Recipe::miningRate, 3.0f, 0.1f, splits3, colors3},
-			{"Drilling", &Recipe::drillingRate, 3.0f, 0.1f, splits3, colors3},
-			{"Crushing", &Recipe::crushingRate, 3.0f, 0.1f, splits3, colors3},
-			{"Smelting", &Recipe::smeltingRate, 3.0f, 0.1f, splits3, colors3},
-			{"Crafting", &Recipe::craftingRate, 3.0f, 0.1f, splits3, colors3},
-			{"Refining", &Recipe::refiningRate, 3.0f, 0.1f, splits3, colors3},
-			{"Centrifuging", &Recipe::centrifugingRate, 3.0f, 0.1f, splits3, colors3},
-			{"Drones", &Drone::speedFactor, 2.0f, 0.1f, splits2, colors2},
-			{"Arm", &Arm::speedFactor, 2.0f, 0.1f, splits2, colors2},
-		};
+			for (auto& area: rates) {
 
-		for (auto& area: rates) {
+				TableNextColumn();
+					BeginGroup();
+						Print(area.title);
+						MultiBar(*area.rate / area.maxRate, area.splits, area.colors);
+					EndGroup();
 
-			TableNextColumn();
-				BeginGroup();
-					Print(area.title);
-					MultiBar(*area.rate / area.maxRate, area.splits, area.colors);
-				EndGroup();
+				auto size = GetItemRectSize();
 
-			auto size = GetItemRectSize();
+				TableNextColumn();
+					BeginDisabled(!Goal::chits);
+					if (Button(fmtc(" + ##rate-%s", area.title), ImVec2(0,size.y)) && Goal::chits > 0 && *area.rate < area.maxRate-0.01f) {
+						Goal::chits--;
+						*area.rate = std::floor((*area.rate + area.bump) * 100.0f) / 100.0f;
+					}
+					if (IsItemHovered()) tip(
+						fmt("%d%% / %d%%",
+							(int)std::floor(*area.rate * 100.0f),
+							(int)std::floor(area.maxRate * 100.0f)
+						));
+					EndDisabled();
+			}
 
-			TableNextColumn();
-				BeginDisabled(!Goal::chits);
-				if (Button(fmtc(" + ##rate-%s", area.title), ImVec2(0,size.y)) && Goal::chits > 0 && *area.rate < area.maxRate-0.01f) {
-					Goal::chits--;
-					*area.rate = std::floor((*area.rate + area.bump) * 100.0f) / 100.0f;
-				}
-				if (IsItemHovered()) tip(
-					fmt("%d%% / %d%%",
-						(int)std::floor(*area.rate * 100.0f),
-						(int)std::floor(area.maxRate * 100.0f)
-					));
-				EndDisabled();
+			EndTable();
 		}
-
-		EndTable();
 
 		mouseOver = IsWindowHovered();
 		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
@@ -4572,18 +4359,19 @@ void SignalsPopup::draw() {
 			create[0] = 0;
 		}
 
+		bool created = false;
+
 		if (BeginTabBar("main-tabs", ImGuiTabBarFlags_None)) {
 
 			if (BeginTabItem("Active", nullptr, focusedTab())) {
 
-				BeginTable("##signals-table-active", 2);
-
+				if (BeginTable("##signals-table-active", 2)) {
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
 					TableNextColumn();
 					SetNextItemWidth(-1);
-					bool created = InputTextWithHint("##signal-create", "<new signal>", create, sizeof(create), ImGuiInputTextFlags_EnterReturnsTrue);
+					created = InputTextWithHint("##signal-create", "<new signal>", create, sizeof(create), ImGuiInputTextFlags_EnterReturnsTrue);
 					inputFocused = IsItemActive();
 
 					TableNextColumn();
@@ -4626,7 +4414,8 @@ void SignalsPopup::draw() {
 					for (auto& [id,_]: inputs) if (!Signal::findLabel(id)) dropA.push(id);
 					for (auto& id: dropA) inputs.erase(id);
 
-				EndTable();
+					EndTable();
+				}
 
 				if (created && create[0]) {
 					auto label = std::string(create);
@@ -4639,8 +4428,7 @@ void SignalsPopup::draw() {
 
 			if (BeginTabItem("Retired", nullptr, focusedTab())) {
 
-				BeginTable("##signals-table-dropped", 2);
-
+				if (BeginTable("##signals-table-dropped", 2)) {
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
@@ -4663,7 +4451,8 @@ void SignalsPopup::draw() {
 						}
 					}
 
-				EndTable();
+					EndTable();
+				}
 				EndTabItem();
 			}
 			EndTabBar();
@@ -4747,35 +4536,36 @@ void PaintPopup::draw() {
 			for (auto& [_,spec]: Spec::all) if (spec->coloredCustom) colors.insert(spec->color);
 		}
 
-		BeginTable("##paint-layout", 2);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, w*0.5);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+		if (BeginTable("##paint-layout", 2)) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, w*0.5);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
-		TableNextRow();
+			TableNextRow();
 
-		TableNextColumn();
-		SetNextItemWidth(w*0.5);
-		if (ColorPicker3("##paint-picker", &rgb.r, ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_NoAlpha|ImGuiColorEditFlags_NoTooltip|ImGuiColorEditFlags_NoOptions|ImGuiColorEditFlags_NoSmallPreview|ImGuiColorEditFlags_NoSidePreview)) {
-			for (auto en: selectedPaint) {
-				en->color(Color(rgb.r, rgb.g, rgb.b, 1.0).degamma());
-			}
-		}
-
-		TableNextColumn();
-		for (int i = 0, l = colors.size(); i < l; i++) {
-			Color c = colors[i];
-			Color srgb = colors[i].gamma();
-			if (ColorButton(fmtc("paint##paint-prev-%d", i), (ImVec4){srgb.r,srgb.g,srgb.b,1.0}, ImGuiColorEditFlags_None|ImGuiColorEditFlags_NoTooltip)) {
-				rgb.r = srgb.r;
-				rgb.g = srgb.g;
-				rgb.b = srgb.b;
+			TableNextColumn();
+			SetNextItemWidth(w*0.5);
+			if (ColorPicker3("##paint-picker", &rgb.r, ImGuiColorEditFlags_NoLabel|ImGuiColorEditFlags_NoAlpha|ImGuiColorEditFlags_NoTooltip|ImGuiColorEditFlags_NoOptions|ImGuiColorEditFlags_NoSmallPreview|ImGuiColorEditFlags_NoSidePreview)) {
 				for (auto en: selectedPaint) {
-					en->color(Color(c.r, c.g, c.b, 1.0));
+					en->color(Color(rgb.r, rgb.g, rgb.b, 1.0).degamma());
 				}
 			}
-			if ((i+1)%4 != 0) SameLine();
+
+			TableNextColumn();
+			for (int i = 0, l = colors.size(); i < l; i++) {
+				Color c = colors[i];
+				Color srgb = colors[i].gamma();
+				if (ColorButton(fmtc("paint##paint-prev-%d", i), (ImVec4){srgb.r,srgb.g,srgb.b,1.0}, ImGuiColorEditFlags_None|ImGuiColorEditFlags_NoTooltip)) {
+					rgb.r = srgb.r;
+					rgb.g = srgb.g;
+					rgb.b = srgb.b;
+					for (auto en: selectedPaint) {
+						en->color(Color(c.r, c.g, c.b, 1.0));
+					}
+				}
+				if ((i+1)%4 != 0) SameLine();
+			}
+			EndTable();
 		}
-		EndTable();
 
 		mouseOver = IsWindowHovered();
 		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
@@ -5173,48 +4963,49 @@ void ZeppelinPopup::draw() {
 		narrow();
 		Begin("Zeppelins", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-		BeginTable("##zeppelins", 3);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-		TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+		if (BeginTable("##zeppelins", 3)) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 
-		auto dist = [](real d) {
-			if (d > 1000) return fmt("%0.1fkm", d/1000.0);
-			return fmt("%dm", (int)d);
-		};
+			auto dist = [](real d) {
+				if (d > 1000) return fmt("%0.1fkm", d/1000.0);
+				return fmt("%dm", (int)d);
+			};
 
-		for (auto& zeppelin: Zeppelin::all) {
-			auto& en = Entity::get(zeppelin.id);
-			TableNextRow();
+			for (auto& zeppelin: Zeppelin::all) {
+				auto& en = Entity::get(zeppelin.id);
+				TableNextRow();
 
-			TableNextColumn();
-			int iconSize = Config::toolbar.icon.size;
-			float iconPix = Config::toolbar.icon.sizes[iconSize];
-			Image((ImTextureID)scene.specIconTextures[en.spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
+				TableNextColumn();
+				int iconSize = Config::toolbar.icon.size;
+				float iconPix = Config::toolbar.icon.sizes[iconSize];
+				Image((ImTextureID)scene.specIconTextures[en.spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0));
 
-			TableNextColumn();
-			Print(en.name().c_str());
-			PushFont(Config::sidebar.font.imgui);
-			Print(dist(en.pos().distance(scene.position)).c_str());
-			PopFont();
+				TableNextColumn();
+				Print(en.name().c_str());
+				PushFont(Config::sidebar.font.imgui);
+				Print(dist(en.pos().distance(scene.position)).c_str());
+				PopFont();
 
-			TableNextColumn();
-			if (Button(fmtc(" Goto ##zeppelin-%d", zeppelin.id))) {
-				scene.view(en.pos());
-				delete scene.directing;
-				scene.directing = new GuiEntity(&en);
-				show(false);
+				TableNextColumn();
+				if (Button(fmtc(" Goto ##zeppelin-%d", zeppelin.id))) {
+					scene.view(en.pos());
+					delete scene.directing;
+					scene.directing = new GuiEntity(&en);
+					show(false);
+				}
+				SameLine();
+				if (Button(fmtc(" Call ##zeppelin-%d", zeppelin.id))) {
+					delete scene.directing;
+					scene.directing = new GuiEntity(&en);
+					en.zeppelin().flyOver(scene.target);
+					show(false);
+				}
 			}
-			SameLine();
-			if (Button(fmtc(" Call ##zeppelin-%d", zeppelin.id))) {
-				delete scene.directing;
-				scene.directing = new GuiEntity(&en);
-				en.zeppelin().flyOver(scene.target);
-				show(false);
-			}
+
+			EndTable();
 		}
-
-		EndTable();
 
 		mouseOver = IsWindowHovered();
 		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
@@ -5240,7 +5031,7 @@ void MainMenu::draw() {
 	};
 
 	narrow();
-	Begin("Menu##mainmenu", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	Begin(fmtc("%s : %ld##mainmenu", Config::mode.saveName, Sim::seed), &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
 		if (IsWindowAppearing()) {
 			reset();
@@ -5275,7 +5066,7 @@ void MainMenu::draw() {
 					gui.doQuit = true;
 				}
 
-				if (quitting.period == 0 && Button("Exit", ImVec2(-1,0))) {
+				if (quitting.period == 0 && Button("Quit", ImVec2(-1,0))) {
 					quitting.period = gui.fps*3;
 					quitting.ticker = 0;
 				}
@@ -5293,41 +5084,42 @@ void MainMenu::draw() {
 
 				PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemSpacing.x/2,0));
 
-				BeginTable("##menu-game", 2);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
+				if (BeginTable("##menu-game", 2)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
 
-				TableNextColumn();
+					TableNextColumn();
 
-				if (Button(Config::mode.pause ? "Resume": "Pause", ImVec2(-1,0))) {
-					Config::mode.pause = !Config::mode.pause;
+					if (Button(Config::mode.pause ? "Resume": "Pause", ImVec2(-1,0))) {
+						Config::mode.pause = !Config::mode.pause;
+					}
+					if (IsItemHovered()) tip("[Pause]");
+					SpacingV();
+
+					TableNextColumn();
+
+					if (Button("Signals", ImVec2(-1,0))) {
+						gui.doSignals = true;
+					}
+					if (IsItemHovered()) tip(
+						"Custom signals for use in rules and on wifi."
+					);
+					SpacingV();
+
+					TableNextColumn();
+
+					if (Button("Zeppelins [Z]", ImVec2(-1,0))) {
+						gui.doZeppelins = true;
+					}
+
+					TableNextColumn();
+
+					if (Button("Map [M]", ImVec2(-1,0))) {
+						gui.doMap = true;
+					}
+
+					EndTable();
 				}
-				if (IsItemHovered()) tip("[Pause]");
-				SpacingV();
-
-				TableNextColumn();
-
-				if (Button("Signals", ImVec2(-1,0))) {
-					gui.doSignals = true;
-				}
-				if (IsItemHovered()) tip(
-					"Custom signals for use in rules and on wifi."
-				);
-				SpacingV();
-
-				TableNextColumn();
-
-				if (Button("Zeppelins [Z]", ImVec2(-1,0))) {
-					gui.doZeppelins = true;
-				}
-
-				TableNextColumn();
-
-				if (Button("Map [M]", ImVec2(-1,0))) {
-					gui.doMap = true;
-				}
-
-				EndTable();
 				PopStyleVar();
 
 				SpacingV();
@@ -5384,61 +5176,61 @@ void MainMenu::draw() {
 
 				SpacingV();
 				Section("Quality");
-				BeginTable("##renderer-quick-buttons", 3);
+				if (BeginTable("##renderer-quick-buttons", 3)) {
+					TableNextRow();
+					TableNextColumn();
+					if (Button("High", ImVec2(-1,0))) {
+						Config::window.horizon = 1500;
+						Config::window.fog = 1000;
+						Config::window.zoomUpperLimit = 500;
+						Config::window.levelsOfDetail[0] = 150;
+						Config::window.levelsOfDetail[1] = 600;
+						Config::window.levelsOfDetail[2] = 1000;
+						Config::window.levelsOfDetail[3] = 1500;
+						Config::mode.shadowmap = true;
+						Config::mode.itemShadows = true;
+						Config::mode.meshMerging = true;
+						Config::mode.waterwaves = true;
+						Config::mode.treebreeze = true;
+						Config::mode.filters = true;
+					}
 
-				TableNextRow();
-				TableNextColumn();
-				if (Button("High", ImVec2(-1,0))) {
-					Config::window.horizon = 1500;
-					Config::window.fog = 1000;
-					Config::window.zoomUpperLimit = 500;
-					Config::window.levelsOfDetail[0] = 150;
-					Config::window.levelsOfDetail[1] = 600;
-					Config::window.levelsOfDetail[2] = 1000;
-					Config::window.levelsOfDetail[3] = 1500;
-					Config::mode.shadowmap = true;
-					Config::mode.itemShadows = true;
-					Config::mode.meshMerging = true;
-					Config::mode.waterwaves = true;
-					Config::mode.treebreeze = true;
-					Config::mode.filters = true;
+					TableNextColumn();
+					if (Button("Medium", ImVec2(-1,0))) {
+						Config::window.horizon = 1200;
+						Config::window.fog = 800;
+						Config::window.zoomUpperLimit = 400;
+						Config::window.levelsOfDetail[0] = 100;
+						Config::window.levelsOfDetail[1] = 500;
+						Config::window.levelsOfDetail[2] = 800;
+						Config::window.levelsOfDetail[3] = 1200;
+						Config::mode.shadowmap = true;
+						Config::mode.itemShadows = true;
+						Config::mode.meshMerging = true;
+						Config::mode.waterwaves = true;
+						Config::mode.treebreeze = true;
+						Config::mode.filters = true;
+					}
+
+					TableNextColumn();
+					if (Button("Low", ImVec2(-1,0))) {
+						Config::window.horizon = 900;
+						Config::window.fog = 500;
+						Config::window.zoomUpperLimit = 300;
+						Config::window.levelsOfDetail[0] = 50;
+						Config::window.levelsOfDetail[1] = 300;
+						Config::window.levelsOfDetail[2] = 500;
+						Config::window.levelsOfDetail[3] = 800;
+						Config::mode.shadowmap = true;
+						Config::mode.itemShadows = false;
+						Config::mode.meshMerging = true;
+						Config::mode.waterwaves = false;
+						Config::mode.treebreeze = false;
+						Config::mode.filters = false;
+					}
+
+					EndTable();
 				}
-
-				TableNextColumn();
-				if (Button("Medium", ImVec2(-1,0))) {
-					Config::window.horizon = 1200;
-					Config::window.fog = 800;
-					Config::window.zoomUpperLimit = 400;
-					Config::window.levelsOfDetail[0] = 100;
-					Config::window.levelsOfDetail[1] = 500;
-					Config::window.levelsOfDetail[2] = 800;
-					Config::window.levelsOfDetail[3] = 1200;
-					Config::mode.shadowmap = true;
-					Config::mode.itemShadows = true;
-					Config::mode.meshMerging = true;
-					Config::mode.waterwaves = true;
-					Config::mode.treebreeze = true;
-					Config::mode.filters = true;
-				}
-
-				TableNextColumn();
-				if (Button("Low", ImVec2(-1,0))) {
-					Config::window.horizon = 900;
-					Config::window.fog = 500;
-					Config::window.zoomUpperLimit = 300;
-					Config::window.levelsOfDetail[0] = 50;
-					Config::window.levelsOfDetail[1] = 300;
-					Config::window.levelsOfDetail[2] = 500;
-					Config::window.levelsOfDetail[3] = 800;
-					Config::mode.shadowmap = true;
-					Config::mode.itemShadows = false;
-					Config::mode.meshMerging = true;
-					Config::mode.waterwaves = false;
-					Config::mode.treebreeze = false;
-					Config::mode.filters = false;
-				}
-
-				EndTable();
 				SpacingV();
 
 				Section("Custom");
@@ -5565,52 +5357,53 @@ void MainMenu::draw() {
 
 				auto display = [&](const char* name, Config::KeyMouseCombo combo, const char* text) {
 					PushFont(Config::sidebar.font.imgui);
-					BeginTable(fmtc("#controls-%d", ++id), 2, ImGuiTableFlags_BordersInnerH);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
-					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
-					TableNextRow();
-					TableNextColumn();
-					Print(name);
-					std::string keys;
-					for (const auto& mod: combo.mods) {
-						if (keys.size()) keys += " + ";
-						keys += std::string(SDL_GetKeyName(mod));
-					}
-					for (const auto& button: combo.buttonsDown) {
-						if (keys.size()) keys += " + ";
-						switch (button) {
-							case SDL_BUTTON_LEFT:
-								keys += "Left Mouse";
-								break;
-							case SDL_BUTTON_MIDDLE:
-								keys += "Middle Mouse";
-								break;
-							case SDL_BUTTON_RIGHT:
-								keys += "Right Mouse";
-								break;
+					if (BeginTable(fmtc("#controls-%d", ++id), 2, ImGuiTableFlags_BordersInnerH)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+						TableNextRow();
+						TableNextColumn();
+						Print(name);
+						std::string keys;
+						for (const auto& mod: combo.mods) {
+							if (keys.size()) keys += " + ";
+							keys += std::string(SDL_GetKeyName(mod));
 						}
-					}
-					for (const auto& button: combo.buttonsReleased) {
-						if (keys.size()) keys += " + ";
-						switch (button) {
-							case SDL_BUTTON_LEFT:
-								keys += "Left Mouse";
-								break;
-							case SDL_BUTTON_MIDDLE:
-								keys += "Middle Mouse";
-								break;
-							case SDL_BUTTON_RIGHT:
-								keys += "Right Mouse";
-								break;
+						for (const auto& button: combo.buttonsDown) {
+							if (keys.size()) keys += " + ";
+							switch (button) {
+								case SDL_BUTTON_LEFT:
+									keys += "Left Mouse";
+									break;
+								case SDL_BUTTON_MIDDLE:
+									keys += "Middle Mouse";
+									break;
+								case SDL_BUTTON_RIGHT:
+									keys += "Right Mouse";
+									break;
+							}
 						}
+						for (const auto& button: combo.buttonsReleased) {
+							if (keys.size()) keys += " + ";
+							switch (button) {
+								case SDL_BUTTON_LEFT:
+									keys += "Left Mouse";
+									break;
+								case SDL_BUTTON_MIDDLE:
+									keys += "Middle Mouse";
+									break;
+								case SDL_BUTTON_RIGHT:
+									keys += "Right Mouse";
+									break;
+							}
+						}
+						for (const auto& mod: combo.keysReleased) {
+							if (keys.size()) keys += " + ";
+							keys += std::string(SDL_GetKeyName(mod));
+						}
+						TableNextColumn();
+						Print(keys);
+						EndTable();
 					}
-					for (const auto& mod: combo.keysReleased) {
-						if (keys.size()) keys += " + ";
-						keys += std::string(SDL_GetKeyName(mod));
-					}
-					TableNextColumn();
-					Print(keys);
-					EndTable();
 					if (IsItemHovered()) tip(text);
 					PopFont();
 				};
@@ -5618,16 +5411,17 @@ void MainMenu::draw() {
 				Section("Game Interface");
 
 				PushFont(Config::sidebar.font.imgui);
-				BeginTable(fmtc("#controls-0", ++id), 2, ImGuiTableFlags_BordersInnerH);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+				if (BeginTable(fmtc("#controls-0", ++id), 2, ImGuiTableFlags_BordersInnerH)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
 
-				TableNextRow();
-				TableNextColumn();
-				Print("Information");
-				TableNextColumn();
-				Print("Hover + Space Bar");
-				EndTable();
+					TableNextRow();
+					TableNextColumn();
+					Print("Information");
+					TableNextColumn();
+					Print("Hover + Space Bar");
+					EndTable();
+				}
 				if (IsItemHovered()) tip(
 					"Hover the mouse over almost anything in the game"
 					" -- hills, lakes, structures, vehicles --"

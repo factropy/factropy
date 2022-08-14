@@ -50,6 +50,7 @@ struct ScenarioBase : Scenario {
 	RelaMod* rela = nullptr;
 	std::vector<Spec*> rocks;
 	ScenarioBase();
+	~ScenarioBase();
 	void items();
 	void fluids();
 	void recipes();

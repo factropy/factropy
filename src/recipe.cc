@@ -8,10 +8,9 @@
 // to consume and how fast to do it.
 
 void Recipe::reset() {
-	for (auto& [_,recipe]: names) {
-		delete recipe;
-	}
+	for (auto& [_,recipe]: names) delete recipe;
 	names.clear();
+	sequence = 0;
 }
 
 uint Recipe::next() {

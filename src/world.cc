@@ -27,6 +27,13 @@ uint64_t World::memory() {
 }
 
 void World::reset() {
+	std::free(flags);
+	flags = nullptr;
+
+	tiles.clear();
+	features.clear();
+	changes.clear();
+	ready = false;
 }
 
 void World::init() {

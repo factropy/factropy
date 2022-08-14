@@ -222,9 +222,10 @@ struct Scene {
 	void exclaim(Point pos);
 
 	Scene() = default;
+	void initGL();
 	void init();
+	void reset();
 	void prepare();
-	void destroy();
 	float pen();
 	void cube(const Box& box, const Color& color);
 	void sphere(const Sphere& sphere, const Color& color);

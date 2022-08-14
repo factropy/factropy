@@ -4,6 +4,11 @@
 
 // On-screen messages visible to the player. Not a log file.
 
+void Message::reset() {
+	for (auto& [_,msg]: all) delete msg;
+	all.clear();
+}
+
 void Message::tick() {
 	for (auto [_,message]: all) {
 		if (!message->sent) message->check();

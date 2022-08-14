@@ -1,6 +1,11 @@
 #include "goal.h"
 #include "scene.h"
 
+void Goal::reset() {
+	for (auto& [_,goal]: all) delete goal;
+	all.clear();
+}
+
 void Goal::tick() {
 	for (auto [_,goal]: all) goal->check();
 }

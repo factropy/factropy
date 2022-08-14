@@ -5,6 +5,8 @@
 void Fluid::reset() {
 	names.clear();
 	all.clear();
+	drilling.clear();
+	sequence = 0;
 }
 
 uint Fluid::next() {

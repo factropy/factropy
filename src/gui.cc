@@ -29,6 +29,67 @@ void GUI::init() {
 	toolbar = new Toolbar();
 }
 
+void GUI::reset() {
+	popup = nullptr;
+	doMenu = false;
+	doDebug = false;
+	doSave = false;
+	doLog = false;
+	doStats = false;
+	doBuild = false;
+	doUpgrade = false;
+	doSignals = false;
+	doPlan = false;
+	doMap = false;
+	doZeppelins = false;
+	doPaint = false;
+	doEscape = false;
+	doQuit = false;
+	focused = false;
+	prepared = false;
+
+	delete statsPopup;
+	statsPopup = nullptr;
+	delete entityPopup;
+	entityPopup = nullptr;
+	delete recipePopup;
+	recipePopup = nullptr;
+	delete upgradePopup;
+	upgradePopup = nullptr;
+	delete signalsPopup;
+	signalsPopup = nullptr;
+	delete planPopup;
+	planPopup = nullptr;
+	delete mapPopup;
+	mapPopup = nullptr;
+	delete zeppelinPopup;
+	zeppelinPopup = nullptr;
+	delete paintPopup;
+	paintPopup = nullptr;
+	delete mainMenu;
+	mainMenu = nullptr;
+	delete debugMenu;
+	debugMenu = nullptr;
+	delete loading;
+	loading = nullptr;
+	delete hud;
+	hud = nullptr;
+	delete toolbar;
+	toolbar = nullptr;
+
+	ups = 0;
+	fps = 0;
+
+	controlHintsRelated.clear();
+	controlHintsGeneral.clear();
+	controlHintsSpecific.clear();
+
+	lastConstruct.planId = 0;
+	lastConstruct.plan = nullptr;
+	lastConstruct.pos = Point::Zero;
+	lastConstruct.tick = 0;
+}
+
 void GUI::prepare() {
 	statsPopup->prepare();
 	entityPopup->prepare();

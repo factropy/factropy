@@ -25,6 +25,11 @@ Stack::Stack(std::initializer_list<uint> l) {
 void Item::reset() {
 	all.clear();
 	names.clear();
+	sequence = 0;
+	mining.clear();
+	supplied.clear();
+	categories.clear();
+	display.clear();
 }
 
 uint Item::next() {

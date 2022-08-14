@@ -15,6 +15,7 @@ class Mesh {
 public:
 	static inline std::mutex allMutex;
 	static inline miniset<Mesh*> all;
+	static void reset();
 
 	uint32_t id = 0;
 	GLuint vao = 0;

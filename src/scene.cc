@@ -12,6 +12,17 @@
 
 Scene scene;
 
+void Scene::initGL() {
+	shader.part = Shader("shader/part.vs", "shader/part.fs");
+	shader.ghost = Shader("shader/ghost.vs", "shader/ghost.fs");
+	shader.water = Shader("shader/water.vs", "shader/water.fs");
+	shader.shadow = Shader("shader/shadow.vs", "shader/shadow.fs");
+	shader.terrain = Shader("shader/terrain.vs", "shader/terrain.fs");
+	shader.glow = Shader("shader/glow.vs", "shader/glow.fs");
+	shader.flame = Shader("shader/flame.vs", "shader/flame.fs");
+	shader.tree = Shader("shader/tree.vs", "shader/tree.fs");
+}
+
 void Scene::init() {
 	glGenFramebuffers(1, &shadowMapFrameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
@@ -29,20 +40,10 @@ void Scene::init() {
 
 	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "%s", glErr());
 
-	shader.part = Shader("shader/part.vs", "shader/part.fs");
-	shader.ghost = Shader("shader/ghost.vs", "shader/ghost.fs");
-	shader.water = Shader("shader/water.vs", "shader/water.fs");
-	shader.shadow = Shader("shader/shadow.vs", "shader/shadow.fs");
-	shader.terrain = Shader("shader/terrain.vs", "shader/terrain.fs");
-	shader.glow = Shader("shader/glow.vs", "shader/glow.fs");
-	shader.flame = Shader("shader/flame.vs", "shader/flame.fs");
-	shader.tree = Shader("shader/tree.vs", "shader/tree.fs");
-
 	unit.mesh.cube = new MeshCube(1.0f);
 	unit.mesh.sphere = new MeshSphere(1.0f);
 	unit.mesh.line = new MeshLine(1.0f, 0.01f);
 	unit.mesh.plane = new MeshPlane(1.0f);
-
 	unit.mesh.sphere2 = new MeshSphere(1.0f,2);
 	unit.mesh.sphere3 = new MeshSphere(1.0f,3);
 
@@ -82,18 +83,84 @@ void Scene::init() {
 	perspective = glm::perspective(glm::radians(fovy), aspect, near, far);
 }
 
-void Scene::prepare() {
-	GuiEntity::prepareCaches();
+void Scene::reset() {
+	glDeleteFramebuffers(1, &shadowMapFrameBuffer);
+	glDeleteTextures(1, &shadowMapDepthTexture);
+
+	current = 0;
+	future = 1;
+	entityPools[0].clear();
+	entityPools[1].clear();
+	visibleCells.clear();
+
+	selecting = false;
+	selectingTypes = SelectAll;
+	selection.a = Point::Zero;
+	selection.b = Point::Zero;
+	selectionBox = {};
+	selectionBoxFuture = {};
+
+	delete hovering;
+	hovering = nullptr;
+	delete directing;
+	directing = nullptr;
+	delete connecting;
+	connecting = nullptr;
+	delete routing;
+	routing = nullptr;
+
+	routingHistory.clear();
+
+	hoveringFuture = 0;
+	directRevert = 0;
+
+	for (auto plan: plans) delete plan;
+	plans.clear();
+	placing = nullptr;
+	placingFits = false;
+
+	delete settings;
+	settings = nullptr;
+
+	frame = 0;
+	width = 0;
+	height = 0;
+	wheel = 0;
+
+	keys.clear();
+	keysLast.clear();
+
+	output.visible.clear();
+
+	for (auto& [_,sizes]: specIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+	for (auto& [_,sizes]: itemIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+	for (auto& [_,sizes]: fluidIconTextures)
+		for (auto size: sizes) { GLuint id = size; glDeleteTextures(1, &id); }
+
+	specIconTextures.clear();
+	itemIconTextures.clear();
+	fluidIconTextures.clear();
+
+	stats.update.clear();
+	stats.updateTerrain.clear();
+	stats.updateEntities.clear();
+	stats.updateEntitiesParts.clear();
+	stats.updateEntitiesFind.clear();
+	stats.updateEntitiesLoad.clear();
+	stats.updateEntitiesHover.clear();
+	stats.updateEntitiesInstances.clear();
+	stats.updateEntitiesItems.clear();
+	stats.updateCurrent.clear();
+	stats.updatePlacing.clear();
+	stats.render.clear();
+
+	risers.clear();
 }
 
-void Scene::destroy() {
-	delete unit.mesh.cube;
-	delete unit.mesh.sphere;
-	delete unit.mesh.line;
-	delete unit.mesh.plane;
-
-	delete unit.mesh.sphere2;
-	delete unit.mesh.sphere3;
+void Scene::prepare() {
+	GuiEntity::prepareCaches();
 }
 
 void Scene::view(Point pos) {

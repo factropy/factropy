@@ -2073,6 +2073,13 @@ ScenarioBase::ScenarioBase() {
 	rela = new RelaMod();
 }
 
+ScenarioBase::~ScenarioBase() {
+	delete rela;
+	// meshes handled by Mesh::reset()
+	// specs handled by Spec::reset()
+	// parts handled by Part::reset()
+}
+
 Mesh* ScenarioBase::mesh(const char* name) {
 	ensuref(meshes.count(name), "unknown mesh: %s", name);
 	return meshes[name];

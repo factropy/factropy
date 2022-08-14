@@ -9,6 +9,8 @@
 #include <set>
 #include <map>
 
+extern SDL_Window* sdlWindow();
+
 namespace Config {
 	struct Version {
 		int major = 0;
@@ -143,7 +145,7 @@ namespace Config {
 
 	struct Mode {
 		bool game1 = false;
-		minivec<uint> seeds = {60464830,60555982,60670951,60841977,60900622};
+		minivec<int64_t> seeds = {60464830,60555982,60670951,60841977,60900622,52778587};
 
 		bool pause = false;
 		bool restart = false;

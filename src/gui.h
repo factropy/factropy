@@ -23,7 +23,6 @@ struct GUI {
 	bool doPaint = false;
 	bool doEscape = false;
 	bool doQuit = false;
-
 	bool focused = false;
 	bool prepared = false;
 
@@ -59,6 +58,7 @@ struct GUI {
 
 	GUI() = default;
 	void init();
+	void reset();
 	void prepare();
 	bool active();
 	void render();

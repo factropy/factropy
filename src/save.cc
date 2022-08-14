@@ -308,8 +308,8 @@ namespace Sim {
 					);
 				}
 
+				init(state["seed"]);
 				tick = state["tick"];
-				reseed(state["seed"]);
 
 				if (state.contains("enemy")) {
 					Enemy::enable = state["enemy"];
