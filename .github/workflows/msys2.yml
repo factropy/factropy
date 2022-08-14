@@ -2,9 +2,9 @@ name: MSYS2 ming64
 
 on:
   push:
-    branches: [ earlygame ]
+    branches: [ main ]
   pull_request:
-    branches: [ earlygame ]
+    branches: [ main ]
 
 jobs:
   build:

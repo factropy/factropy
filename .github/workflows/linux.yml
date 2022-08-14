@@ -2,9 +2,9 @@ name: linux
 
 on:
   push:
-    branches: [ earlygame ]
+    branches: [ main ]
   pull_request:
-    branches: [ earlygame ]
+    branches: [ main ]
 
 jobs:
   build:
