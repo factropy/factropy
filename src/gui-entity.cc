@@ -191,6 +191,9 @@ void GuiEntity::load(const Entity& en) {
 	if (!ghost && spec->generateElectricity && !en.electricityProducer().connected()) flags |= ELECTRICITY;
 	if (!ghost && spec->consumeElectricity && !en.electricityConsumer().connected()) flags |= ELECTRICITY;
 	if (!ghost && spec->consumeCharge && !en.charger().powered()) flags |= ELECTRICITY;
+
+	// special case: tubes can draw power from their line, so only the last tube tower needs to be connected
+	if (spec->tube && (flags&ELECTRICITY) && en.tube().next) flags ^= ELECTRICITY;
 }
 
 void GuiEntity::loadConveyor(const Entity& en) {

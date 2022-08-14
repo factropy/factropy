@@ -167,10 +167,10 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 		return {0,0};
 	}
 
-	// container to container, respect levels if present
+	// container to container, destination levels have priority
 	for (auto& stack: src.stacks) {
 		if (filter.size() && !filter.count(stack.iid)) continue;
-		uint have = src.level(stack.iid) ? src.countProviding(stack.iid): src.countLessReserved(stack.iid);
+		uint have = src.countLessReserved(stack.iid);
 		if (!have) continue;
 		uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
 		if (!space) continue;

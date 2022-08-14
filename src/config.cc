@@ -182,7 +182,6 @@ namespace Config {
 		notef("Data path: %s", mode.dataPath);
 
 		if (!std::filesystem::exists(dataPath("saves"))) {
-			mode.game1 = true;
 			std::filesystem::create_directory(dataPath("saves"));
 		}
 
@@ -252,6 +251,10 @@ namespace Config {
 
 		if (state.contains("/mode/autosave"_json_pointer)) {
 			Config::mode.autosave = state["mode"]["autosave"];
+		}
+
+		if (state.contains("/mode/autosaveN"_json_pointer)) {
+			Config::mode.autosaveN = state["mode"]["autosaveN"];
 		}
 
 		if (state.contains("/mode/autotip"_json_pointer)) {
@@ -324,6 +327,7 @@ namespace Config {
 		};
 
 		state["mode"]["autosave"] = Config::mode.autosave;
+		state["mode"]["autosaveN"] = Config::mode.autosaveN;
 		state["mode"]["autotip"] = Config::mode.autotip;
 		state["mode"]["grid"] = Config::mode.grid;
 		state["mode"]["alignment"] = Config::mode.alignment;
@@ -342,16 +346,6 @@ namespace Config {
 	}
 
 	void args(int argc, char *argv[]) {
-//		bool width = false;
-//		bool height = false;
-//
-//		if ( width ||  height) window.fullscreen = false;
-//		if ( width && !height) window.height = BASELINE_WINDOW_HEIGHT * ((float)window.width/BASELINE_WINDOW_WIDTH);
-//		if (!width &&  height) window.width = BASELINE_WINDOW_WIDTH * ((float)window.height/BASELINE_WINDOW_HEIGHT);
-//
-//		if (!mode.load && !forcenew) {
-//			mode.load = std::filesystem::exists(fmt("%s/sim.json", savePath(mode.saveName)));
-//		}
 	}
 
 	void sdl() {

@@ -62,11 +62,14 @@ StartScreen::~StartScreen() {
 
 void StartScreen::draw() {
 	small();
-	Begin("Factropy", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+	Begin("##start-screen", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
 	PushID("start-screen");
 
 	ImageBanner(banner.id, banner.w, banner.h);
+
+	SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + GetStyle().ItemSpacing.y/2));
+	Notice(Config::version.text, false);
 
 	if (BeginTable("##layout", 2)) {
 		TableSetupColumn("##layout-left", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.25));
@@ -74,20 +77,21 @@ void StartScreen::draw() {
 
 		TableNextColumn();
 			BeginChild("##layout-left-group");
+			float button = (GetContentRegionAvail().y - GetStyle().ItemSpacing.y*3) / 4;
 
 			PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::Load ? ImGuiCol_ButtonActive: ImGuiCol_Button));
-			if (Button(" Load Game ", ImVec2(-1,0))) screen = Screen::Load;
+			if (Button(" Load Game ", ImVec2(-1,button))) screen = Screen::Load;
 			PopStyleColor();
 
 			PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::New ? ImGuiCol_ButtonActive: ImGuiCol_Button));
-			if (Button(" New Game ", ImVec2(-1,0))) screen = Screen::New;
+			if (Button(" New Game ", ImVec2(-1,button))) screen = Screen::New;
 			PopStyleColor();
 
 			PushStyleColor(ImGuiCol_Button, GetColorU32(screen == Screen::Video ? ImGuiCol_ButtonActive: ImGuiCol_Button));
-			if (Button(" Video ", ImVec2(-1,0))) screen = Screen::Video;
+			if (Button(" Video ", ImVec2(-1,button))) screen = Screen::Video;
 			PopStyleColor();
 
-			if (Button(" Exit ", ImVec2(-1,0))) exit(0);
+			if (Button(" Exit ", ImVec2(-1,button))) exit(0);
 
 			EndChild();
 
@@ -124,24 +128,44 @@ void StartScreen::draw() {
 void StartScreen::drawNew() {
 	bool ok = true;
 
+	Separator();
+
+	Print("Name"); SameLine();
+	PushFont(Config::sidebar.font.imgui);
+	PrintRight("_ a-z A-Z 0-9");
+	PopFont();
+
+	SetNextItemWidth(-1);
+	InputText("##name", name, sizeof(name));
+	SpacingV();
+
 	if (!Config::saveNameOk(name)) {
 		Warning("Invalid save name: _ a-z A-Z 0-9");
 		ok = false;
 	}
 
-	if (!Config::saveNameFree(std::string(name))) {
+	if (std::string(name).size() && !Config::saveNameFree(std::string(name))) {
 		Warning(fmtc("Save '%s' already exists.", name));
 		ok = false;
 	}
+
+	Separator();
+
+	Print("Seed"); SameLine();
+	PushFont(Config::sidebar.font.imgui);
+	PrintRight("seed > 0");
+	PopFont();
+
+	SetNextItemWidth(-1);
+	InputText("##seed", seed, sizeof(seed));
+	SpacingV();
 
 	if (!strtoul(seed, nullptr, 10)) {
 		Warning(fmtc("Seed invalid.", name));
 		ok = false;
 	}
 
-	InputText("Name##name", name, sizeof(name));
-	InputText("Seed##seed", seed, sizeof(seed));
-
+	PushFont(Config::sidebar.font.imgui);
 	if (Button(" Random ")) {
 		snprintf(seed, sizeof(seed), "%ld", todayMS());
 	}
@@ -159,13 +183,21 @@ void StartScreen::drawNew() {
 	if (IsItemHovered()) tip(
 		"Choose from a list of curated seeds with decent start locations."
 	);
+	PopFont();
+	SpacingV();
 
-	SameLine();
+	Separator();
+	SpacingV();
+
+	if (!ok) PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
+
 	if (Button(" Start Game ") && ok) {
 		Config::mode.fresh = true;
 		Config::mode.freshSeed = strtoul(seed, nullptr, 10);
 		Config::mode.saveName = std::string(name);
 	}
+
+	if (!ok) PopStyleColor(1);
 }
 
 void StartScreen::drawLoad() {
@@ -173,6 +205,7 @@ void StartScreen::drawLoad() {
 		std::string name;
 		char date[32];
 		char time[32];
+		uint64_t stamp = 0;
 	};
 
 	std::vector<Save> saves;
@@ -186,6 +219,7 @@ void StartScreen::drawLoad() {
 			std::time_t cftime = to_time_t(std::filesystem::last_write_time(simjson));
 			auto& save = saves.emplace_back();
 			save.name = name;
+			save.stamp = cftime;
 			std::strftime(save.date, sizeof(save.date), "%b %d", std::localtime(&cftime));
 			std::strftime(save.time, sizeof(save.time), "%H:%M", std::localtime(&cftime));
 		}
@@ -196,7 +230,7 @@ void StartScreen::drawLoad() {
 		saves.clear();
 	}
 
-	std::sort(saves.begin(), saves.end(), [](const auto& a, const auto& b) { return a.name < b.name; });
+	std::sort(saves.begin(), saves.end(), [](const auto& a, const auto& b) { return a.stamp > b.stamp; });
 	games.resize(saves.size());
 
 	Separator();
@@ -242,7 +276,7 @@ void StartScreen::drawLoad() {
 	}
 
 	SpacingV();
-	if (Button("Delete Selected") && selected) {
+	if (Button(" Delete Selected ") && selected) {
 		for (int i = 0, l = saves.size(); i < l; i++) {
 			if (games[i]) Config::saveDelete(saves[i].name);
 		}

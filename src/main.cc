@@ -37,6 +37,7 @@ using namespace std::literals::chrono_literals;
 FILE* errorLog = nullptr;
 SDL_Window* window = nullptr;
 SDL_GLContext context;
+std::atomic<bool> quit = false;
 const char* binary = nullptr;
 
 SDL_Window* sdlWindow() {
@@ -201,7 +202,7 @@ void game() {
 			}
 		}
 
-		if (Config::mode.load && !Config::saveNameFree(Config::mode.saveName)) {
+		if (Config::mode.load) {
 			try {
 				auto cam = Sim::load(Config::savePath(Config::mode.saveName).c_str());
 				scene.position = std::get<0>(cam);
@@ -215,7 +216,6 @@ void game() {
 				ensuref(false,
 					"Cannot load \"%s\"\r\n"
 					"Exception: %s\r\n"
-					"Deleting it will generate a new world but leave autosaveN intact.\r\n"
 					"If this is the result of a recent game crash please report a bug.\r\n",
 					Config::savePath(Config::mode.saveName),
 					e.what()
@@ -224,7 +224,6 @@ void game() {
 			catch (...) {
 				ensuref(false,
 					"Cannot load \"%s\"\r\n"
-					"Deleting it will generate a new world but leave autosaveN intact.\r\n"
 					"If this is the result of a recent game crash please report a bug.\r\n",
 					Config::savePath(Config::mode.saveName)
 				);
@@ -330,9 +329,8 @@ void game() {
 		};
 
 		uint64_t autoSaveLast = Sim::tick;
-		uint autosaves = 0;
 
-		while (run) {
+		while (run && !quit) {
 			if (Config::mode.pause) {
 				std::this_thread::sleep_for(16ms);
 				continue;
@@ -348,12 +346,12 @@ void game() {
 			Sim::locked([&]() {
 				Sim::update();
 
-				if (autoSaveNext == Sim::tick) {
-					Sim::save(Config::savePath(fmt("autosave%d", autosaves%3)).c_str(),
+				if (autoSaveNext <= Sim::tick) {
+					if (Config::mode.autosaveN == 3) Config::mode.autosaveN = 0;
+					Sim::save(Config::savePath(fmt("autosave%d", Config::mode.autosaveN++)).c_str(),
 						scene.position, scene.direction,
 						scene.directing ? scene.directing->id : 0
 					);
-					autosaves++;
 					autoSaveLast = Sim::tick;
 				}
 			});
@@ -393,7 +391,7 @@ void game() {
 
 	auto& io = ImGui::GetIO();
 
-	while (run) {
+	while (run && !quit) {
 		Config::autoscale(window);
 
 		gui.focused = io.WantCaptureMouse || io.WantCaptureKeyboard;
@@ -445,6 +443,7 @@ void game() {
 			{
 				case SDL_QUIT: {
 					run = false;
+					quit = true;
 					break;
 				}
 				case SDL_KEYUP: {
@@ -516,7 +515,14 @@ void menu() {
 	bool run = true;
 	auto screen = new StartScreen();
 
-	while (run) {
+	while (run && !quit) {
+		// Ubuntu + Gnome3 + SDL_WINDOW_FULLSCREEN_DESKTOP + amdgpu + SDL 2.0.10
+		// has a race condition that causes the first call to SDL_GL_MakeCurrent
+		// to produce a viewport with a gap at the top the size of the Gnome top
+		// bar + a non-fullscreen window titlebar. Calling it again during
+		// loading realigns the viewport.
+		SDL_GL_MakeCurrent(window, context);
+
 		Config::autoscale(window);
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -541,6 +547,7 @@ void menu() {
 			{
 				case SDL_QUIT: {
 					run = false;
+					quit = true;
 					break;
 				}
 			}

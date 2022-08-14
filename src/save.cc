@@ -143,6 +143,7 @@ namespace Sim {
 					state["tick"] = tick;
 					state["seed"] = seed;
 					state["enemy"] = Enemy::enable;
+					state["name"] = Config::mode.saveName;
 
 					for (auto [iid,size]: Item::supplied) {
 						state["supplied"][Save::itemOut(iid)] = size;
@@ -308,6 +309,7 @@ namespace Sim {
 					);
 				}
 
+				Config::mode.saveName = state["name"];
 				init(state["seed"]);
 				tick = state["tick"];
 

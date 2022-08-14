@@ -295,20 +295,6 @@ struct MainMenu : Popup {
 		int ticker = 0;
 	} quitting;
 
-	char saveas[50];
-	char create[50];
-	std::string load;
-
-	minivec<bool> games;
-
-	enum class SaveStatus {
-		Current = 0,
-		SaveAsOk,
-		SaveAsFail,
-	};
-
-	SaveStatus saveStatus;
-
 	MainMenu();
 	~MainMenu();
 	void draw() override;

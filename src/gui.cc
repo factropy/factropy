@@ -1554,7 +1554,7 @@ void GUI::update() {
 		popup->show(true);
 	}
 
-	if (doSave || (Config::mode.game1 && Sim::tick == 60)) {
+	if (doSave || (Config::mode.fresh && Sim::tick == 60)) {
 		doSave = false;
 		Sim::locked([&]() {
 			bool ok = Sim::save(Config::savePath(Config::mode.saveName).c_str(), scene.position, scene.direction, scene.directing ? scene.directing->id: 0);

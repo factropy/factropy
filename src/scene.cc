@@ -273,6 +273,7 @@ void Scene::exclaim(Point pos) {
 
 void Scene::updateMouse() {
 	MouseState last = mouse;
+	if (SDL_GetMouseFocus() != sdlWindow()) return;
 
 	int mx, my;
 	uint32_t buttons = SDL_GetMouseState(&mx, &my);

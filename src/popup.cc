@@ -170,7 +170,7 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 		for (auto& [iid,_]: from) {
 			items.push(Item::get(iid));
 		}
-		std::sort(items.begin(), items.end());
+		std::sort(items.begin(), items.end(), Item::sort);
 		return items.size() ? items.front()->id: 0;
 	};
 
@@ -179,9 +179,7 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 		for (auto& [fid,_]: from) {
 			fluids.push(Fluid::get(fid));
 		}
-		std::sort(fluids.begin(), fluids.end(), [](const auto a, const auto b) {
-			return a->title < b->title;
-		});
+		std::sort(fluids.begin(), fluids.end(), Fluid::sort);
 		return fluids.size() ? fluids.front()->id: 0;
 	};
 
@@ -5024,19 +5022,13 @@ MainMenu::~MainMenu() {
 void MainMenu::draw() {
 	bool showing = true;
 
-	auto reset = [&]() {
-		saveas[0] = 0;
-		create[0] = 0;
-		games.clear();
+	auto saveConfig = [&](bool changed = true) {
+		if (changed) Config::save();
+		return changed;
 	};
 
 	narrow();
 	Begin(fmtc("%s : %ld##mainmenu", Config::mode.saveName, Sim::seed), &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-		if (IsWindowAppearing()) {
-			reset();
-			saveStatus = SaveStatus::Current;
-		}
 
 		auto focusedTab = [&]() {
 			bool focused = opened;
@@ -5067,7 +5059,7 @@ void MainMenu::draw() {
 				}
 
 				if (quitting.period == 0 && Button("Quit", ImVec2(-1,0))) {
-					quitting.period = gui.fps*3;
+					quitting.period = gui.fps*2;
 					quitting.ticker = 0;
 				}
 
@@ -5127,43 +5119,43 @@ void MainMenu::draw() {
 				Section("Settings");
 
 				PushItemWidth(GetContentRegionAvail().x*0.5);
-				InputIntClamp("Autosave##autosave", &Config::mode.autosave, 5, 60, 5, 5);
+				saveConfig(InputIntClamp("Autosave##autosave", &Config::mode.autosave, 5, 60, 5, 5));
 				if (IsItemHovered()) tip(
 					"Autosave interval in minutes."
 				);
-				InputIntClamp("UPS", &Config::engine.ups, 1, 1000, 1, 1);
+				saveConfig(InputIntClamp("UPS", &Config::engine.ups, 1, 1000, 1, 1));
 				if (IsItemHovered()) tip(
 					"Simulation updates per second. Increase to make time speed up."
 				);
 				PopItemWidth();
 
-				Checkbox("Lock UPS to FPS", &Config::engine.pulse);
+				saveConfig(Checkbox("Lock UPS to FPS", &Config::engine.pulse));
 				if (IsItemHovered()) tip(
 					"UPS and FPS are loosely coupled by default, allowing FPS to"
 					" fluctuate without impacting the apparent speed of the game."
 				);
 
-				Checkbox("Build Grid [G]", &Config::mode.grid);
+				saveConfig(Checkbox("Build Grid [G]", &Config::mode.grid));
 				if (IsItemHovered()) tip(
 					"Show the build grid when zoomed in."
 				);
 
-				Checkbox("Build Alignment [H]", &Config::mode.alignment);
+				saveConfig(Checkbox("Build Alignment [H]", &Config::mode.alignment));
 				if (IsItemHovered()) tip(
 					"Show alignment lines when placing a ghost or blueprint."
 				);
 
-				Checkbox("Camera Snap [TAB]", &Config::mode.cardinalSnap);
+				saveConfig(Checkbox("Camera Snap [TAB]", &Config::mode.cardinalSnap));
 				if (IsItemHovered()) tip(
 					"Align the camera when close to the cardinal directions: North, South, East, West."
 				);
 
-				Checkbox("Tip Window", &Config::mode.autotip);
+				saveConfig(Checkbox("Tip Window", &Config::mode.autotip));
 				if (IsItemHovered()) tip(
 					"Show the tip window after 1s of mouse inactivity. [SPACEBAR] will always manually show it."
 				);
 
-				Checkbox("Enemy Attacks", &Enemy::enable);
+				saveConfig(Checkbox("Enemy Attacks", &Enemy::enable));
 				if (IsItemHovered()) tip(
 					"The enemy, livid that your logistics skills are so awesome, will"
 					" periodically send missiles to disrupt your supply chain."
@@ -5193,6 +5185,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = true;
 						Config::mode.treebreeze = true;
 						Config::mode.filters = true;
+						saveConfig();
 					}
 
 					TableNextColumn();
@@ -5210,6 +5203,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = true;
 						Config::mode.treebreeze = true;
 						Config::mode.filters = true;
+						saveConfig();
 					}
 
 					TableNextColumn();
@@ -5227,6 +5221,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = false;
 						Config::mode.treebreeze = false;
 						Config::mode.filters = false;
+						saveConfig();
 					}
 
 					EndTable();
@@ -5236,7 +5231,7 @@ void MainMenu::draw() {
 				Section("Custom");
 				PushItemWidth(GetContentRegionAvail().x*0.5);
 
-				InputIntClamp("FPS", &Config::window.fps, 10, 1000, 10, 10);
+				saveConfig(InputIntClamp("FPS", &Config::window.fps, 10, 1000, 10, 10));
 				if (IsItemHovered()) tip(
 					"Frames per second. Only works if the game was started with VSYNC off."
 					" FPS and UPS are only loosely coupled however there is a stage on every frame"
@@ -5244,44 +5239,44 @@ void MainMenu::draw() {
 					" in view. Therefore setting FPS too high will eventually impact UPS."
 				);
 
-				InputIntClamp("FOV", &Config::window.fov, 45, 135, 5, 5);
+				saveConfig(InputIntClamp("FOV", &Config::window.fov, 45, 135, 5, 5));
 				if (IsItemHovered()) tip(
 					"Horizontal field of view."
 				);
 
-				InputIntClamp("Horizon (m)", &Config::window.horizon, 750, 1500, 10, 100);
+				saveConfig(InputIntClamp("Horizon (m)", &Config::window.horizon, 750, 1500, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from ground zero (the point on the ground the camera is pointing at)"
 					" to render entities. Terrain is always rendered at least this far too."
 				);
 
-				InputIntClamp("Fog (m)", &Config::window.fog, 100, 1000, 10, 100);
+				saveConfig(InputIntClamp("Fog (m)", &Config::window.fog, 100, 1000, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from ground zero (the point on the ground the camera is pointing at)"
 					" where fog blur begins."
 				);
 
-				InputIntClamp("Zoom (m)", &Config::window.zoomUpperLimit, 100, 1000, 10, 100);
+				saveConfig(InputIntClamp("Zoom (m)", &Config::window.zoomUpperLimit, 100, 1000, 10, 100));
 				if (IsItemHovered()) tip(
 					"Maximum camera distance from ground zero (the point on the ground the camera is pointing at)."
 				);
 
-				InputIntClamp("LOD close (m)", &Config::window.levelsOfDetail[0], 10, 1500, 10, 100);
+				saveConfig(InputIntClamp("LOD close (m)", &Config::window.levelsOfDetail[0], 10, 1500, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from the camera to render high-detail entity and item models."
 				);
 
-				InputIntClamp("LOD near (m)", &Config::window.levelsOfDetail[1], Config::window.levelsOfDetail[0], 1500, 10, 100);
+				saveConfig(InputIntClamp("LOD near (m)", &Config::window.levelsOfDetail[1], Config::window.levelsOfDetail[0], 1500, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from the camera to render medium-detail entity and low-detail item models."
 				);
 
-				InputIntClamp("LOD far (m)", &Config::window.levelsOfDetail[2], Config::window.levelsOfDetail[1], 1500, 10, 100);
+				saveConfig(InputIntClamp("LOD far (m)", &Config::window.levelsOfDetail[2], Config::window.levelsOfDetail[1], 1500, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from the camera to render low-detail entity models (items will be invisible)."
 				);
 
-				InputIntClamp("LOD distant (m)", &Config::window.levelsOfDetail[3], Config::window.levelsOfDetail[2], 1500, 10, 100);
+				saveConfig(InputIntClamp("LOD distant (m)", &Config::window.levelsOfDetail[3], Config::window.levelsOfDetail[2], 1500, 10, 100));
 				if (IsItemHovered()) tip(
 					"Distance from the camera to render very low-detail entity models (items and small"
 					" entities will be invisible)."
@@ -5291,59 +5286,62 @@ void MainMenu::draw() {
 					if (Selectable("sand", Config::window.ground == Config::window.groundSand)) {
 						Config::window.ground = Config::window.groundSand;
 						Config::window.grid = Config::window.gridSand;
+						saveConfig();
 					}
 					if (Selectable("grass", Config::window.ground == Config::window.groundGrass)) {
 						Config::window.ground = Config::window.groundGrass;
 						Config::window.grid = Config::window.gridGrass;
+						saveConfig();
 					}
 					EndCombo();
 				}
 				PopItemWidth();
 
-				Checkbox("Shadows", &Config::mode.shadowmap);
+				saveConfig(Checkbox("Shadows", &Config::mode.shadowmap));
 				if (IsItemHovered()) tip(
 					"Render shadows. Increases GPU load."
 				);
 
 				if (Config::mode.shadowmap) {
-					Checkbox("Shadows: Items", &Config::mode.itemShadows);
+					saveConfig(Checkbox("Shadows: Items", &Config::mode.itemShadows));
 					if (IsItemHovered()) tip(
 						"Render item shadows. Increases GPU load."
 					);
 				}
 
-				Checkbox("Mesh Merging", &Config::mode.meshMerging);
+				saveConfig(Checkbox("Mesh Merging", &Config::mode.meshMerging));
 				if (IsItemHovered()) tip(
 					"Generate merged meshes for groups of identical items on backed-up belts."
 					" Reduces CPU load. Slightly increases GPU load."
 				);
 
-				Checkbox("Procedural Waves", &Config::mode.waterwaves);
+				saveConfig(Checkbox("Procedural Waves", &Config::mode.waterwaves));
 				if (IsItemHovered()) tip(
 					"Water motion. Slightly increases GPU load."
 				);
 
-				Checkbox("Procedural Breeze", &Config::mode.treebreeze);
+				saveConfig(Checkbox("Procedural Breeze", &Config::mode.treebreeze));
 				if (IsItemHovered()) tip(
 					"Subtle tree motion. Slightly increases GPU load."
 				);
 
-				Checkbox("Procedural Textures", &Config::mode.filters);
+				saveConfig(Checkbox("Procedural Textures", &Config::mode.filters));
 				if (IsItemHovered()) tip(
 					"Close-up surface effects on concrete and metal. Slightly increases GPU load."
 				);
 
-				Checkbox("MSAA", &Config::window.antialias);
+				saveConfig(Checkbox("MSAA", &Config::window.antialias));
 				if (IsItemHovered()) tip(
 					"Normal GL_MULTISAMPLE. Disable if better anti-aliasing is done via GPU driver settings."
 				);
 
 				if (Checkbox("VSYNC", &Config::window.vsync)) {
 					SDL_GL_SetSwapInterval(Config::window.vsync ? 1:0);
+					saveConfig();
 				}
 
-				Checkbox("Show UPS", &Config::mode.overlayUPS);
-				Checkbox("Show FPS", &Config::mode.overlayFPS);
+				saveConfig(Checkbox("Show UPS", &Config::mode.overlayUPS));
+				saveConfig(Checkbox("Show FPS", &Config::mode.overlayFPS));
 
 				EndTabItem();
 			}

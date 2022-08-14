@@ -33,7 +33,10 @@ void World::reset() {
 	tiles.clear();
 	features.clear();
 	changes.clear();
+	nextHill = 1;
+	nextLake = -1;
 	ready = false;
+	game++;
 }
 
 void World::init() {
@@ -506,7 +509,13 @@ World::Tile* World::get(const XY& at) {
 		XY at = {0,0};
 		uint offset = 0;
 		bool ok = false;
+		uint game = 0;
 	} cache;
+
+	if (cache.game != game) {
+		cache.ok = false;
+		cache.game = game;
+	}
 
 	if (within(at) && flag(at)) {
 		if (cache.ok && cache.at == at) {

@@ -73,8 +73,6 @@ namespace Sim {
 
 	void init(int64_t seed);
 	void reset();
-	void save();
-	void load();
 
 	float random();
 	int choose(int range);

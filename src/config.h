@@ -144,8 +144,7 @@ namespace Config {
 	extern Popup popup;
 
 	struct Mode {
-		bool game1 = false;
-		minivec<int64_t> seeds = {60464830,60555982,60670951,60841977,60900622,52778587};
+		minivec<int64_t> seeds = {60464830,60555982,60670951,60841977,60900622,52778587,60252849};
 
 		bool pause = false;
 		bool restart = false;
@@ -158,11 +157,12 @@ namespace Config {
 		std::string dataPath;
 		std::string saveName;
 
+		bool load = false;
 		bool fresh = false;
 		uint freshSeed = 0;
-		bool load = false;
 
 		int autosave = 15;
+		int autosaveN = 0;
 
 		bool shadowmap = true;
 		bool itemShadows = true;
