@@ -5045,6 +5045,12 @@ void MainMenu::draw() {
 
 				Notice(Config::version.text);
 
+				if (Button("Save [F5]", ImVec2(-1,0))) {
+					gui.doSave = true;
+				}
+
+				SpacingV();
+
 				if (IsWindowAppearing()) {
 					quitting.period = 0;
 					quitting.ticker = 0;
