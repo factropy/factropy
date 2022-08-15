@@ -684,16 +684,20 @@ Entity::Settings* Entity::settings() {
 	return new Settings(*this);
 }
 
-void Entity::setup(Entity::Settings* settings) {
+bool Entity::setup(Entity::Settings* settings) {
 	setEnabled(settings->enabled);
 	color(settings->color);
 
+	bool applied = false;
+
 	if (spec->store && settings->store) {
 		store().setup(settings->store);
+		applied = true;
 	}
 
 	if (spec->crafter && settings->crafter) {
 		crafter().setup(settings->crafter);
+		applied = true;
 	}
 
 	if (spec->venter) {
@@ -719,6 +723,7 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->arm && settings->arm) {
 		arm().setup(settings->arm);
+		applied = true;
 	}
 
 	if (spec->vehicle) {
@@ -726,14 +731,17 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->cart && settings->cart) {
 		cart().setup(settings->cart);
+		applied = true;
 	}
 
 	if (spec->cartStop && settings->cartStop) {
 		cartStop().setup(settings->cartStop);
+		applied = true;
 	}
 
 	if (spec->cartWaypoint && settings->cartWaypoint) {
 		cartWaypoint().setup(settings->cartWaypoint);
+		applied = true;
 	}
 
 	if (spec->conveyor) {
@@ -744,14 +752,17 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->loader && settings->loader) {
 		loader().setup(settings->loader);
+		applied = true;
 	}
 
 	if (spec->balancer && settings->balancer) {
 		balancer().setup(settings->balancer);
+		applied = true;
 	}
 
 	if (spec->pipe && settings->pipe) {
 		pipe().setup(settings->pipe);
+		applied = true;
 	}
 
 	if (spec->turret) {
@@ -762,10 +773,12 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->router && settings->router) {
 		router().setup(settings->router);
+		applied = true;
 	}
 
 	if (spec->networker && settings->networker) {
 		networker().setup(settings->networker);
+		applied = true;
 	}
 
 	if (spec->zeppelin) {
@@ -785,6 +798,7 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->monorail && settings->monorail) {
 		monorail().setup(settings->monorail);
+		applied = true;
 	}
 
 	if (spec->monocar) {
@@ -792,10 +806,12 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->tube && settings->tube) {
 		tube().setup(settings->tube);
+		applied = true;
 	}
 
 	if (spec->monorail && settings->monorail) {
 		monorail().setup(settings->monorail);
+		applied = true;
 	}
 
 	if (spec->source) {
@@ -803,6 +819,8 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->powerpole) {
 	}
+
+	return applied;
 }
 
 bool Entity::exists(uint id) {

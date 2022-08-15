@@ -167,7 +167,7 @@ struct GuiFakeEntity : GuiEntity {
 	~GuiFakeEntity();
 
 	GuiFakeEntity* getConfig(Entity& en);
-	GuiFakeEntity* setConfig(Entity& en);
+	GuiFakeEntity* setConfig(Entity& en, bool plan = false);
 	GuiFakeEntity* move(Point p);
 	GuiFakeEntity* move(Point p, Point d);
 	GuiFakeEntity* move(float x, float y, float z);

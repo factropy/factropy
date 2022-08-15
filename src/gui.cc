@@ -851,7 +851,7 @@ void GUI::update() {
 				}
 
 				for (auto cfg: postConfiguration) {
-					cfg.te->setConfig(*cfg.en);
+					cfg.te->setConfig(*cfg.en, true);
 				}
 			}
 		});

@@ -1591,13 +1591,14 @@ GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en) {
 	return this;
 }
 
-GuiFakeEntity* GuiFakeEntity::setConfig(Entity& en) {
-	if (en.spec != spec || !settings) {
+GuiFakeEntity* GuiFakeEntity::setConfig(Entity& en, bool plan) {
+	if (!plan && (en.spec != spec || !settings)) {
 		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
 		return this;
 	}
-	en.setup(settings);
-	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
+	if (en.setup(settings)) {
+		scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
+	}
 	return this;
 }
 

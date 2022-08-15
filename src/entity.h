@@ -348,7 +348,7 @@ struct Entity {
 	};
 
 	Settings* settings();
-	void setup(Settings* settings);
+	bool setup(Settings* settings);
 
 	// Access entity components
 	Ghost& ghost() const;
