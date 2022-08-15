@@ -2,8 +2,8 @@ name: linux
 
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - main
 
 jobs:
   build:
