@@ -341,6 +341,7 @@ struct Entity {
 		MonorailSettings* monorail = nullptr;
 		RouterSettings* router = nullptr;
 		bool enabled = true;
+		bool applicable = false;
 		Color color = 0xffffffff;
 		Settings();
 		Settings(Entity& en);

@@ -321,7 +321,7 @@ void GUI::update() {
 						auto ge = new GuiFakeEntity(se->spec);
 						ge->dir(en.dir());
 						ge->pos(en.pos());
-						ge->getConfig(en);
+						ge->getConfig(en, true);
 						plan->add(ge);
 					}
 

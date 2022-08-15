@@ -546,13 +546,16 @@ Entity::Settings::Settings() {
 Entity::Settings::Settings(Entity& en) : Settings() {
 	enabled = en.isEnabled();
 	color = en.color();
+	applicable = false;
 
 	if (en.spec->store) {
 		store = en.store().settings();
+		applicable = true;
 	}
 
 	if (en.spec->crafter) {
 		crafter = en.crafter().settings();
+		applicable = true;
 	}
 
 	if (en.spec->venter) {
@@ -578,6 +581,7 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->arm) {
 		arm = en.arm().settings();
+		applicable = true;
 	}
 
 	if (en.spec->vehicle) {
@@ -585,14 +589,17 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->cart) {
 		cart = en.cart().settings();
+		applicable = true;
 	}
 
 	if (en.spec->cartStop) {
 		cartStop = en.cartStop().settings();
+		applicable = true;
 	}
 
 	if (en.spec->cartWaypoint) {
 		cartWaypoint = en.cartWaypoint().settings();
+		applicable = true;
 	}
 
 	if (en.spec->conveyor) {
@@ -603,14 +610,17 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->loader) {
 		loader = en.loader().settings();
+		applicable = true;
 	}
 
 	if (en.spec->balancer) {
 		balancer = en.balancer().settings();
+		applicable = true;
 	}
 
 	if (en.spec->pipe) {
 		pipe = en.pipe().settings();
+		applicable = true;
 	}
 
 	if (en.spec->turret) {
@@ -621,10 +631,12 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->router) {
 		router = en.router().settings();
+		applicable = true;
 	}
 
 	if (en.spec->networker) {
 		networker = en.networker().settings();
+		applicable = true;
 	}
 
 	if (en.spec->zeppelin) {
@@ -644,6 +656,7 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->monorail) {
 		monorail = en.monorail().settings();
+		applicable = true;
 	}
 
 	if (en.spec->monocar) {
@@ -651,10 +664,12 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->tube) {
 		tube = en.tube().settings();
+		applicable = true;
 	}
 
 	if (en.spec->monorail) {
 		monorail = en.monorail().settings();
+		applicable = true;
 	}
 
 	if (en.spec->source) {

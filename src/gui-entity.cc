@@ -1578,7 +1578,7 @@ GuiFakeEntity::~GuiFakeEntity() {
 	settings = nullptr;
 }
 
-GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en) {
+GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en, bool plan) {
 	if (en.spec != spec) {
 		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
 		return this;
@@ -1587,7 +1587,13 @@ GuiFakeEntity* GuiFakeEntity::getConfig(Entity& en) {
 	settings = en.settings();
 	status = settings->enabled ? Status::None: Status::Warning;
 	color = settings->color;
-	scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
+	if (!plan && !settings->applicable) {
+		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
+		return this;
+	}
+	if (settings->applicable) {
+		scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
+	}
 	return this;
 }
 
