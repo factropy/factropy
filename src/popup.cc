@@ -1644,7 +1644,9 @@ void EntityPopup2::draw() {
 						}
 						for (auto item: items) {
 							if (store.level(item->id)) continue;
-							store.levelSet(item->id, 0, 0);
+							int limit = (int)store.limit().value/item->mass.value;
+							int step  = (int)std::max(1U, (uint)limit/100);
+							store.levelSet(item->id, 0, store.magic ? step: 0);
 						}
 					}
 					if (IsItemHovered()) tip(

@@ -229,6 +229,7 @@ void Depot::update() {
 	};
 
 	auto recycle = [&](auto& src, auto& dst) {
+		if (dst.magic) return false;
 		if (src.en == dst.en) return false;
 		if (!src.overflow) return false;
 		if (!dst.hint.accepting) return false;

@@ -331,6 +331,7 @@ add_goal({
 	dependencies = ["supply3"],
 	chits = 2,
 	specs = [
+		"drone-depot2",
 		"centrifuge1",
 		"nuclear-reactor",
 		"conveyor-2",

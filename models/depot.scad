@@ -3,8 +3,12 @@ use <lib.scad>
 hd = 72;
 ld = 12;
 
-module slat() {
-	box([0.2,0.5,2.5]);
+module slatsHD() {
+	for (i = [0:30:360]) rotate([0,0,i]) translate([0,1.35,1.6]) rbox([0.5,0.2,2.5],0.02,$fn=8);
+}
+
+module slatsLD() {
+	for (i = [0:30:360]) rotate([0,0,i]) translate([0,1.35,1.6]) box([0.5,0.2,2.5]);
 }
 
 module baseHD($fn=hd) {
@@ -45,5 +49,5 @@ module baseVLD($fn=ld) {
 	}
 }
 
-//translate([0,0,1.25]) slat();
-baseLD();
+slatsHD();
+//baseLD();
