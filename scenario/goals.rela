@@ -253,6 +253,7 @@ add_goal({
 		"solid-fuel-naphtha",
 		"sulfur",
 		"sulfuric-acid",
+		"mother-board",
 	],
 	supplies = {
 		"ammo1" = 500,
@@ -275,7 +276,6 @@ add_goal({
 		"rocket",
 	],
 	recipes = [
-		"mother-board",
 		"battery",
 		"filter",
 	],
@@ -300,6 +300,7 @@ add_goal({
 		"monorail-stop",
 		"monocar",
 		"container-shipping",
+		"drone-depot2",
 	],
 	recipes = [
 		"ammo2",
@@ -331,7 +332,6 @@ add_goal({
 	dependencies = ["supply3"],
 	chits = 2,
 	specs = [
-		"drone-depot2",
 		"centrifuge1",
 		"nuclear-reactor",
 		"conveyor-2",
