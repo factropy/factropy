@@ -2,6 +2,9 @@
 add_item({
 	name = "gear-wheel",
 	title = "Gear Wheel",
+	category = "intermediate",
+	group = "construction",
+	order = "ca",
 	parts = [{
 		color = 0x999999ff,
 		gloss = gloss.metallic,

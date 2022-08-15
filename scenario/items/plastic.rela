@@ -2,6 +2,8 @@
 add_item({
 	name = "plastic-bar",
 	title = "Plastic Bar",
+	category = "processed",
+	order = "a",
 	parts = [{
 		color = colors.plastic,
 		gloss = 16,

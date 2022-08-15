@@ -2,9 +2,8 @@
 add_item({
 	name = "brick",
 	title = "Brick",
-	category = "construction",
-	group = "foundation",
-	order = "z",
+	category = "processed",
+	order = "b",
 	parts = [{
 		color = 0xb69062ff,
 		lods = [

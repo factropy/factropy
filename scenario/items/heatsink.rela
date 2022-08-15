@@ -2,6 +2,7 @@
 add_item({
 	name = "heatsink",
 	title = "Heat Sink",
+	category = "intermediate",
 	parts = [
 		{
 			color = colors.aluminium,

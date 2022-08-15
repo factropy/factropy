@@ -2,6 +2,7 @@
 add_item({
 	name = "battery",
 	title = "Battery",
+	category = "intermediate",
 	parts = [
 		{
 			color = 0xcc6600ff,

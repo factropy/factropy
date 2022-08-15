@@ -3,7 +3,7 @@ function ingot(name, title, color, order)
 	add_item({
 		name = name,
 		title = title,
-		category = "resources",
+		category = "processed",
 		group = "ingot",
 		order = order,
 		parts = [{

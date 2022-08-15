@@ -1,8 +1,11 @@
 
-function circuitBoard(name, title, color)
+function circuitBoard(name, title, color, order)
 	add_item({
 		name = name,
 		title = title,
+		category = "intermediate",
+		group = "circuit",
+		order = order,
 		parts = [{
 			color = color,
 			lods = [
@@ -17,8 +20,8 @@ function circuitBoard(name, title, color)
 	})
 end
 
-circuitBoard("circuit-board", "Circuit Board", 0x228800ff)
-circuitBoard("mother-board", "Mother Board", 0xDC143Cff)
-circuitBoard("processor", "Processor", 0x3c14dcff)
-circuitBoard("computer", "Computer", 0xffffffff)
+circuitBoard("circuit-board", "Circuit Board", 0x228800ff, "a")
+circuitBoard("mother-board", "Mother Board", 0xDC143Cff, "b")
+circuitBoard("processor", "Processor", 0x3c14dcff, "c")
+circuitBoard("computer", "Computer", 0xffffffff, "d")
 

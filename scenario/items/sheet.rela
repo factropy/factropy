@@ -3,9 +3,9 @@ function sheet(name, title, color)
 	add_item({
 		name = name,
 		title = title,
-		category = "construction",
-		group = "sheeting",
-		order = order,
+		category = "intermediate",
+		group = "construction",
+		order = "a-$(order)",
 		parts = [
 			{
 				color = color,
