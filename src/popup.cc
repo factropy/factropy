@@ -191,12 +191,12 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 		return fluidIconChoose(Fluid::get(recipe->drill), pix);
 	}
 
-	if (recipe->fluid) {
-		return fluidIconChoose(Fluid::get(recipe->fluid), pix);
-	}
-
 	if (recipe->outputItems.size() > 0) {
 		return itemIconChoose(Item::get(chooseItem(recipe->outputItems)), pix);
+	}
+
+	if (recipe->fluid) {
+		return fluidIconChoose(Fluid::get(recipe->fluid), pix);
 	}
 
 	if (recipe->outputFluids.size() > 0) {
@@ -1644,7 +1644,9 @@ void EntityPopup2::draw() {
 						}
 						for (auto item: items) {
 							if (store.level(item->id)) continue;
-							store.levelSet(item->id, 0, 0);
+							int limit = (int)store.limit().value/item->mass.value;
+							int step  = (int)std::max(1U, (uint)limit/100);
+							store.levelSet(item->id, 0, store.magic ? step: 0);
 						}
 					}
 					if (IsItemHovered()) tip(
@@ -5045,28 +5047,47 @@ void MainMenu::draw() {
 
 				Notice(Config::version.text);
 
-				if (IsWindowAppearing()) {
-					quitting.period = 0;
-					quitting.ticker = 0;
+				PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemSpacing.x/2,0));
+
+				if (BeginTable("##menu1-game", 2)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
+
+					TableNextColumn();
+
+						if (Button("Save [F5]", ImVec2(-1,0))) {
+							gui.doSave = true;
+						}
+
+					TableNextColumn();
+
+						if (IsWindowAppearing()) {
+							quitting.period = 0;
+							quitting.ticker = 0;
+						}
+
+						if (quitting.period > 0 && quitting.ticker < quitting.period) {
+							quitting.ticker++;
+						}
+
+						if (quitting.period > 0 && quitting.ticker >= quitting.period) {
+							gui.doQuit = true;
+						}
+
+						if (quitting.period == 0 && Button("Quit", ImVec2(-1,0))) {
+							quitting.period = gui.fps*2;
+							quitting.ticker = 0;
+						}
+
+						if (quitting.period > 0 && Button("Continue", ImVec2(-1,0))) {
+							quitting.period = 0;
+							quitting.ticker = 0;
+						}
+
+					EndTable();
 				}
 
-				if (quitting.period > 0 && quitting.ticker < quitting.period) {
-					quitting.ticker++;
-				}
-
-				if (quitting.period > 0 && quitting.ticker >= quitting.period) {
-					gui.doQuit = true;
-				}
-
-				if (quitting.period == 0 && Button("Quit", ImVec2(-1,0))) {
-					quitting.period = gui.fps*2;
-					quitting.ticker = 0;
-				}
-
-				if (quitting.period > 0 && Button("Continue", ImVec2(-1,0))) {
-					quitting.period = 0;
-					quitting.ticker = 0;
-				}
+				PopStyleVar();
 
 				if (quitting.period > 0) {
 					SmallBar((float)quitting.ticker/(float)quitting.period);
@@ -5076,39 +5097,39 @@ void MainMenu::draw() {
 
 				PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemSpacing.x/2,0));
 
-				if (BeginTable("##menu-game", 2)) {
+				if (BeginTable("##menu2-game", 2)) {
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
 					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, GetContentRegionAvail().x*0.5);
 
 					TableNextColumn();
 
-					if (Button(Config::mode.pause ? "Resume": "Pause", ImVec2(-1,0))) {
-						Config::mode.pause = !Config::mode.pause;
-					}
-					if (IsItemHovered()) tip("[Pause]");
-					SpacingV();
+						if (Button("Signals", ImVec2(-1,0))) {
+							gui.doSignals = true;
+						}
+						if (IsItemHovered()) tip(
+							"Custom signals for use in rules and on wifi."
+						);
+						SpacingV();
 
 					TableNextColumn();
 
-					if (Button("Signals", ImVec2(-1,0))) {
-						gui.doSignals = true;
-					}
-					if (IsItemHovered()) tip(
-						"Custom signals for use in rules and on wifi."
-					);
-					SpacingV();
+						if (Button(Config::mode.pause ? "Resume": "Pause", ImVec2(-1,0))) {
+							Config::mode.pause = !Config::mode.pause;
+						}
+						if (IsItemHovered()) tip("[Pause]");
+						SpacingV();
 
 					TableNextColumn();
 
-					if (Button("Zeppelins [Z]", ImVec2(-1,0))) {
-						gui.doZeppelins = true;
-					}
+						if (Button("Zeppelins [Z]", ImVec2(-1,0))) {
+							gui.doZeppelins = true;
+						}
 
 					TableNextColumn();
 
-					if (Button("Map [M]", ImVec2(-1,0))) {
-						gui.doMap = true;
-					}
+						if (Button("Map [M]", ImVec2(-1,0))) {
+							gui.doMap = true;
+						}
 
 					EndTable();
 				}

@@ -3477,7 +3477,10 @@ void ScenarioBase::specifications() {
 		{ Item::byName("brick")->id, 3 },
 	};
 
-	droneDepotTier(1);
+	droneDepotTier(1, 0xFFD700ff, 0xB22222FF);
+	droneDepotTier(2, 0xFFD700ff, 0x008800FF);
+
+	Spec::byName("drone-depot1")->upgrade = Spec::byName("drone-depot2");
 
 	spec = new Spec("centrifuge1");
 	spec->title = "Centrifuge";
@@ -3514,7 +3517,7 @@ void ScenarioBase::specifications() {
 	};
 
 	spec->materials = {
-		{ Item::byName("computer")->id, 3 },
+		{ Item::byName("processor")->id, 5 },
 		{ Item::byName("circuit-board")->id, 10 },
 		{ Item::byName("steel-sheet")->id, 10 },
 		{ Item::byName("steel-frame")->id, 5 },
@@ -3630,12 +3633,12 @@ void ScenarioBase::specifications() {
 	};
 
 	spec->materials = {
-		{ Item::byName("brick")->id, 25 },
-		{ Item::byName("steel-sheet")->id, 10 },
-		{ Item::byName("steel-frame")->id, 5 },
-		{ Item::byName("copper-sheet")->id, 10 },
-		{ Item::byName("circuit-board")->id, 10 },
-		{ Item::byName("pipe")->id, 10 },
+		{ Item::byName("brick")->id, 50 },
+		{ Item::byName("steel-sheet")->id, 100 },
+		{ Item::byName("steel-frame")->id, 50 },
+		{ Item::byName("copper-sheet")->id, 100 },
+		{ Item::byName("mother-board")->id, 10 },
+		{ Item::byName("pipe")->id, 100 },
 	};
 
 	float falconGloss = 16;
@@ -3850,7 +3853,7 @@ void ScenarioBase::specifications() {
 			{ Item::byName("plastic-bar")->id, 100 },
 			{ Item::byName("electric-motor")->id, 100 },
 			{ Item::byName("battery")->id, 100 },
-			{ Item::byName("mother-board")->id, 5 },
+			{ Item::byName("computer")->id, 5 },
 		};
 
 		spec->highLOD = 10;
@@ -4214,7 +4217,7 @@ void ScenarioBase::blimpTier(int tier) {
 			{ Item::byName("battery")->id, 8 },
 			{ Item::byName("aluminium-frame")->id, 50 },
 			{ Item::byName("electric-motor")->id, 6 },
-			{ Item::byName("mother-board")->id, 1 },
+			{ Item::byName("processor")->id, 1 },
 		};
 
 		spec->highLOD = 10;
@@ -4451,10 +4454,11 @@ void ScenarioBase::cartTier(int tier) {
 	if (tier > 1) {
 		spec->materials.push_back({ Item::byName("plastic-bar")->id, 1 });
 		spec->materials.push_back({ Item::byName("battery")->id, 1 });
+		spec->materials.push_back({ Item::byName("mother-board")->id, 1 });
 	}
 
 	if (tier > 2) {
-		spec->materials.push_back({ Item::byName("mother-board")->id, 1 });
+		spec->materials.push_back({ Item::byName("processor")->id, 1 });
 	}
 
 	Spec::byName(fmt("cart%d", tier))->cycle = Spec::byName(fmt("cart-engineer%d", tier));
@@ -4649,7 +4653,7 @@ void ScenarioBase::truckTier(int tier) {
 	}
 }
 
-void ScenarioBase::droneDepotTier(int tier) {
+void ScenarioBase::droneDepotTier(int tier, uint color, uint color2) {
 
 	if (!meshes.count("depotBase")) {
 		meshes["depotBase"] = new Mesh("models/depot-base-hd.stl");
@@ -4662,33 +4666,29 @@ void ScenarioBase::droneDepotTier(int tier) {
 	auto depot = fmt("drone-depot%d", tier);
 
 	auto spec = new Spec(depot);
+
 	spec->title = "Drone Port";
+	if (tier == 2) spec->title = "Drone Port (Smart)";
+
 	spec->collision = {0, 0, 0, 3, 3, 3};
 	spec->selection = spec->collision;
 	spec->rotateGhost = true;
 	spec->parts = {
-		(new Part(0xFFD700ff))->gloss(16)
+		(new Part(color))->gloss(16)
 			->lod(mesh("depotBase"), Part::HD, Part::SHADOW)
 			->lod(mesh("depotBaseLD"), Part::MD, Part::SHADOW)
 			->lod(mesh("depotBaseVLD"), Part::VLD, Part::SHADOW)
-			->transform(Mat4::translate(0,-1.5,0))
+			->transform(Mat4::translate(0,-1.5,0)),
+		(new Part(color2))->gloss(16)
+			->lod(mesh("depotSlat"), Part::HD, Part::NOSHADOW)
+			->lod(mesh("depotSlatLD"), Part::MD, Part::NOSHADOW)
+			->transform(Mat4::translate(0,-1.5,0)),
 	};
-	{
-		std::vector<Mat4> states = {Mat4::identity};
-		for (int i = 0; i < 12; i++) {
-			spec->parts.push_back(
-				(new Part(0x778899ff))->gloss(16)
-					->lod(mesh("depotSlat"), Part::HD, Part::NOSHADOW)
-					->lod(mesh("depotSlatLD"), Part::MD, Part::NOSHADOW)
-					->transform(Mat4::translate(1.4,-1.2,0) * Mat4::rotateY((float)i*30.0f))
-			);
-		}
-	}
 
-	spec->networker = true;
-	spec->networkInterfaces = tier;
+	spec->networker = tier > 1;
+	spec->networkInterfaces = 1;
 	spec->networkWifi = {-1,1.5,0};
-	spec->health = 150;
+	spec->health = tier*150;
 
 	spec->consumeCharge = true;
 	spec->consumeChargeEffect = true;
@@ -4698,11 +4698,25 @@ void ScenarioBase::droneDepotTier(int tier) {
 	spec->materials = {
 		{Item::byName("steel-sheet")->id, 5},
 		{Item::byName("plastic-bar")->id, 30*(uint)tier},
-		{Item::byName("mother-board")->id, 1},
-		{Item::byName("circuit-board")->id, 25*(uint)tier},
 		{Item::byName("electric-motor")->id, 25*(uint)tier},
 		{Item::byName("battery")->id, 25*(uint)tier + 25},
 	};
+
+	if (tier == 1) {
+		spec->materials.push_back({ Item::byName("circuit-board")->id, 25*(uint)tier });
+		spec->materials.push_back({ Item::byName("mother-board")->id, 5 });
+	}
+
+	if (tier == 2) {
+		spec->materials.push_back({ Item::byName("mother-board")->id, 25*(uint)tier });
+		spec->materials.push_back({ Item::byName("processor")->id, 5 });
+	}
+
+	if (tier == 3) {
+		spec->materials.push_back({ Item::byName("processor")->id, 25*(uint)tier });
+		spec->materials.push_back({ Item::byName("computer")->id, 5 });
+	}
+
 	spec->depot = true;
 	spec->depotAssist = true;
 	spec->depotFixed = true;

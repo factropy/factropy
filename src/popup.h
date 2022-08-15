@@ -77,6 +77,12 @@ struct StartScreen : Popup {
 	Texture banner;
 	minivec<bool> games;
 
+	struct {
+		char edit[50];
+		bool active = false;
+		std::string from;
+	} rename;
+
 	enum class Screen {
 		Load = 0,
 		New,

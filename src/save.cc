@@ -309,7 +309,10 @@ namespace Sim {
 					);
 				}
 
-				Config::mode.saveName = state["name"];
+				auto fpath = std::filesystem::path(name);
+				if (fpath.stem().string().find("autosave") == 0)
+					Config::mode.saveName = state["name"];
+
 				init(state["seed"]);
 				tick = state["tick"];
 

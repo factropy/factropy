@@ -70,6 +70,6 @@ struct ScenarioBase : Scenario {
 	void cartTier(int tier);
 	void truckTier(int tier);
 	void blimpTier(int tier);
-	void droneDepotTier(int tier);
+	void droneDepotTier(int tier, uint color, uint color2);
 };
 

@@ -132,7 +132,7 @@ void StartScreen::drawNew() {
 
 	Print("Name"); SameLine();
 	PushFont(Config::sidebar.font.imgui);
-	PrintRight("_ a-z A-Z 0-9");
+	PrintRight("_- a-z A-Z 0-9");
 	PopFont();
 
 	SetNextItemWidth(-1);
@@ -140,7 +140,7 @@ void StartScreen::drawNew() {
 	SpacingV();
 
 	if (!Config::saveNameOk(name)) {
-		Warning("Invalid save name: _ a-z A-Z 0-9");
+		Warning("Invalid save name: _- a-z A-Z 0-9");
 		ok = false;
 	}
 
@@ -244,26 +244,76 @@ void StartScreen::drawLoad() {
 
 	for (int i = 0, l = saves.size(); i < l; i++) {
 		auto name = saves[i].name;
-		if (BeginTable(fmtc("##load-list-%d", i), 4)) {
+		if (BeginTable(fmtc("##load-list-%d", i), 5)) {
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, width);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
 			TableNextRow();
+
 			TableNextColumn();
-			Checkbox(fmtc("##check-%s", name), &games[i]);
+				Checkbox(fmtc("##check-%s", name), &games[i]);
+
 			TableNextColumn();
-			if (Button(fmtc("%s##open-%d", ICON_FA_FOLDER_OPEN, i), ImVec2(button,0))) {
-				Config::mode.load = true;
-				Config::mode.saveName = name;
-			}
-			if (IsItemHovered()) tip("Open game");
+				if (Button(fmtc("%s##rename-%d", ICON_FA_PENCIL_SQUARE_O, i), ImVec2(button,0))) {
+					if (rename.active && rename.from == name) {
+						rename.active = false;
+					}
+					else {
+						rename.active = true;
+						rename.from = name;
+						snprintf(rename.edit, sizeof(rename.edit), "%s", name.c_str());
+					}
+				}
+				if (IsItemHovered()) tip("Rename");
+
 			TableNextColumn();
-			Print(name.c_str());
+				if (rename.active && rename.from == name) {
+					auto rname = std::string(rename.edit);
+
+					bool ok = rname.size() && Config::saveNameOk(rname);
+					bool dup = rname.size() && !Config::saveNameFree(rname);
+
+					dup = dup || rname.find("autosave") == 0;
+
+					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0,0));
+					if (BeginTable("##rename-inline", 2)) {
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+						TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+
+						TableNextColumn();
+							SetNextItemWidth(-1);
+							InputTextWithHint("##rename", rename.from.c_str(), rename.edit, sizeof(rename.edit));
+
+						TableNextColumn();
+							if (Button(fmtc("%s##rename-save", ICON_FA_FLOPPY_O), ImVec2(button,0)) && ok && !dup) {
+								Config::saveRename(name, rname);
+							}
+
+						EndTable();
+					}
+					PopStyleVar(1);
+
+					if (!ok && rname.size()) Warning("Invalid name: _- a-z A-Z 0-9");
+					if (dup && rname != name) Warning("Duplicate name");
+				}
+				else {
+					Print(name.c_str());
+				}
+
 			TableNextColumn();
-			PushFont(Config::sidebar.font.imgui);
-			PrintRight(fmtc("%s %s", saves[i].date, saves[i].time));
-			PopFont();
+				PushFont(Config::sidebar.font.imgui);
+				PrintRight(fmtc("%s %s", saves[i].date, saves[i].time));
+				PopFont();
+
+			TableNextColumn();
+				if (Button(fmtc("%s##open-%d", ICON_FA_FOLDER_OPEN, i), ImVec2(button,0))) {
+					Config::mode.load = true;
+					Config::mode.saveName = name;
+				}
+				if (IsItemHovered()) tip("Open");
+
 			EndTable();
 		}
 		Separator();

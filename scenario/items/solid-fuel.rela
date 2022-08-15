@@ -1,8 +1,10 @@
 
-function solidFuel(name, title, color, energy, type)
+function solidFuel(name, title, color, energy, type, order)
 	add_item({
 		name = name,
 		title = title,
+		category = "processed",
+		order = "c-$(order)",
 		fuel = [ type, energy ],
 		parts = [{
 			color = color,
@@ -17,6 +19,6 @@ function solidFuel(name, title, color, energy, type)
 	})
 end
 
-solidFuel("solid-fuel", "Solid Fuel", 0x666666ff, MJ(40), "chemical")
-solidFuel("nuclear-fuel", "Nuclear Fuel", 0x66cc66ff, GJ(8), "nuclear")
+solidFuel("solid-fuel", "Solid Fuel", 0x666666ff, MJ(40), "chemical", "a")
+solidFuel("nuclear-fuel", "Nuclear Fuel", 0x66cc66ff, GJ(8), "nuclear", "b")
 

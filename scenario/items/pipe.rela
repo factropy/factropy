@@ -2,6 +2,9 @@
 add_item({
 	name = "pipe",
 	title = "Pipe",
+	category = "intermediate",
+	group = "construction",
+	order = "cb",
 	parts = [{
 		color = 0xffa500ff,
 		scale = 0.7,

@@ -1,43 +1,49 @@
 
 add_item_category({
-	name = "resources",
-	title = "Resources",
+	name = "raw",
+	title = "Raw",
 	order = "a",
 })
 
-add_item_group({
-	name = "ore",
-	category = "resources",
-	order = "a",
+add_item_category({
+	name = "prepared",
+	title = "Prepared",
+	order = "b",
 })
 
 add_item_group({
 	name = "crushed",
-	category = "resources",
+	category = "raw",
+	order = "c",
+})
+
+add_item_category({
+	name = "processed",
+	title = "Processed",
 	order = "b",
 })
 
 add_item_group({
 	name = "ingot",
-	category = "resources",
-	order = "c",
+	category = "processed",
+	order = "a",
 })
 
 add_item_category({
-	name = "construction",
-	title = "Construction",
-	order = "b",
+	name = "intermediate",
+	title = "Products",
+	order = "c",
 })
 
 add_item_group({
-	name = "foundation",
-	category = "construction",
+	name = "construction",
+	category = "intermediate",
 	order = "a",
 })
 
 add_item_group({
-	name = "sheeting",
-	category = "construction",
+	name = "circuit",
+	category = "intermediate",
 	order = "b",
 })
 

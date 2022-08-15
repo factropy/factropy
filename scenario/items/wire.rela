@@ -1,8 +1,11 @@
 
-function wire(name, title, color)
+function wire(name, title, color, order)
 	add_item({
 		name = name,
 		title = title,
+		category = "intermediate",
+		group = "circuit",
+		order = order,
 		parts = [
 			{
 				color = color,
@@ -35,7 +38,7 @@ function wire(name, title, color)
 	})
 end
 
-wire("copper-wire", "Copper Wire", colors.copper)
-wire("gold-wire", "Gold Wire", colors.gold)
-wire("solder", "Solder", 0x033f63ff)
+wire("copper-wire", "Copper Wire", colors.copper, "e")
+wire("solder", "Solder", 0x033f63ff, "f")
+wire("gold-wire", "Gold Wire", colors.gold, "g")
 

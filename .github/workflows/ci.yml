@@ -1,8 +1,8 @@
-name: linux
+name: build
 
 on:
   push:
-    branches:
+    branches-ignore:
       - main
 
 jobs:
@@ -21,11 +21,5 @@ jobs:
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
     - name: make
       run: ./package-linux.sh
-    - name: factropy-linux
-      uses: actions/upload-artifact@v2
-      with:
-        name: factropy-linux
-        path: factropy-linux.zip
-        retention-days: 1
 
 

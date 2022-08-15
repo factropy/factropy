@@ -3,9 +3,9 @@ function frame(name, title, color)
 	add_item({
 		name = name,
 		title = title,
-		category = "construction",
-		group = "foundation",
-		order = order,
+		category = "intermediate",
+		group = "construction",
+		order = "b-$(order)",
 		parts = [{
 			color = color,
 			gloss = gloss.metallic,

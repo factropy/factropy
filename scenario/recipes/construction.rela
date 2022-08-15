@@ -161,6 +161,7 @@ add_recipe({
 	title = "Heat Sink Machining",
 	input = {
 		"copper-sheet" = 1,
+		"gold-wire" = 1,
 		"aluminium-ingot" = 1,
 		"steam" = L(20),
 	},
@@ -187,7 +188,7 @@ add_recipe({
 add_recipe({
 	name = "computer",
 	title = "Computer Assembly",
-	energy = kJ(600),
+	energy = kJ(1200),
 	tags = tags.crafting,
 	input = {
 		"mother-board" = 1,

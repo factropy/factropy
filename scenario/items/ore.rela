@@ -3,8 +3,7 @@ add_item({
 	name = "iron-ore",
 	title = "Iron Ore",
 	ore = "Iron",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.iron,
 	mining = 1.0,
 	parts = [{
@@ -26,8 +25,7 @@ add_item({
 	name = "copper-ore",
 	title = "Copper Ore",
 	ore = "Copper",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.copper,
 	raw = true,
 	parts = [{
@@ -49,8 +47,7 @@ add_item({
 	name = "tin-ore",
 	title = "Tin Ore",
 	ore = "Tin",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.tin,
 	raw = true,
 	parts = [{
@@ -72,8 +69,7 @@ add_item({
 	name = "lead-ore",
 	title = "Lead Ore",
 	ore = "Lead",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.lead,
 	raw = true,
 	parts = [{
@@ -95,8 +91,7 @@ add_item({
 	name = "coal",
 	title = "Coal",
 	ore = "Coal",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.coal,
 	raw = true,
 	fuel = [ "chemical", MJ(20) ],
@@ -119,8 +114,7 @@ add_item({
 	name = "stone",
 	title = "Stone",
 	ore = "Stone",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.stone,
 	raw = true,
 	parts = [{
@@ -140,8 +134,7 @@ add_item({
 	name = "aluminium-ore",
 	title = "Aluminium Ore",
 	ore = "Aluminium",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.aluminium,
 	raw = true,
 	parts = [{
@@ -162,8 +155,7 @@ add_item({
 	name = "gold-ore",
 	title = "Gold Ore",
 	ore = "Gold",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.gold,
 	raw = true,
 	parts = [{
@@ -183,8 +175,7 @@ add_item({
 	name = "uranium-ore",
 	title = "Uranium Ore",
 	ore = "Uranium",
-	category = "resources",
-	group = "ore",
+	category = "raw",
 	order = order.uranium,
 	raw = true,
 	parts = [{
@@ -207,8 +198,7 @@ function crushedOre(name, title, color, gloss, order)
 	add_item({
 		name = name,
 		title = title,
-		category = "resources",
-		group = "crushed",
+		category = "prepared",
 		order = order,
 		parts = [
 			{
