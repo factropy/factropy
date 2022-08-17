@@ -49,6 +49,7 @@ struct Spec {
 		int ghosts = 0;
 		int extant = 0;
 		int render = 0;
+		int constructed = 0;
 	} count;
 
 	std::string name;
@@ -59,6 +60,7 @@ struct Spec {
 	std::vector<std::vector<bool>> statesShow;
 	float iconD;
 	float iconV;
+	float iconH;
 
 	std::string toolbar = "z";
 
@@ -381,6 +383,13 @@ struct Spec {
 	uint sourceItemRate;
 	Fluid* sourceFluid;
 	uint sourceFluidRate;
+
+	bool ship;
+	Recipe* shipRecipe;
+
+	bool shipyard;
+	Point shipyardBuild;
+	Point shipyardLaunch;
 
 	bool once;
 	bool done;

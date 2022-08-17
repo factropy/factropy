@@ -33,6 +33,7 @@ Recipe::Recipe(std::string name) {
 	energyUsage = 0;
 	launch = false;
 	licensed = false;
+	outputSpec = nullptr;
  }
 
 Recipe::~Recipe() {

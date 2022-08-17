@@ -68,6 +68,8 @@ struct Entity;
 #include "source.h"
 #include "powerpole.h"
 #include "electricity.h"
+#include "shipyard.h"
+#include "ship.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -395,4 +397,6 @@ struct Entity {
 	ElectricityProducer& electricityProducer() const;
 	ElectricityConsumer& electricityConsumer() const;
 	ElectricityBuffer& electricityBuffer() const;
+	Shipyard& shipyard() const;
+	Ship& ship() const;
 };

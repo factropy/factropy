@@ -99,6 +99,15 @@ struct GuiEntity {
 
 	powerpoleState* powerpole = nullptr;
 
+	struct shipyardState {
+		Shipyard::Stage stage;
+		Point pos;
+		Spec* spec;
+		bool ghost;
+	};
+
+	shipyardState* shipyard;
+
 	static void prepareCaches();
 
 	GuiEntity();
@@ -130,6 +139,7 @@ struct GuiEntity {
 	void loadComputer();
 	void loadRouter();
 	void loadPowerPole();
+	void loadShipyard();
 	Box box() const;
 	Box selectionBox() const;
 	Box southBox() const;

@@ -237,6 +237,8 @@ namespace Sim {
 				Launcher::saveAll(name);
 				PowerPole::saveAll(name);
 				ElectricityNetwork::saveAll(name);
+				Shipyard::saveAll(name);
+				Ship::saveAll(name);
 
 				Goal::saveAll(name);
 				Message::saveAll(name);
@@ -407,6 +409,8 @@ namespace Sim {
 		Launcher::loadAll(name);
 		PowerPole::loadAll(name);
 		ElectricityNetwork::loadAll(name);
+		Shipyard::loadAll(name);
+		Ship::loadAll(name);
 
 		Goal::loadAll(name);
 		Message::loadAll(name);
@@ -480,6 +484,7 @@ void Spec::saveAll(const char* name) {
 		json state;
 		state["name"] = spec->name;
 		state["licensed"] = spec->licensed;
+		state["constructed"] = spec->count.constructed;
 		out << state << "\n";
 	}
 
@@ -500,6 +505,10 @@ void Spec::loadAll(const char* name) {
 
 		Spec* spec = Spec::byName(state["name"]);
 		spec->licensed = state["licensed"];
+
+		if (state.contains("constructed")) {
+			spec->count.constructed = state["constructed"];
+		}
 	}
 
 	in.close();
@@ -3118,6 +3127,106 @@ void ElectricityNetwork::loadAll(const char* name) {
 	in.close();
 }
 
+void Shipyard::saveAll(const char* name) {
+	auto path = std::string(name);
+	auto out = std::ofstream(path + "/shipyards.json");
+
+	for (auto& shipyard: all) {
+		json state;
+		state["id"] = shipyard.id;
+		state["delta"] = shipyard.delta;
+		state["completed"] = shipyard.completed;
+
+		switch (shipyard.stage) {
+			case Stage::Start: state["stage"] = "start";
+			case Stage::Build: state["stage"] = "build";
+			case Stage::RollOut: state["stage"] = "rollout";
+			case Stage::Launch: state["stage"] = "launch";
+			case Stage::RollIn: state["stage"] = "rollin";
+		}
+
+		if (shipyard.ship) {
+			state["ship"] = shipyard.ship->name;
+		}
+
+		out << state << "\n";
+	}
+
+	out.close();
+}
+
+void Shipyard::loadAll(const char* name) {
+	auto path = std::string(name);
+	auto in = std::ifstream(path + "/shipyards.json");
+
+	for (std::string line; std::getline(in, line);) {
+		auto state = json::parse(line);
+		if (!all.has(state["id"])) continue;
+
+		Shipyard& shipyard = get(state["id"]);
+		shipyard.delta = state["delta"];
+		shipyard.completed = state["completed"];
+
+		if (state["stage"] == "start") shipyard.stage = Stage::Start;
+		if (state["stage"] == "build") shipyard.stage = Stage::Build;
+		if (state["stage"] == "rollout") shipyard.stage = Stage::RollOut;
+		if (state["stage"] == "launch") shipyard.stage = Stage::Launch;
+		if (state["stage"] == "rollin") shipyard.stage = Stage::RollIn;
+
+		if (state.contains("ship")) {
+			shipyard.ship = Spec::byName(state["ship"]);
+		}
+
+	}
+
+	in.close();
+}
+
+void Ship::saveAll(const char* name) {
+	auto path = std::string(name);
+	auto out = std::ofstream(path + "/ships.json");
+
+	for (auto& ship: all) {
+		json state;
+		state["id"] = ship.id;
+
+		switch (ship.stage) {
+			case Stage::Start: state["stage"] = "start";
+			case Stage::Lift: state["stage"] = "lift";
+			case Stage::Fly: state["stage"] = "fly";
+		}
+
+		int i = 0;
+		for (Point point: ship.flight) {
+			state["flight"][i++] = {point.x, point.y, point.z};
+		}
+
+		out << state << "\n";
+	}
+
+	out.close();
+}
+
+void Ship::loadAll(const char* name) {
+	auto path = std::string(name);
+	auto in = std::ifstream(path + "/ships.json");
+
+	for (std::string line; std::getline(in, line);) {
+		auto state = json::parse(line);
+		if (!all.has(state["id"])) continue;
+
+		Ship& ship = get(state["id"]);
+		if (state["stage"] == "start") ship.stage = Stage::Start;
+		if (state["stage"] == "lift") ship.stage = Stage::Lift;
+		if (state["stage"] == "fly") ship.stage = Stage::Fly;
+
+		for (auto point: state["flight"]) {
+			ship.flight.push_back({point[0], point[1], point[2]});
+		}
+	}
+
+	in.close();
+}
 
 void Goal::saveAll(const char* name) {
 	auto path = std::string(name);

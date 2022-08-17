@@ -334,9 +334,11 @@ void HUD::draw() {
 					Header("Construction");
 					for (auto [spec,count]: goal->construction) {
 						Print(spec->title.c_str());
-						SameLine(); PrintRight(fmtc("%u/%u", spec->count.extant, count));
+						// 0.2.x saves may not have constructed; remove extant later
+						auto constructed = std::max(spec->count.constructed, spec->count.extant);
+						SameLine(); PrintRight(fmtc("%u/%u", constructed, count));
 						PushStyleColor(ImGuiCol_PlotHistogram, colorStore);
-						SmallBar((float)spec->count.extant/(float)count);
+						SmallBar((float)constructed/(float)count);
 						PopStyleColor(1);
 						Spacing();
 					}

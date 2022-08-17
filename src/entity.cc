@@ -79,6 +79,8 @@ void Entity::reset() {
 	ElectricityConsumer::reset();
 	ElectricityBuffer::reset();
 	ElectricityNetwork::reset();
+	Shipyard::reset();
+	Ship::reset();
 }
 
 std::size_t Entity::memory() {
@@ -341,6 +343,14 @@ Entity& Entity::create(uint id, Spec *spec) {
 		ElectricityBuffer::create(id);
 	}
 
+	if (spec->shipyard) {
+		Shipyard::create(id);
+	}
+
+	if (spec->ship) {
+		Ship::create(id);
+	}
+
 	if (spec->named) {
 		names[id] = fmt("%s %u", spec->name, id);
 	}
@@ -532,6 +542,14 @@ void Entity::destroy() {
 		electricityBuffer().destroy();
 	}
 
+	if (spec->shipyard) {
+		shipyard().destroy();
+	}
+
+	if (spec->ship) {
+		ship().destroy();
+	}
+
 	if (spec->enemyTarget) {
 		enemyTargets.erase(id);
 	}
@@ -676,6 +694,12 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 	}
 
 	if (en.spec->powerpole) {
+	}
+
+	if (en.spec->shipyard) {
+	}
+
+	if (en.spec->ship) {
 	}
 }
 
@@ -833,6 +857,12 @@ bool Entity::setup(Entity::Settings* settings) {
 	}
 
 	if (spec->powerpole) {
+	}
+
+	if (spec->shipyard) {
+	}
+
+	if (spec->ship) {
 	}
 
 	return applied;
@@ -1958,5 +1988,13 @@ ElectricityConsumer& Entity::electricityConsumer() const {
 
 ElectricityBuffer& Entity::electricityBuffer() const {
 	return ElectricityBuffer::get(id);
+}
+
+Shipyard& Entity::shipyard() const {
+	return Shipyard::get(id);
+}
+
+Ship& Entity::ship() const {
+	return Ship::get(id);
 }
 

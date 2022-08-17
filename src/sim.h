@@ -51,6 +51,8 @@ namespace Sim {
 	extern TimeSeries statsSource;
 	extern TimeSeries statsPowerPole;
 	extern TimeSeries statsCharger;
+	extern TimeSeries statsShipyard;
+	extern TimeSeries statsShip;
 
 	extern OpenSimplex* opensimplex;
 	extern uint64_t tick;

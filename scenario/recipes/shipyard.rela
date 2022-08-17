@@ -1,0 +1,50 @@
+
+add_recipe({
+	name = "ship-fighter",
+	title = "Ship (Fighter)",
+	energy = MJ(200),
+	tags = tags.shipyard1,
+	input = {
+		"aluminium-frame" = 100,
+		"steel-sheet" = 100,
+		"circuit-board" = 100,
+		"processor" = 25,
+		"gold-wire" = 300,
+		"copper-wire" = 300,
+		"ammo2" = 1000,
+		"battery" = 50,
+		"filter" = 50,
+		"pipe" = 50,
+		"gear-wheel" = 50,
+		"electric-motor" = 50,
+		"plastic-bar" = 50,
+		"solid-fuel" = 100,
+	},
+	output = { "ship-fighter" = 1 },
+})
+
+add_recipe({
+	name = "ship-corvette",
+	title = "Ship (Corvette)",
+	energy = MJ(600),
+	tags = tags.shipyard1,
+	input = {
+		"aluminium-frame" = 300,
+		"steel-sheet" = 300,
+		"mother-board" = 100,
+		"computer" = 25,
+		"heatsink" = 100,
+		"gold-wire" = 900,
+		"copper-wire" = 900,
+		"ammo3" = 1000,
+		"battery" = 150,
+		"filter" = 150,
+		"pipe" = 150,
+		"gear-wheel" = 150,
+		"electric-motor" = 150,
+		"plastic-bar" = 150,
+		"nuclear-fuel" = 100,
+	},
+	output = { "ship-corvette" = 1 },
+})
+

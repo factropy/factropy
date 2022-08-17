@@ -569,7 +569,7 @@ public:
 				recipe->outputFluids[Fluid::byName(name)->id] = to_integer(val);
 			}
 			else {
-				fatalf("unknown recipe output: %s", name);
+				scenario->recipeOutputSpecs[recipe] = name;
 			}
 		}
 
@@ -1474,6 +1474,11 @@ public:
 			spec->iconV = to_number(iconV);
 		}
 
+		auto iconH = field("iconH");
+		if (is_number(iconH)) {
+			spec->iconH = to_number(iconH);
+		}
+
 		auto conveyor = field("conveyor");
 		if (is_bool(conveyor)) {
 			spec->conveyor = to_bool(conveyor);
@@ -1705,6 +1710,35 @@ public:
 		auto cartWaypoint = field("cartWaypoint");
 		if (is_bool(cartWaypoint)) {
 			spec->cartWaypoint = to_bool(cartWaypoint);
+		}
+
+		auto ship = field("ship");
+		if (is_bool(ship)) {
+			spec->ship = to_bool(ship);
+		}
+
+		if (spec->ship) {
+			auto shipRecipe = field("shipRecipe");
+			if (is_string(shipRecipe)) {
+				spec->shipRecipe = Recipe::byName(to_string(shipRecipe));
+			}
+		}
+
+		auto shipyard = field("shipyard");
+		if (is_bool(shipyard)) {
+			spec->shipyard = to_bool(shipyard);
+		}
+
+		if (spec->shipyard) {
+			auto shipyardBuild = field("shipyardBuild");
+			if (is_vector(shipyardBuild)) {
+				spec->shipyardBuild = to_point(shipyardBuild);
+			}
+
+			auto shipyardLaunch = field("shipyardLaunch");
+			if (is_vector(shipyardLaunch)) {
+				spec->shipyardLaunch = to_point(shipyardLaunch);
+			}
 		}
 
 		for (auto part: spec->parts) {
@@ -2318,6 +2352,10 @@ void ScenarioBase::specifications() {
 
 	for (auto [spec,name]: specDownwards) {
 		spec->downward = Spec::byName(name);
+	}
+
+	for (auto [recipe,name]: recipeOutputSpecs) {
+		recipe->outputSpec = Spec::byName(name);
 	}
 
 	Spec* spec;

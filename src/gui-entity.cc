@@ -80,6 +80,8 @@ GuiEntity::GuiEntity() {
 
 	tube = nullptr;
 	monorail = nullptr;
+	shipyard = nullptr;
+	powerpole = nullptr;
 
 	cartWaypoint.relative[CartWaypoint::Red] = Point::Zero;
 	cartWaypoint.relative[CartWaypoint::Blue] = Point::Zero;
@@ -128,9 +130,23 @@ GuiEntity::GuiEntity(const GuiEntity& other) : GuiEntity() {
 		tube->target = other.tube->target;
 	}
 
+	if (other.shipyard) {
+		shipyard = new shipyardState;
+		shipyard->stage = other.shipyard->stage;
+		shipyard->pos = other.shipyard->pos;
+		shipyard->spec = other.shipyard->spec;
+		shipyard->ghost = other.shipyard->ghost;
+	}
+
 	if (other.monorail) {
 		monorail = new monorailState;
 		monorail->railsOut = other.monorail->railsOut;
+	}
+
+	if (other.powerpole) {
+		powerpole = new powerpoleState;
+		powerpole->wires = other.powerpole->wires;
+		powerpole->point = other.powerpole->point;
 	}
 }
 
@@ -141,6 +157,8 @@ GuiEntity::~GuiEntity() {
 	monorail = nullptr;
 	delete powerpole;
 	powerpole = nullptr;
+	delete shipyard;
+	shipyard = nullptr;
 }
 
 void GuiEntity::load(const Entity& en) {
@@ -178,6 +196,7 @@ void GuiEntity::load(const Entity& en) {
 	loadComputer();
 	loadRouter();
 	loadPowerPole();
+	loadShipyard();
 
 	if (spec->coloredAuto && !iid && spec->store) {
 		iid = en.store().hint.iid;
@@ -443,6 +462,18 @@ void GuiEntity::loadPowerPole() {
 				powerpole->wires.push_back({end, powerpole->point < end});
 			}
 		}
+	}
+}
+
+void GuiEntity::loadShipyard() {
+	if (spec->shipyard) {
+		if (!shipyard)
+			shipyard = new shipyardState;
+		auto& s = Shipyard::get(id);
+		shipyard->stage = s.stage;
+		shipyard->pos = s.shipPos();
+		shipyard->spec = s.ship;
+		shipyard->ghost = s.shipGhost();
 	}
 }
 
@@ -714,6 +745,16 @@ void GuiEntity::instance() {
 				Mat4 m1 = scale * Point(0,y-down-(height/2.0),0.05).translation() * pl.trx * trx;
 				scene.unit.mesh.sphere->instance(scene.shader.part.id(), m1, Color(0xffa500ff));
 			}
+		}
+	}
+
+	if (spec->shipyard) {
+		if (shipyard && shipyard->spec && shipyard->pos != Point::Zero) {
+			auto gs = GuiFakeEntity(shipyard->spec);
+			gs.health = spec->health;
+			gs.ghost = shipyard->ghost;
+			gs.move(pos + shipyard->pos.transform(dir.rotation()), dir);
+			gs.instance();
 		}
 	}
 }

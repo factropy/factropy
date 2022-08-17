@@ -53,6 +53,8 @@ namespace Sim {
 	TimeSeries statsSource;
 	TimeSeries statsPowerPole;
 	TimeSeries statsCharger;
+	TimeSeries statsShipyard;
+	TimeSeries statsShip;
 
 	OpenSimplex* opensimplex = nullptr;
 	std::mutex mutex;
@@ -159,6 +161,8 @@ namespace Sim {
 		statsSource.clear();
 		statsPowerPole.clear();
 		statsCharger.clear();
+		statsShipyard.clear();
+		statsShip.clear();
 
 		for (auto& item: Item::all) {
 			item.production.clear();
@@ -283,6 +287,8 @@ namespace Sim {
 		statsCrafter.track(tick, Crafter::tick);
 		statsVenter.track(tick, Venter::tick);
 		statsLauncher.track(tick, Launcher::tick);
+		statsShipyard.track(tick, Shipyard::tick);
+		statsShip.track(tick, Ship::tick);
 		statsVehicle.track(tick, Vehicle::tick);
 		statsFlightPath.track(tick, FlightPath::tick);
 		statsZeppelin.track(tick, Zeppelin::tick);

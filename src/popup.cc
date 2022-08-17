@@ -183,6 +183,10 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 		return fluids.size() ? fluids.front()->id: 0;
 	};
 
+	if (recipe->outputSpec) {
+		return (ImTextureID)scene.specIconTextures[recipe->outputSpec][iconTier(pix)];
+	}
+
 	if (recipe->mine) {
 		return itemIconChoose(Item::get(recipe->mine), pix);
 	}
@@ -230,10 +234,15 @@ bool Popup::recipeIconButton(Recipe* recipe, float pix) {
 		int i = 0;
 
 		auto item = [&](uint iid, uint count) {
-			if (i++) {
+			if (i%8 != 0) {
 				Print(" + ");
 				SameLine();
 			}
+			else
+			if (i) {
+				NewLine();
+			}
+			i++;
 			itemIcon(Item::get(iid));
 			SameLine();
 			Print(fmtc("(%u)", count));
@@ -241,10 +250,15 @@ bool Popup::recipeIconButton(Recipe* recipe, float pix) {
 		};
 
 		auto fluid = [&](uint fid, uint count) {
-			if (i++) {
+			if (i%8 != 0) {
 				Print(" + ");
 				SameLine();
 			}
+			else
+			if (i) {
+				NewLine();
+			}
+			i++;
 			fluidIcon(Fluid::get(fid));
 			SameLine();
 			Print(fmtc("(%u)", count));
@@ -265,6 +279,13 @@ bool Popup::recipeIconButton(Recipe* recipe, float pix) {
 		SameLine();
 
 		i = 0;
+		if (recipe->outputSpec) {
+			i++;
+			recipeIcon(recipe);
+			SameLine();
+			Print("(1)");
+			SameLine();
+		}
 		if (recipe->mine) {
 			item(recipe->mine, 1);
 		}
@@ -1872,7 +1893,7 @@ void EntityPopup2::draw() {
 
 				int i = 0;
 				for (auto iid: launcher.cargo) {
-					if (ButtonStrip(i++, fmtc(" %s ", Item::get(iid)->title))) remove = iid;
+					if (ButtonStrip(i++, fmtc(" %s (%u)", Item::get(iid)->title, store.count(iid)))) remove = iid;
 					if (IsItemHovered()) tip("Drop item type from payload");
 				}
 
@@ -4100,7 +4121,7 @@ void RecipePopup::drawSpec(Spec* spec) {
 }
 
 void RecipePopup::drawSpecButton(Spec* spec) {
-	if (!spec->build) return;
+	if (!spec->build && !spec->ship) return;
 	Bullet();
 	if (SmallButtonInline(spec->title.c_str())) {
 		locate.spec = spec;
