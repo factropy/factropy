@@ -4124,8 +4124,19 @@ void RecipePopup::drawSpecButton(Spec* spec) {
 	if (!spec->build && !spec->ship) return;
 	Bullet();
 	if (SmallButtonInline(spec->title.c_str())) {
-		locate.spec = spec;
-		expanded.spec[spec] = !expanded.spec[spec];
+		if (spec->ship) {
+			for (auto [_,recipe]: Recipe::names) {
+				if (recipe->outputSpec == spec) {
+					locate.recipe = recipe;
+					expanded.recipe[recipe] = !expanded.recipe[recipe];
+					break;
+				}
+			}
+		}
+		else {
+			locate.spec = spec;
+			expanded.spec[spec] = !expanded.spec[spec];
+		}
 	}
 	highlited.spec[spec] = highlited.spec[spec] || IsItemHovered();
 }
