@@ -79,6 +79,8 @@ void Entity::reset() {
 	ElectricityConsumer::reset();
 	ElectricityBuffer::reset();
 	ElectricityNetwork::reset();
+	Shipyard::reset();
+	Ship::reset();
 }
 
 std::size_t Entity::memory() {
@@ -341,6 +343,14 @@ Entity& Entity::create(uint id, Spec *spec) {
 		ElectricityBuffer::create(id);
 	}
 
+	if (spec->shipyard) {
+		Shipyard::create(id);
+	}
+
+	if (spec->ship) {
+		Ship::create(id);
+	}
+
 	if (spec->named) {
 		names[id] = fmt("%s %u", spec->name, id);
 	}
@@ -532,6 +542,14 @@ void Entity::destroy() {
 		electricityBuffer().destroy();
 	}
 
+	if (spec->shipyard) {
+		shipyard().destroy();
+	}
+
+	if (spec->ship) {
+		ship().destroy();
+	}
+
 	if (spec->enemyTarget) {
 		enemyTargets.erase(id);
 	}
@@ -546,13 +564,16 @@ Entity::Settings::Settings() {
 Entity::Settings::Settings(Entity& en) : Settings() {
 	enabled = en.isEnabled();
 	color = en.color();
+	applicable = false;
 
 	if (en.spec->store) {
 		store = en.store().settings();
+		applicable = true;
 	}
 
 	if (en.spec->crafter) {
 		crafter = en.crafter().settings();
+		applicable = true;
 	}
 
 	if (en.spec->venter) {
@@ -578,6 +599,7 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->arm) {
 		arm = en.arm().settings();
+		applicable = true;
 	}
 
 	if (en.spec->vehicle) {
@@ -585,14 +607,17 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->cart) {
 		cart = en.cart().settings();
+		applicable = true;
 	}
 
 	if (en.spec->cartStop) {
 		cartStop = en.cartStop().settings();
+		applicable = true;
 	}
 
 	if (en.spec->cartWaypoint) {
 		cartWaypoint = en.cartWaypoint().settings();
+		applicable = true;
 	}
 
 	if (en.spec->conveyor) {
@@ -603,14 +628,17 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->loader) {
 		loader = en.loader().settings();
+		applicable = true;
 	}
 
 	if (en.spec->balancer) {
 		balancer = en.balancer().settings();
+		applicable = true;
 	}
 
 	if (en.spec->pipe) {
 		pipe = en.pipe().settings();
+		applicable = true;
 	}
 
 	if (en.spec->turret) {
@@ -621,10 +649,12 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->router) {
 		router = en.router().settings();
+		applicable = true;
 	}
 
 	if (en.spec->networker) {
 		networker = en.networker().settings();
+		applicable = true;
 	}
 
 	if (en.spec->zeppelin) {
@@ -644,6 +674,7 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->monorail) {
 		monorail = en.monorail().settings();
+		applicable = true;
 	}
 
 	if (en.spec->monocar) {
@@ -651,16 +682,24 @@ Entity::Settings::Settings(Entity& en) : Settings() {
 
 	if (en.spec->tube) {
 		tube = en.tube().settings();
+		applicable = true;
 	}
 
 	if (en.spec->monorail) {
 		monorail = en.monorail().settings();
+		applicable = true;
 	}
 
 	if (en.spec->source) {
 	}
 
 	if (en.spec->powerpole) {
+	}
+
+	if (en.spec->shipyard) {
+	}
+
+	if (en.spec->ship) {
 	}
 }
 
@@ -684,16 +723,20 @@ Entity::Settings* Entity::settings() {
 	return new Settings(*this);
 }
 
-void Entity::setup(Entity::Settings* settings) {
+bool Entity::setup(Entity::Settings* settings) {
 	setEnabled(settings->enabled);
 	color(settings->color);
 
+	bool applied = false;
+
 	if (spec->store && settings->store) {
 		store().setup(settings->store);
+		applied = true;
 	}
 
 	if (spec->crafter && settings->crafter) {
 		crafter().setup(settings->crafter);
+		applied = true;
 	}
 
 	if (spec->venter) {
@@ -719,6 +762,7 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->arm && settings->arm) {
 		arm().setup(settings->arm);
+		applied = true;
 	}
 
 	if (spec->vehicle) {
@@ -726,14 +770,17 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->cart && settings->cart) {
 		cart().setup(settings->cart);
+		applied = true;
 	}
 
 	if (spec->cartStop && settings->cartStop) {
 		cartStop().setup(settings->cartStop);
+		applied = true;
 	}
 
 	if (spec->cartWaypoint && settings->cartWaypoint) {
 		cartWaypoint().setup(settings->cartWaypoint);
+		applied = true;
 	}
 
 	if (spec->conveyor) {
@@ -744,14 +791,17 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->loader && settings->loader) {
 		loader().setup(settings->loader);
+		applied = true;
 	}
 
 	if (spec->balancer && settings->balancer) {
 		balancer().setup(settings->balancer);
+		applied = true;
 	}
 
 	if (spec->pipe && settings->pipe) {
 		pipe().setup(settings->pipe);
+		applied = true;
 	}
 
 	if (spec->turret) {
@@ -762,10 +812,12 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->router && settings->router) {
 		router().setup(settings->router);
+		applied = true;
 	}
 
 	if (spec->networker && settings->networker) {
 		networker().setup(settings->networker);
+		applied = true;
 	}
 
 	if (spec->zeppelin) {
@@ -785,6 +837,7 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->monorail && settings->monorail) {
 		monorail().setup(settings->monorail);
+		applied = true;
 	}
 
 	if (spec->monocar) {
@@ -792,10 +845,12 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->tube && settings->tube) {
 		tube().setup(settings->tube);
+		applied = true;
 	}
 
 	if (spec->monorail && settings->monorail) {
 		monorail().setup(settings->monorail);
+		applied = true;
 	}
 
 	if (spec->source) {
@@ -803,6 +858,14 @@ void Entity::setup(Entity::Settings* settings) {
 
 	if (spec->powerpole) {
 	}
+
+	if (spec->shipyard) {
+	}
+
+	if (spec->ship) {
+	}
+
+	return applied;
 }
 
 bool Entity::exists(uint id) {
@@ -1925,5 +1988,13 @@ ElectricityConsumer& Entity::electricityConsumer() const {
 
 ElectricityBuffer& Entity::electricityBuffer() const {
 	return ElectricityBuffer::get(id);
+}
+
+Shipyard& Entity::shipyard() const {
+	return Shipyard::get(id);
+}
+
+Ship& Entity::ship() const {
+	return Ship::get(id);
 }
 

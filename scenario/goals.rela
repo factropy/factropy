@@ -253,6 +253,7 @@ add_goal({
 		"solid-fuel-naphtha",
 		"sulfur",
 		"sulfuric-acid",
+		"mother-board",
 	],
 	supplies = {
 		"ammo1" = 500,
@@ -275,7 +276,6 @@ add_goal({
 		"rocket",
 	],
 	recipes = [
-		"mother-board",
 		"battery",
 		"filter",
 	],
@@ -291,15 +291,13 @@ add_goal({
 	chits = 2,
 	specs = [
 		"electrolyser1",
-		"blimp1",
-		"flight-pad-depot",
-		"flight-pad-load",
-		"flight-pad-unload",
 		"monorail",
 		"monorail-tall",
 		"monorail-stop",
 		"monocar",
 		"container-shipping",
+		"drone-depot2",
+		"shipyard1"
 	],
 	recipes = [
 		"ammo2",
@@ -315,23 +313,23 @@ add_goal({
 		"gold-smelting",
 		"gold-wire",
 		"ammonia-electrolysis",
+		"hydrazine-alt",
 		"processor",
+		"ship-fighter",
 	],
-	interval = 1,
-	period = 3,
-	rates = [
-		{ item = "ammo1", count = 5000 },
-		{ item = "repair-kit", count = 5000 },
-	],
+	supplies = {
+		"ammo1" = 5000,
+		"repair-kit" = 5000,
+	},
 })
 
 add_goal({
 	name = "supply4",
-	title = "Supply: Complexity",
+	title = "Fleet: Fighters",
 	dependencies = ["supply3"],
+	construction = { "shipyard1" = 1, "ship-fighter" = 10 },
 	chits = 2,
 	specs = [
-		"drone-depot2",
 		"centrifuge1",
 		"nuclear-reactor",
 		"conveyor-2",
@@ -350,6 +348,12 @@ add_goal({
 		"balancer-2",
 		"zeppelin-support",
 		"hill-explosive",
+		"ship-corvette",
+		"shipyard2"
+		"blimp1",
+		"flight-pad-depot",
+		"flight-pad-load",
+		"flight-pad-unload",
 	],
 	recipes = [
 		"computer",
@@ -363,18 +367,19 @@ add_goal({
 		"nuclear-fuel",
 		"reacting",
 		"explosive",
+		"ship-corvette",
 	],
-	period = 3,
-	rates = [
-		{ item = "ammo2", count = 5000 },
-		{ item = "parts-kit", count = 5000 },
-	],
+	supplies = {
+		"ammo2" = 5000,
+		"parts-kit" = 5000,
+	},
 })
 
 add_goal({
 	name = "supply5",
-	title = "Supply: Expansion",
+	title = "Fleet: Corvettes",
 	dependencies = ["supply4"],
+	construction = { "ship-fighter" = 100, "ship-corvette" = 10 },
 	chits = 3,
 	specs = [
 		"battery-pack",
@@ -388,18 +393,18 @@ add_goal({
 		"plutonium-fuel",
 		"explosive-atomic",
 	],
-	period = 3,
-	rates = [
-		{ item = "ammo3", count = 5000 },
-		{ item = "upgrade-kit", count = 5000 },
-		{ item = "explosive", count = 5000 },
-	],
+	supplies = {
+		"ammo3" = 5000,
+		"parts-kit" = 5000,
+		"explosive" = 5000,
+	},
 })
 
 add_goal({
 	name = "supply6",
 	title = "Supply: Bulk",
 	dependencies = ["supply5"],
+	construction = { "ship-fighter" = 1000, "ship-corvette" = 100 },
 	chits = 3,
 	specs = [
 		"teleporter-send",

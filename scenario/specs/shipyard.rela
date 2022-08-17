@@ -1,0 +1,468 @@
+
+function()
+	frame0 = matrix_rotate(up, 45)
+	frame1 = matrix_rotate(up, -45)
+	frame2 = matrix_rotate(up, 135)
+	frame3 = matrix_rotate(up, -135)
+
+	states = []
+	statesShow = []
+
+	screensOff = [
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		false,
+		false,
+	]
+
+	screensOn = [
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+	]
+
+	screenStep = 0.275
+	screenDist = screenStep*25
+
+	// 0-99 build
+	states[#states] = [
+		identity,
+		identity,
+		frame0,
+		frame1,
+		frame2,
+		frame3,
+		identity,
+		identity,
+	]
+	statesShow[#statesShow] = screensOff
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			frame2,
+			frame3,
+			matrix_translate(0,0,screenStep*i),
+			matrix_translate(0,0,-screenDist+screenStep*i),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			frame2,
+			frame3,
+			matrix_translate(0,0,screenDist-screenStep*i),
+			matrix_translate(0,0,screenStep*i),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			frame2,
+			frame3,
+			matrix_translate(0,0,-screenStep*i),
+			matrix_translate(0,0,screenDist-screenStep*i),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 24
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			frame2,
+			frame3,
+			matrix_translate(0,0,-screenDist+screenStep*i),
+			matrix_translate(0,0,-screenStep*i),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+
+	// 100-200 rollout
+	for i in 60
+		rot = matrix_rotate(south, 0.8*i)
+		states[#states] = [
+			identity,
+			matrix_translate(up * (0.08*i)),
+			rot * frame0,
+			rot * frame1,
+			rot * frame2,
+			rot * frame3,
+			identity,
+			identity,
+		]
+		statesShow[#statesShow] = screensOff
+	end
+	for i in 40
+		j = #states-1
+		states[#states] = states[j]
+		statesShow[#statesShow] = screensOff
+	end
+
+	// 200-300 rollin
+	for i in 100
+		j = 199-i
+		states[#states] = states[j]
+		statesShow[#statesShow] = screensOff
+	end
+
+	add_spec({
+		name = "shipyard1",
+		title = "Shipyard (Small)",
+		health = 150,
+		collision = [0, 0, 0, 30, 18, 30],
+		iconD = 20,
+		rotateGhost = true,
+		shipyard = true,
+		shipyardBuild = down*3.0,
+		shipyardLaunch = up*6.0,
+		store = true,
+		capacity = kg(1000000),
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterState = false,
+		enable = true,
+		recipeTags = tags.shipyard1,
+		consumeElectricity = true,
+		materials = {
+			"steel-frame" = 100,
+			"aluminium-frame" = 100,
+			"copper-sheet" = 100,
+			"plastic-bar" = 100,
+			"copper-wire" = 100,
+			"gear-wheel" = 100,
+			"pipe" = 100,
+			"filter" = 50,
+			"electric-motor" = 50,
+			"processor" = 10,
+		},
+		energyConsume = MW(10),
+		states = states,
+		statesShow = statesShow,
+		parts = [
+			{
+				color = 0xffffffff,
+				filter = filter.powdercoat,
+				translate = [0,-9.0,0],
+				rotate = [up,180.0],
+				lods = [
+					["models/shipyard1-chassis-hd.stl", medium, shadow],
+					["models/shipyard1-chassis-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-7.5,0],
+				rotate = [up,180.0],
+				lods = [
+					["models/shipyard1-lift-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-9.0,0],
+				lods = [
+					["models/shipyard1-frame-hd.stl", medium, shadow],
+					["models/shipyard1-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-9.0,0],
+				lods = [
+					["models/shipyard1-frame-hd.stl", medium, shadow],
+					["models/shipyard1-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-9.0,0],
+				lods = [
+					["models/shipyard1-frame-hd.stl", medium, shadow],
+					["models/shipyard1-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-9.0,0],
+				lods = [
+					["models/shipyard1-frame-hd.stl", medium, shadow],
+					["models/shipyard1-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x00ff00ff,
+				translucent = true,
+				translate = [0,-9.0,0],
+				lods = [
+					["models/shipyard1-screen-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x0000ffff,
+				translucent = true,
+				translate = [0,-9.0,0],
+				rotate = [up,90],
+				lods = [
+					["models/shipyard1-screen-hd.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end()
+
+
+
+function()
+	frame0 = identity //matrix_rotate(up, 0)
+	frame1 = identity //matrix_rotate(up, 0)
+
+	states = []
+	statesShow = []
+
+	screensOff = [
+		true,
+		true,
+		true,
+		true,
+		false,
+		false,
+		false,
+	]
+
+	screensOn = [
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+	]
+
+	screenStepShort = 0.275
+	screenDistShort = screenStepShort*25
+
+	screenStepLong = 0.375
+	screenDistLong = screenStepLong*25
+
+	// 0-99 build
+	states[#states] = [
+		identity,
+		identity,
+		frame0,
+		frame1,
+		identity,
+		identity,
+		identity,
+	]
+	statesShow[#statesShow] = screensOff
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			matrix_translate(0,0,screenStepShort*i),
+			matrix_translate(0,0,-screenStepShort*i),
+			matrix_translate(-screenDistLong+screenStepLong*i,0,0),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			matrix_translate(0,0,screenDistShort-screenStepShort*i),
+			matrix_translate(0,0,-screenDistShort+screenStepShort*i),
+			matrix_translate(screenStepLong*i,0,0),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 25
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			matrix_translate(0,0,-screenStepShort*i),
+			matrix_translate(0,0,screenStepShort*i),
+			matrix_translate(screenDistLong-screenStepLong*i,0,0),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+	for i in 24
+		states[#states] = [
+			identity,
+			identity,
+			frame0,
+			frame1,
+			matrix_translate(0,0,-screenDistShort+screenStepShort*i),
+			matrix_translate(0,0,screenDistShort-screenStepShort*i),
+			matrix_translate(-screenStepLong*i,0,0),
+		]
+		statesShow[#statesShow] = screensOn
+	end
+
+	// 100-200 rollout
+	for i in 60
+		rot = matrix_rotate(south, 0.8*i)
+		states[#states] = [
+			identity,
+			matrix_translate(up * (0.08*i)),
+			rot * frame0,
+			rot * frame1,
+			identity,
+			identity,
+			identity,
+		]
+		statesShow[#statesShow] = screensOff
+	end
+	for i in 40
+		j = #states-1
+		states[#states] = states[j]
+		statesShow[#statesShow] = screensOff
+	end
+
+	// 200-300 rollin
+	for i in 100
+		j = 199-i
+		states[#states] = states[j]
+		statesShow[#statesShow] = screensOff
+	end
+
+	add_spec({
+		name = "shipyard2",
+		title = "Shipyard (Medium)",
+		health = 150,
+		collision = [0, 0, 0, 40, 20, 60],
+		iconD = 30,
+		rotateGhost = true,
+		shipyard = true,
+		shipyardBuild = down*4.0,
+		shipyardLaunch = up*8.0,
+		store = true,
+		capacity = kg(1000000),
+		tipStorage = true,
+		rotateGhost = true,
+		rotateExtant = true,
+		crafter = true,
+		crafterRate = 1.0,
+		crafterState = false,
+		enable = true,
+		recipeTags = tags.shipyard1,
+		consumeElectricity = true,
+		materials = {
+			"steel-frame" = 1000,
+			"aluminium-frame" = 1000,
+			"copper-sheet" = 1000,
+			"plastic-bar" = 1000,
+			"copper-wire" = 1000,
+			"gear-wheel" = 1000,
+			"pipe" = 1000,
+			"filter" = 500,
+			"electric-motor" = 500,
+			"computer" = 50,
+		},
+		energyConsume = MW(100),
+		states = states,
+		statesShow = statesShow,
+		parts = [
+			{
+				color = 0xffffffff,
+				filter = filter.powdercoat,
+				translate = [0,-10.0,0],
+				//rotate = [up,90.0],
+				lods = [
+					["models/shipyard2-chassis-hd.stl", medium, shadow],
+					["models/shipyard2-chassis-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-7.5,0],
+				//rotate = [up,90.0],
+				lods = [
+					["models/shipyard2-lift-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-10.0,0],
+				//rotate = [up,90.0],
+				lods = [
+					["models/shipyard2-frame-hd.stl", medium, shadow],
+					["models/shipyard2-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x444455ff,
+				gloss = gloss.shiny,
+				translate = [0,-10.0,0],
+				rotate = [up,180.0],
+				lods = [
+					["models/shipyard2-frame-hd.stl", medium, shadow],
+					["models/shipyard2-frame-hd.stl", verylow, noshadow],
+				],
+			},
+			{
+				color = 0x00ff00ff,
+				translucent = true,
+				translate = [0,-10.0,8],
+				lods = [
+					["models/shipyard2-screen-short-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x00ff00ff,
+				translucent = true,
+				translate = [0,-10.0,-8],
+				lods = [
+					["models/shipyard2-screen-short-hd.stl", medium, noshadow],
+				],
+			},
+			{
+				color = 0x0000ffff,
+				translucent = true,
+				translate = [0,-10.0,0],
+				lods = [
+					["models/shipyard2-screen-long-hd.stl", medium, noshadow],
+				],
+			},
+		],
+	})
+end()
+
+

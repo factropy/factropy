@@ -44,6 +44,7 @@ void Ghost::update() {
 	if (en.isConstruction() && store.isRequesterSatisfied()) {
 		en.complete();
 		en.materialize();
+		en.spec->count.constructed++;
 		return;
 	}
 

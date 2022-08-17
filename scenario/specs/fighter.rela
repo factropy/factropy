@@ -1,0 +1,145 @@
+
+add_spec({
+	name = "ship-fighter",
+	title = "Ship (Fighter)",
+	cycle = "ship-fighter",
+	collision = [0, 0, 0, 16, 4, 16],
+	iconD = 8,
+	iconV = -4,
+	iconH = -2,
+	rotateGhost = true,
+	ship = true,
+	select = false,
+	align = false,
+	build = false,
+	states = [
+		[
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+		],
+		[
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_translate(0,0,-2.0),
+		],
+		[
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			identity,
+			matrix_translate(0,0,-1.0),
+			matrix_translate(0,0,-3.8),
+		],
+	]
+	statesShow = [
+		[
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			false,
+			false,
+		],
+		[
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		],
+		[
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+			true,
+		],
+	]
+	parts = [
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-hull-hd.stl", verylow, shadow],
+			],
+		},
+		{
+			color = 0x666666ff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-nose-hd.stl", verylow, shadow],
+			],
+		},
+		{
+			color = 0x666666ff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-cockpit-hd.stl", verylow, shadow],
+			],
+		},
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-wings-hd.stl", verylow, shadow],
+			],
+		},
+		{
+			color = 0x666666ff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-engines-hd.stl", verylow, shadow],
+			],
+		},
+		{
+			color = 0x666666ff,
+			gloss = gloss.metallic,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-guns-hd.stl", medium, shadow],
+			],
+		},
+		{
+			color = 0xff9900ff,
+			translucent = true,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-plumes-hd.stl", verylow, noshadow],
+			],
+		},
+		{
+			color = 0xffff00ff,
+			fire = true,
+			rotate = [up,180.0],
+			lods = [
+				["models/fighter-plumes-hd.stl", verylow, noshadow],
+			],
+		},
+	],
+})

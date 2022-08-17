@@ -211,9 +211,11 @@ void Tube::update() {
 		Energy require = en->spec->energyConsume;
 		Energy energy = en->consume(require);
 
-		for (uint sid = next; sid && energy < require; ) {
+		miniset<uint> seen;
+		for (uint sid = next; sid && energy < require && !seen.has(sid) && all.has(sid); ) {
 			auto& sib = all[sid];
 			energy += sib.en->consume(require-energy);
+			seen.insert(sid);
 			sid = sib.next;
 		}
 

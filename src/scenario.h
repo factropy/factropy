@@ -30,6 +30,7 @@ struct Scenario {
 	std::map<Spec*,std::string> specFollowConveyors;
 	std::map<Spec*,std::string> specUpwards;
 	std::map<Spec*,std::string> specDownwards;
+	std::map<Recipe*,std::string> recipeOutputSpecs;
 	std::deque<Mat4> matrices;
 	virtual void items() = 0;
 	virtual void fluids() = 0;

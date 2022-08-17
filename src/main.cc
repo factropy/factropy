@@ -255,7 +255,10 @@ void game() {
 		// to produce a viewport with a gap at the top the size of the Gnome top
 		// bar + a non-fullscreen window titlebar. Calling it again during
 		// loading realigns the viewport.
-		SDL_GL_MakeCurrent(window, context);
+		ensuref(0 == SDL_GL_MakeCurrent(window, context), fmtc(
+			"SDL_GL_MakeCurrent failed with: \"%s\"",
+			SDL_GetError()
+		));
 
 		while (SDL_PollEvent(&event))
 			ImGui_ImplSDL2_ProcessEvent(&event);
@@ -521,7 +524,10 @@ void menu() {
 		// to produce a viewport with a gap at the top the size of the Gnome top
 		// bar + a non-fullscreen window titlebar. Calling it again during
 		// loading realigns the viewport.
-		SDL_GL_MakeCurrent(window, context);
+		ensuref(0 == SDL_GL_MakeCurrent(window, context), fmtc(
+			"SDL_GL_MakeCurrent failed with: \"%s\"",
+			SDL_GetError()
+		));
 
 		Config::autoscale(window);
 
@@ -572,7 +578,7 @@ int main(int argc, char* argv[]) {
 
 	Config::version.major = 0;
 	Config::version.minor = 2;
-	Config::version.patch = 2;
+	Config::version.patch = 3;
 
 	snprintf(Config::version.text, sizeof(Config::version.text),
 		"%d.%d.%d-alpha",
@@ -634,7 +640,10 @@ int main(int argc, char* argv[]) {
 		SDL_GetError()
 	));
 
-	SDL_GL_MakeCurrent(window, context);
+	ensuref(0 == SDL_GL_MakeCurrent(window, context), fmtc(
+		"SDL_GL_MakeCurrent failed with: \"%s\"",
+		SDL_GetError()
+	));
 
 	auto glewErr = glewInit();
 

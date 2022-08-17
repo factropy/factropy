@@ -99,6 +99,15 @@ struct GuiEntity {
 
 	powerpoleState* powerpole = nullptr;
 
+	struct shipyardState {
+		Shipyard::Stage stage;
+		Point pos;
+		Spec* spec;
+		bool ghost;
+	};
+
+	shipyardState* shipyard;
+
 	static void prepareCaches();
 
 	GuiEntity();
@@ -130,6 +139,7 @@ struct GuiEntity {
 	void loadComputer();
 	void loadRouter();
 	void loadPowerPole();
+	void loadShipyard();
 	Box box() const;
 	Box selectionBox() const;
 	Box southBox() const;
@@ -166,8 +176,8 @@ struct GuiFakeEntity : GuiEntity {
 	GuiFakeEntity(Spec* spec);
 	~GuiFakeEntity();
 
-	GuiFakeEntity* getConfig(Entity& en);
-	GuiFakeEntity* setConfig(Entity& en);
+	GuiFakeEntity* getConfig(Entity& en, bool plan = false);
+	GuiFakeEntity* setConfig(Entity& en, bool plan = false);
 	GuiFakeEntity* move(Point p);
 	GuiFakeEntity* move(Point p, Point d);
 	GuiFakeEntity* move(float x, float y, float z);

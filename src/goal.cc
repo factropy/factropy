@@ -82,7 +82,8 @@ float Goal::progress() {
 	if (construction.size()) {
 		float constructionSum = 0.0f;
 		for (auto [spec,count]: construction) {
-			constructionSum += std::min(1.0f, (float)spec->count.extant / (float)count);
+			// 0.2.x saves may not have constructed; remove extant later
+			constructionSum += std::min(1.0f, (float)std::max(spec->count.constructed, spec->count.extant) / (float)count);
 		}
 		sum += constructionSum / (float)construction.size();
 		div++;
@@ -122,7 +123,8 @@ void Goal::check() {
 	if (!active()) return;
 
 	for (auto [spec,count]: construction) {
-		if (spec->count.extant < (int)count) return;
+		// 0.2.x saves may not have constructed; remove extant later
+		if (std::max(spec->count.constructed, spec->count.extant) < (int)count) return;
 	}
 
 	for (auto [iid,count]: productionItem) {

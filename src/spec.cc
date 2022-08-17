@@ -38,8 +38,9 @@ Spec::Spec(std::string name) {
 	rotateExtant = false;
 	rotations = {Point::South,Point::West,Point::North,Point::East};
 
-	iconV = 0.0f;
 	iconD = 0.0f;
+	iconV = 0.0f;
+	iconH = 0.0f;
 
 	direct = false;
 	directRevert = false;
@@ -321,6 +322,13 @@ Spec::Spec(std::string name) {
 	sourceItemRate = 0;
 	sourceFluid = nullptr;
 	sourceFluidRate = 0;
+
+	ship = false,
+	shipRecipe = nullptr,
+
+	shipyard = false;
+	shipyardBuild = Point::Zero;
+	shipyardLaunch = Point::Zero;
 
 	once = false;
 	done = false;

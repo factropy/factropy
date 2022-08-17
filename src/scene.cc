@@ -2186,7 +2186,7 @@ bool Scene::renderSpecIcon() {
 	glm::mat4 orthographic = glm::ortho<float>(-right,right,-top,top,0.0f,range*2);
 
 	float distance = Point::Zero.distance(position);
-	auto trx = Point::South.rotation() * (Point(0,spec->iconV,0) + offset).translation();
+	auto trx = Point::South.rotation() * (Point(spec->iconH,spec->iconV,0) + offset).translation();
 
 	for (uint i = 0, l = spec->parts.size(); i < l; i++) {
 		auto part = spec->parts[i];

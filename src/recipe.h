@@ -62,6 +62,8 @@ struct Recipe {
 	Energy energyUsage;
 	uint fluid; // fluid color
 
+	Spec* outputSpec = nullptr;
+
 	Recipe();
 	Recipe(std::string name);
 	~Recipe();

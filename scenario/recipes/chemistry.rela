@@ -10,6 +10,16 @@ add_recipe({
 })
 
 add_recipe({
+	name = "hydrazine-alt",
+	title = "Hydrazine Synthesis (Alt)",
+	energy = kJ(900),
+	tags = tags.chemistry,
+	input = { "ammonia" = 50, "water" = L(100) },
+	output = { "hydrazine" = L(100) },
+	fluid = "hydrazine",
+})
+
+add_recipe({
 	name = "sulfuric-acid",
 	title = "Sulfuric Acid Hydration",
 	energy = kJ(600),

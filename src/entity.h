@@ -68,6 +68,8 @@ struct Entity;
 #include "source.h"
 #include "powerpole.h"
 #include "electricity.h"
+#include "shipyard.h"
+#include "ship.h"
 
 struct Entity {
 	Spec* spec;     // Specification (prototype/class/behaviour)
@@ -341,6 +343,7 @@ struct Entity {
 		MonorailSettings* monorail = nullptr;
 		RouterSettings* router = nullptr;
 		bool enabled = true;
+		bool applicable = false;
 		Color color = 0xffffffff;
 		Settings();
 		Settings(Entity& en);
@@ -348,7 +351,7 @@ struct Entity {
 	};
 
 	Settings* settings();
-	void setup(Settings* settings);
+	bool setup(Settings* settings);
 
 	// Access entity components
 	Ghost& ghost() const;
@@ -394,4 +397,6 @@ struct Entity {
 	ElectricityProducer& electricityProducer() const;
 	ElectricityConsumer& electricityConsumer() const;
 	ElectricityBuffer& electricityBuffer() const;
+	Shipyard& shipyard() const;
+	Ship& ship() const;
 };
