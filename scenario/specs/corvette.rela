@@ -3,7 +3,7 @@ add_spec({
 	name = "ship-corvette",
 	title = "Ship (Corvette)",
 	cycle = "ship-corvette",
-	collision = [0, 0, 0, 40, 6, 20],
+	collision = [0, 0, 0, 20, 6, 40],
 	iconD = 20,
 	iconV = -6,
 	iconH = -3,
