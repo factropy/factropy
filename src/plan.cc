@@ -323,7 +323,7 @@ bool Plan::entityFits(Spec *spec, Point pos, Point dir) {
 		if (es->spec->flightPad && spec->flightPath) continue;
 		if (es->spec->monorail && spec->monocar) continue;
 		if (es->spec->monocar && spec->monocar) return false;
-		if (!es->spec->collideBuild) continue;
+		if (es->spec->drone) continue;
 		if (es->spec != spec) return false;
 		if (es->pos() != pos) return false;
 		if (es->dir() != dir) return false;

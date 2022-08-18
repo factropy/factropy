@@ -123,7 +123,7 @@ void Depot::update() {
 	}
 
 	auto damaged = Entity::intersecting(range, Entity::gridDamaged);
-	discard_if(damaged, [&](Entity* ed) { return ed->spec->junk || Entity::repairActions.count(ed->id); });
+	discard_if(damaged, [&](Entity* ed) { return ed->spec->junk || ed->spec->enemy || Entity::repairActions.count(ed->id); });
 
 	minivec<EntityStore> stores;
 
@@ -332,6 +332,9 @@ void Depot::update() {
 		if (!dst.size()) return false;
 		for (auto se: src) for (auto de: dst) {
 			if (supply(*se.store, *de.store)) return true;
+		}
+		for (auto se: src) for (auto de: dst) {
+			if (collect(*se.store, *de.store)) return true;
 		}
 		for (auto se: src) for (auto de: dst) {
 			if (overflow(*se.store, *de.store)) return true;

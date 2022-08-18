@@ -523,6 +523,9 @@ bool ElectricityNetworkState::noCapacity() {
 }
 
 ElectricityNetwork* ElectricityNetwork::primary() {
-	for (auto& network: all) return &network;
-	return nullptr;
+	ElectricityNetwork* largest = nullptr;
+	for (auto& network: all) {
+		if (!largest || network.capacity > largest->capacity) largest = &network;
+	}
+	return largest;
 }

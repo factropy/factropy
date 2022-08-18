@@ -311,6 +311,14 @@ void Conveyor::tick() {
 			}
 		}
 
+		for (auto belt: newBelts) {
+			for (auto& conveyor: belt->conveyors) {
+				if (conveyor.en->spec->conveyorEnergyDrain && !conveyor.en->spec->consumeElectricity) {
+					belt->bulkConsumeSpec = conveyor.en->spec;
+				}
+			}
+		}
+
 		// SANITY check belts
 //		uint checked = 0;
 //		for (auto belt: ConveyorBelt::all) {
@@ -455,18 +463,10 @@ void Conveyor::tick() {
 	// consume energy in bulk for the length of each belt, using the first normal conveyor
 	// that isn't a more complex entity with its own consumption (tube, balancer etc) as a
 	// baseline.
-	for (auto& belt: ConveyorBelt::all) {
-		for (auto& conveyor: belt->conveyors) {
-			if (conveyor.en->spec->conveyorEnergyDrain && !conveyor.en->spec->consumeElectricity) {
-				auto lead = conveyor.en;
-				auto spec = lead->spec;
-				auto pole = PowerPole::covering(lead->box());
-				if (pole && pole->network) {
-					pole->network->consume(spec, spec->conveyorEnergyDrain, belt->conveyors.size());
-				}
-				break;
-			}
-		}
+	auto network = ElectricityNetwork::primary();
+	if (network) for (auto belt: ConveyorBelt::all) {
+		if (!belt->bulkConsumeSpec) continue;
+		network->consume(belt->bulkConsumeSpec, belt->bulkConsumeSpec->conveyorEnergyDrain, belt->conveyors.size());
 	}
 }
 

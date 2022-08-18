@@ -894,7 +894,8 @@ bool Entity::fits(Spec *spec, Point pos, Point dir) {
 		if (es->spec->flightPad && spec->flightPath) continue;
 		if (es->spec->monorail && spec->monocar) continue;
 		if (es->spec->monocar && spec->monocar) return false;
-		if (es->spec->collideBuild) return false;
+		if (es->spec->drone) continue;
+		return false;
 	}
 
 	if (spec->place & Spec::Monorail) {

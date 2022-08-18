@@ -9,6 +9,7 @@ struct TubeSettings;
 #include "entity.h"
 #include "slabmap.h"
 #include "gridmap.h"
+#include "electricity.h"
 
 struct Tube {
 	uint id = 0;
@@ -26,7 +27,7 @@ struct Tube {
 	static std::vector<uint> upgradableGroup(uint cid);
 
 	void destroy();
-	void update();
+	void update(ElectricityNetwork* network);
 
 	TubeSettings* settings();
 	void setup(TubeSettings*);

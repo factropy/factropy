@@ -1741,6 +1741,23 @@ public:
 			}
 		}
 
+		auto drone = field("drone");
+		if (is_bool(drone)) {
+			spec->drone = to_bool(drone);
+		}
+
+		if (spec->drone) {
+			auto droneSpeed = field("droneSpeed");
+			if (is_number(droneSpeed)) {
+				spec->droneSpeed = to_number(droneSpeed);
+			}
+
+			auto droneCargoSize = field("droneCargoSize");
+			if (is_integer(droneCargoSize)) {
+				spec->droneCargoSize = to_integer(droneCargoSize);
+			}
+		}
+
 		for (auto part: spec->parts) {
 			spec->coloredAuto = spec->coloredAuto || part->autoColor;
 			spec->coloredCustom = spec->coloredCustom || part->customColor;
@@ -2472,50 +2489,6 @@ void ScenarioBase::specifications() {
 		rocks.push_back(spec);
 	}
 
-	meshes["droneChassis"] = new Mesh("models/drone-chassis-hd.stl");
-	meshes["droneChassisLD"] = new Mesh("models/drone-chassis-ld.stl");
-	meshes["droneSpars"] = new Mesh("models/drone-spars-hd.stl");
-	meshes["droneSparsLD"] = new Mesh("models/drone-spars-ld.stl");
-	meshes["droneRotor"] = new Mesh("models/drone-rotor-hd.stl");
-	meshes["droneRotorLD"] = new Mesh("models/drone-rotor-ld.stl");
-
-	spec = new Spec("drone");
-	spec->title = "Drone";
-	spec->select = false;
-	spec->build = false;
-	spec->collision = {0, 0, 0, 1, 1, 1};
-	spec->selection = spec->collision;
-	spec->parts = {
-		(new Part(0x990000ff))
-			->lod(mesh("droneChassis"), Part::HD, Part::SHADOW)
-			->lod(mesh("droneChassis"), Part::MD, Part::NOSHADOW),
-		(new Part(0x444444ff))
-			->lod(mesh("droneSpars"), Part::HD, Part::SHADOW)
-			->lod(mesh("droneSparsLD"), Part::MD, Part::NOSHADOW)
-			->transform(Mat4::rotate(Point::Up, glm::radians(45.0f))),
-		(new PartSpinner(0x999999ff, Point::Up, 45))
-			->lod(mesh("droneRotor"), Part::HD, Part::NOSHADOW)
-			->lod(mesh("droneRotorLD"), Part::MD, Part::NOSHADOW)
-			->transform(Mat4::translate(0.3,0.02,0.3)),
-		(new PartSpinner(0x999999ff, Point::Up, 45))
-			->lod(mesh("droneRotor"), Part::HD, Part::NOSHADOW)
-			->lod(mesh("droneRotorLD"), Part::MD, Part::NOSHADOW)
-			->transform(Mat4::translate(0.3,0.02,-0.3)),
-		(new PartSpinner(0x999999ff, Point::Up, 45))
-			->lod(mesh("droneRotor"), Part::HD, Part::NOSHADOW)
-			->lod(mesh("droneRotorLD"), Part::MD, Part::NOSHADOW)
-			->transform(Mat4::translate(-0.3,0.02,0.3)),
-		(new PartSpinner(0x999999ff, Point::Up, 45))
-			->lod(mesh("droneRotor"), Part::HD, Part::NOSHADOW)
-			->lod(mesh("droneRotorLD"), Part::MD, Part::NOSHADOW)
-			->transform(Mat4::translate(-0.3,0.02,-0.3)),
-	};
-	spec->align = false;
-	spec->drone = true;
-	spec->droneSpeed = 0.2f;
-	spec->droneCargoSize = 5;
-	spec->collideBuild = false;
-
 	meshes["armBase"] = new Mesh("models/arm-base-hd.stl");
 	meshes["armBaseLD"] = new Mesh("models/arm-base-ld.stl");
 	meshes["armPillar"] = new Mesh("models/arm-pillar-hd.stl");
@@ -3125,48 +3098,6 @@ void ScenarioBase::specifications() {
 		}
 	}
 
-	meshes["computerRack"] = new Mesh("models/computer-rack-hd.stl");
-	meshes["computerRackLD"] = new Mesh("models/computer-rack-ld.stl");
-
-//	spec = new Spec("computer");
-//	spec->title = "Computer";
-//	spec->health = 150;
-//	spec->rotateGhost = true;
-//	spec->rotateExtant = true;
-//	spec->computer = true;
-//	spec->computerDataStackSize = 8;
-//	spec->computerReturnStackSize = 8;
-//	spec->computerRAMSize = 32;
-//	spec->computerROMSize = 32;
-//	spec->computerCyclesPerTick = 60;
-//	spec->consumeElectricity = true;
-//	spec->energyDrain = Energy::W(100);
-//	spec->collision = {0, 0, 0, 1, 2, 1};
-//	spec->selection = spec->collision;
-//	spec->iconD = 1.5;
-//	spec->iconV = 0;
-//	spec->enable = true;
-//	spec->networker = true;
-//	spec->networkInterfaces = 2;
-//	spec->networkWifi = {0,1,0};
-//	spec->status = true;
-//	spec->beacon = {0,1,0};
-//	spec->parts = {
-//		(new Part(0x888888ff))
-//			->lod(mesh("computerRack"), Part::HD, Part::SHADOW)
-//			->lod(mesh("computerRackLD"), Part::MD, Part::SHADOW)
-//			->lod(mesh("computerRackLD"), Part::VLD, Part::NOSHADOW)
-//			->transform(Mat4::translate(0,-1,0)),
-//	};
-//	spec->materials = {
-//		{ Item::byName("steel-frame")->id, 1 },
-//		{ Item::byName("copper-wire")->id, 10 },
-//		{ Item::byName("solder")->id, 3 },
-//		{ Item::byName("circuit-board")->id, 10 },
-//		{ Item::byName("mother-board")->id, 1 },
-//		{ Item::byName("battery")->id, 1 },
-//	};
-
 	meshes["oilRigBase"] = new Mesh("models/oil-rig-base-hd.stl");
 	meshes["oilRigBaseLD"] = new Mesh("models/oil-rig-base-ld.stl");
 	meshes["oilRigBaseVLD"] = new Mesh("models/oil-rig-base-vld.stl");
@@ -3482,11 +3413,11 @@ void ScenarioBase::specifications() {
 
 	cartTier(1);
 
-	Spec::byName("cart-engineer1")->depotDroneSpec = Spec::byName("drone");
+	Spec::byName("cart-engineer1")->depotDroneSpec = Spec::byName("drone2");
 
 	truckTier(1);
 
-	Spec::byName("truck-engineer1")->depotDroneSpec = Spec::byName("drone");
+	Spec::byName("truck-engineer1")->depotDroneSpec = Spec::byName("drone2");
 
 	meshes["block"] = new Mesh("models/block.stl");
 
@@ -4760,7 +4691,7 @@ void ScenarioBase::droneDepotTier(int tier, uint color, uint color2) {
 	spec->depotFixed = true;
 	spec->depotRange = 100.0f + (10.0f*tier);
 	spec->depotDrones = 25*tier;
-	spec->depotDroneSpec = Spec::byName("drone");
+	spec->depotDroneSpec = tier > 1 ? Spec::byName("drone"): Spec::byName("drone2");
 	spec->dronePoint = Point::Up*(spec->collision.h/2.0f) + Point::Up*0.5f;
 	spec->depotDispatchEnergy = Energy::MJ(1);
 }
