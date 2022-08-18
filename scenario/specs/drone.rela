@@ -1,0 +1,142 @@
+
+add_spec({
+	name = "drone",
+	title = "Drone (Fast)",
+	collision = [0, 0, 0, 1, 1, 1],
+	select = false,
+	build = false,
+	align = false,
+	drone = true,
+	droneSpeed = 0.2,
+	droneCargoSize = 5,
+	parts = [
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			lods = [
+				["models/drone-chassis-hd.stl", high, shadow],
+				["models/drone-chassis-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.buffer,
+			gloss = gloss.metallic,
+			lods = [
+				["models/drone-spars-hd.stl", high, shadow],
+				["models/drone-spars-hd.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,45],
+			translate = [0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,45],
+			translate = [0.35,0.02,-0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,-45],
+			translate = [-0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,-45],
+			translate = [-0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+	],
+})
+
+
+add_spec({
+	name = "drone2",
+	title = "Drone",
+	collision = [0, 0, 0, 1, 1, 1],
+	select = false,
+	build = false,
+	align = false,
+	drone = true,
+	droneSpeed = 0.1,
+	droneCargoSize = 2,
+	parts = [
+		{
+			color = 0xffffffff,
+			gloss = gloss.metallic,
+			lods = [
+				["models/drone-chassis-hd.stl", high, shadow],
+				["models/drone-chassis-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = colors.provider,
+			gloss = gloss.metallic,
+			lods = [
+				["models/drone-spars-hd.stl", high, shadow],
+				["models/drone-spars-hd.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,45],
+			translate = [0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,45],
+			translate = [0.35,0.02,-0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,-45],
+			translate = [-0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+		{
+			color = 0x111111ff,
+			gloss = gloss.metallic,
+			spinner = [up,-45],
+			translate = [-0.35,0.02,0.35],
+			lods = [
+				["models/drone-rotor-hd.stl", high, noshadow],
+				["models/drone-rotor-ld.stl", medium, noshadow],
+			],
+		},
+	],
+})
+
