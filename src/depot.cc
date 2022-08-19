@@ -123,7 +123,7 @@ void Depot::update() {
 	}
 
 	auto damaged = Entity::intersecting(range, Entity::gridDamaged);
-	discard_if(damaged, [&](Entity* ed) { return ed->spec->junk || Entity::repairActions.count(ed->id); });
+	discard_if(damaged, [&](Entity* ed) { return ed->spec->junk || ed->spec->enemy || Entity::repairActions.count(ed->id); });
 
 	minivec<EntityStore> stores;
 
@@ -334,6 +334,9 @@ void Depot::update() {
 			if (supply(*se.store, *de.store)) return true;
 		}
 		for (auto se: src) for (auto de: dst) {
+			if (collect(*se.store, *de.store)) return true;
+		}
+		for (auto se: src) for (auto de: dst) {
 			if (overflow(*se.store, *de.store)) return true;
 		}
 		return false;
@@ -469,12 +472,6 @@ void Depot::dispatch(uint dep, uint src, uint dst, Stack stack, uint flags) {
 	drone.repairing = flags & FlightRepair;
 	drone.stage = Drone::ToSrc;
 
-	if (src == en->id) {
-		drone.stage = Drone::ToDst;
-		en->store().remove(stack);
-		drone.iid = stack.iid;
-	}
-
 	Entity &se = Entity::get(src);
 	Store& ss = drone.srcGhost ? se.ghost().store: se.store();
 	ss.reserve(stack);
@@ -494,6 +491,13 @@ void Depot::dispatch(uint dep, uint src, uint dst, Stack stack, uint flags) {
 		se.pos().distance(pos),
 		de.pos().distance(pos)
 	) + 10.0f;
+
+	if (en->spec->dronePointRadius > 0 && src == en->id) {
+		drone.stage = Drone::ToDst;
+		en->store().remove(stack);
+		en->store().drones.erase(ed.id);
+		drone.iid = stack.iid;
+	}
 
 	hot.pause(this);
 	nextDispatch = Sim::tick + (en->spec->zeppelin ? 5: 15);

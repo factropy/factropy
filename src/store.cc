@@ -498,7 +498,7 @@ uint Store::countProviding(uint iid) {
 	uint n = countLessReserved(iid);
 	auto lvl = level(iid);
 	if (!lvl) return n;
-	return (n > lvl->lower) ? lvl->lower-n: 0;
+	return (n > lvl->lower) ? n-lvl->lower: 0;
 }
 
 // store has an upper limit for item exceeded

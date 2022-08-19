@@ -1725,10 +1725,26 @@ void EntityPopup2::draw() {
 							TableNextRow();
 
 							int limit = (int)std::max(level.upper, (uint)store.limit().value/item->mass.value);
-							int step  = (int)std::max(1U, (uint)limit/100);
+
+							int step = 100;
+							if (store.limit() < Mass::kg(1001)) step = 50;
+							if (store.limit() < Mass::kg(501)) step = 25;
 
 							TableNextColumn();
 							itemIcon(item);
+//							if (tipBegin()) {
+//								Print(fmtc("count %u", store.count(item->id)));
+//								Print(fmtc("countNet %u", store.countNet(item->id)));
+//								Print(fmtc("countSpace %u", store.countSpace(item->id)));
+//								Print(fmtc("countLessReserved %u", store.countLessReserved(item->id)));
+//								Print(fmtc("countPlusPromised %u", store.countPlusPromised(item->id)));
+//								Separator();
+//								Print(fmtc("countRequesting %u", store.countRequesting(item->id)));
+//								Print(fmtc("countProviding %u", store.countProviding(item->id)));
+//								Print(fmtc("countActiveProviding %u", store.countActiveProviding(item->id)));
+//								Print(fmtc("countAccepting %u", store.countAccepting(item->id)));
+//								tipEnd();
+//							}
 
 							TableNextColumn();
 							Print(fmtc("%s", item->title));
@@ -4124,8 +4140,19 @@ void RecipePopup::drawSpecButton(Spec* spec) {
 	if (!spec->build && !spec->ship) return;
 	Bullet();
 	if (SmallButtonInline(spec->title.c_str())) {
-		locate.spec = spec;
-		expanded.spec[spec] = !expanded.spec[spec];
+		if (spec->ship) {
+			for (auto [_,recipe]: Recipe::names) {
+				if (recipe->outputSpec == spec) {
+					locate.recipe = recipe;
+					expanded.recipe[recipe] = !expanded.recipe[recipe];
+					break;
+				}
+			}
+		}
+		else {
+			locate.spec = spec;
+			expanded.spec[spec] = !expanded.spec[spec];
+		}
 	}
 	highlited.spec[spec] = highlited.spec[spec] || IsItemHovered();
 }

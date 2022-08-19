@@ -1109,7 +1109,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			conveyorSlotsRight = 2,
 			conveyorTransformsLeft = conveyorTransformsLeft,
 			conveyorTransformsRight = conveyorTransformsRight,
-			consumeElectricity = true,
+			//consumeElectricity = true,
 			energyConsume = kW(30*tier),
 			health = 150,
 			materials = materials,
@@ -1197,7 +1197,7 @@ function conveyorTier(tier, maxTier, steps, color, chevronColor)
 			tubeOrigin = height/2.0,
 			tubeSpeed = lib.ceil(1000.0/(0.5*steps)), // mm/s
 			tubeSpan = 30*tier*1000, // mm
-			consumeElectricity = true,
+			//consumeElectricity = true,
 			energyConsume = kW(30*tier),
 			health = 150,
 			icon = [0,height/2+1.25,0],

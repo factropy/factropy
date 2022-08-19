@@ -91,7 +91,6 @@ struct Spec {
 	bool directRevert;
 
 	bool forceDelete;
-	bool collideBuild;
 
 	bool rotateGhost;
 	bool rotateExtant;

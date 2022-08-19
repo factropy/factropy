@@ -578,7 +578,7 @@ int main(int argc, char* argv[]) {
 
 	Config::version.major = 0;
 	Config::version.minor = 2;
-	Config::version.patch = 3;
+	Config::version.patch = 4;
 
 	snprintf(Config::version.text, sizeof(Config::version.text),
 		"%d.%d.%d-alpha",

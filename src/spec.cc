@@ -46,7 +46,6 @@ Spec::Spec(std::string name) {
 	directRevert = false;
 
 	forceDelete = false;
-	collideBuild = true;
 
 	health = 0;
 

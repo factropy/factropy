@@ -13,9 +13,8 @@ void Tube::reset() {
 }
 
 void Tube::tick() {
-	for (auto& tube: all) {
-		tube.update();
-	}
+	auto network = ElectricityNetwork::primary();
+	for (auto& tube: all) tube.update(network);
 }
 
 Tube& Tube::create(uint id) {
@@ -197,7 +196,7 @@ bool Tube::tryTubeInAnyOut() {
 	return tryTubeInTubeOut() || tryTubeInBeltOut();
 }
 
-void Tube::update() {
+void Tube::update(ElectricityNetwork* network) {
 	if (en->isGhost()) return;
 	if (!en->isEnabled()) return;
 
@@ -208,22 +207,14 @@ void Tube::update() {
 	}
 
 	if (next) {
-		Energy require = en->spec->energyConsume;
-		Energy energy = en->consume(require);
+		auto& sib = all[next];
+		length = std::floor(sib.origin().distance(origin())) * 1000.0f;
 
-		miniset<uint> seen;
-		for (uint sid = next; sid && energy < require && !seen.has(sid) && all.has(sid); ) {
-			auto& sib = all[sid];
-			energy += sib.en->consume(require-energy);
-			seen.insert(sid);
-			sid = sib.next;
-		}
+		Energy require = en->spec->energyConsume * ((float)length/(float)en->spec->tubeSpan);
+		Energy energy = network->consume(en->spec, require);
 
 		float fueled = energy.portion(require);
 		uint speed = std::ceil(std::max(10.0f, (float)en->spec->tubeSpeed * fueled)); // mm/s
-
-		auto& sib = all[next];
-		length = std::floor(sib.origin().distance(origin())) * 1000.0f;
 
 		ensure(length);
 

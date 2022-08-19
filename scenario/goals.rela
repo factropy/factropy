@@ -296,8 +296,8 @@ add_goal({
 		"monorail-stop",
 		"monocar",
 		"container-shipping",
-		"drone-depot2",
 		"shipyard1"
+		"hill-explosive",
 	],
 	recipes = [
 		"ammo2",
@@ -347,13 +347,13 @@ add_goal({
 		"unloader-2",
 		"balancer-2",
 		"zeppelin-support",
-		"hill-explosive",
 		"ship-corvette",
 		"shipyard2"
 		"blimp1",
 		"flight-pad-depot",
 		"flight-pad-load",
 		"flight-pad-unload",
+		"drone-depot2",
 	],
 	recipes = [
 		"computer",
