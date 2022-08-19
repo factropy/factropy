@@ -107,7 +107,6 @@ struct Store {
 	uint countSpace(uint iid);
 	uint countLessReserved(uint iid);
 	uint countPlusPromised(uint iid);
-	uint countAcceptable(uint iid);
 	bool isRequesterSatisfied();
 	uint countRequesting(uint iid);
 	bool isRequesting(uint iid);

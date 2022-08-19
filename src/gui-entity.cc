@@ -767,10 +767,10 @@ void GuiEntity::instanceItems() {
 	auto trx = dir.rotation() * (pos + scene.offset).translation();
 
 	if (spec->drone && iid) {
-		auto itemScaleDrone = Mat4::scale(0.6f, 0.6f, 0.6f);
+		auto itemScaleDrone = Mat4::scale(0.7f, 0.7f, 0.7f);
 		Item* item = Item::get(iid);
 		if (item->hasLOD(distance)) {
-			Point p = pos - (Point::Up*0.5f) + scene.offset;
+			Point p = pos - (Point::Up*0.6f) + scene.offset;
 			Mat4 t = itemScaleDrone * Mat4::translate(p.x, p.y + item->droneV, p.z);
 			for (Part* part: item->parts) {
 				part->instance(scene.shader.part.id(), distance, t, part->color, Config::mode.itemShadows);

@@ -1729,6 +1729,23 @@ void EntityPopup2::draw() {
 
 							TableNextColumn();
 							itemIcon(item);
+							if (tipBegin()) {
+								Print(fmtc("count %u", store.count(item->id)));
+								Print(fmtc("countNet %u", store.countNet(item->id)));
+								Print(fmtc("countSpace %u", store.countSpace(item->id)));
+								Print(fmtc("countLessReserved %u", store.countLessReserved(item->id)));
+								Print(fmtc("countPlusPromised %u", store.countPlusPromised(item->id)));
+								Separator();
+								Print(fmtc("countRequesting %u", store.countRequesting(item->id)));
+								Print(fmtc("countProviding %u", store.countProviding(item->id)));
+								Print(fmtc("countActiveProviding %u", store.countActiveProviding(item->id)));
+								Print(fmtc("countAccepting %u", store.countAccepting(item->id)));
+								Print(fmtc("drones %u", store.drones.size()));
+								for (auto& delivery: store.deliveries) {
+									Print(fmtc("delivery %s %u %u", Item::get(delivery.iid)->name, delivery.promised, delivery.reserved));
+								}
+								tipEnd();
+							}
 
 							TableNextColumn();
 							Print(fmtc("%s", item->title));
@@ -1796,6 +1813,23 @@ void EntityPopup2::draw() {
 
 							TableNextColumn();
 							itemIcon(item);
+							if (tipBegin()) {
+								Print(fmtc("count %u", store.count(item->id)));
+								Print(fmtc("countNet %u", store.countNet(item->id)));
+								Print(fmtc("countSpace %u", store.countSpace(item->id)));
+								Print(fmtc("countLessReserved %u", store.countLessReserved(item->id)));
+								Print(fmtc("countPlusPromised %u", store.countPlusPromised(item->id)));
+								Separator();
+								Print(fmtc("countRequesting %u", store.countRequesting(item->id)));
+								Print(fmtc("countProviding %u", store.countProviding(item->id)));
+								Print(fmtc("countActiveProviding %u", store.countActiveProviding(item->id)));
+								Print(fmtc("countAccepting %u", store.countAccepting(item->id)));
+								Print(fmtc("drones %u", store.drones.size()));
+								for (auto& delivery: store.deliveries) {
+									Print(fmtc("delivery %s %u %u", Item::get(delivery.iid)->name, delivery.promised, delivery.reserved));
+								}
+								tipEnd();
+							}
 
 							TableNextColumn();
 							Print(fmtc("%s", item->title));

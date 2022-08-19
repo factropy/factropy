@@ -207,14 +207,14 @@ void Tube::update(ElectricityNetwork* network) {
 	}
 
 	if (next) {
-		Energy require = en->spec->energyConsume;
+		auto& sib = all[next];
+		length = std::floor(sib.origin().distance(origin())) * 1000.0f;
+
+		Energy require = en->spec->energyConsume * ((float)length/(float)en->spec->tubeSpan);
 		Energy energy = network->consume(en->spec, require);
 
 		float fueled = energy.portion(require);
 		uint speed = std::ceil(std::max(10.0f, (float)en->spec->tubeSpeed * fueled)); // mm/s
-
-		auto& sib = all[next];
-		length = std::floor(sib.origin().distance(origin())) * 1000.0f;
 
 		ensure(length);
 
