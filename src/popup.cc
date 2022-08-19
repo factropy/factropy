@@ -1725,7 +1725,10 @@ void EntityPopup2::draw() {
 							TableNextRow();
 
 							int limit = (int)std::max(level.upper, (uint)store.limit().value/item->mass.value);
-							int step  = (int)std::max(1U, (uint)limit/100);
+
+							int step = 100;
+							if (store.limit() < Mass::kg(1001)) step = 50;
+							if (store.limit() < Mass::kg(501)) step = 25;
 
 							TableNextColumn();
 							itemIcon(item);

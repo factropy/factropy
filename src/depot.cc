@@ -492,6 +492,13 @@ void Depot::dispatch(uint dep, uint src, uint dst, Stack stack, uint flags) {
 		de.pos().distance(pos)
 	) + 10.0f;
 
+	if (en->spec->dronePointRadius > 0 && src == en->id) {
+		drone.stage = Drone::ToDst;
+		en->store().remove(stack);
+		en->store().drones.erase(ed.id);
+		drone.iid = stack.iid;
+	}
+
 	hot.pause(this);
 	nextDispatch = Sim::tick + (en->spec->zeppelin ? 5: 15);
 }
