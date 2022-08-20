@@ -75,8 +75,12 @@ struct Signal {
 	};
 
 	struct Key {
-		Type type = Type::Stack;
+		Type type = Type::Virtual;
 		uint id = 0;
+
+		operator bool() const {
+			return !(type == Type::Virtual && id == 0);
+		}
 
 		bool operator==(const Signal::Key& o) const;
 		bool operator!=(const Signal::Key& o) const;

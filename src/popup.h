@@ -49,6 +49,9 @@ struct Popup {
 	Recipe* recipePicked = nullptr;
 	Recipe* recipePicker(bool open = false, std::function<bool(Recipe*)> show = nullptr);
 
+	Signal::Key signalPicked;
+	bool signalPicker(bool open = false, bool metas = false);
+
 	float relativeWidth(float w);
 
 	static bool tipBegin();
