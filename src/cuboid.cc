@@ -16,7 +16,9 @@ Cuboid Cuboid::grow(real n) const {
 }
 
 bool Cuboid::contains(const Point& point) const {
-	return false;
+	auto trx = (dir.rotationAltAz() * box.centroid().translation()).invert();
+	Point position = point.transform(trx);
+	return Box({0,0,0,box.w,box.h,box.d}).contains(position);
 }
 
 namespace {

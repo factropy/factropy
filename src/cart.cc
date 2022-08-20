@@ -9,67 +9,6 @@ void Cart::reset() {
 }
 
 void Cart::tick() {
-
-	// check waypoints with reservations; those with a reserving cart still intersecting, extend reservation
-
-	std::set<uint> reserved;
-
-	for (auto& waypoint: CartWaypoint::all) {
-		if (!waypoint.reserverId) continue;
-		if (!all.has(waypoint.reserverId)) {
-			waypoint.reserverId = 0;
-			continue;
-		}
-		auto& ew = Entity::get(waypoint.id);
-		if (ew.isGhost()) continue;
-		auto& cart = get(waypoint.reserverId);
-		auto& ec = Entity::get(cart.id);
-		if (ec.isGhost()) {
-			waypoint.reserverId = 0;
-			continue;
-		}
-		if (waypoint.reserveUntil > Sim::tick) {
-			reserved.insert(waypoint.id);
-			cart.status = fmt("%u holds %u", waypoint.reserverId, waypoint.id);
-			continue;
-		}
-		if (ec.groundSphere().intersects(ew.groundSphere())) {
-			waypoint.reserveUntil = Sim::tick+30;
-			reserved.insert(waypoint.id);
-			cart.status = fmt("%u renews %u", waypoint.reserverId, waypoint.id);
-		}
-	}
-
-	// identify carts over unreserved waypoints; closest has reservation
-
-	struct cartProximity {
-		Cart* cart = nullptr;
-		double dist = 0.0f;
-	};
-
-	std::map<CartWaypoint*,std::vector<cartProximity>> proximity;
-
-	for (auto& cart: all) {
-		auto& ec = Entity::get(cart.id);
-		if (ec.isGhost()) continue;
-		auto space = ec.groundSphere();
-		for (auto ew: Entity::intersecting(ec.box().grow(2.0f), Entity::gridCartWaypoints)) {
-			ensure(ew->spec->cartWaypoint);
-			if (ew->isGhost()) continue;
-			if (!ew->groundSphere().intersects(space)) continue;
-			auto& waypoint = ew->cartWaypoint();
-			if (reserved.count(waypoint.id)) continue;
-			proximity[&waypoint].push_back({&cart, ec.pos().distance(ew->pos())});
-		}
-	}
-
-	for (auto& [waypoint,cartProximities]: proximity) {
-		std::sort(cartProximities.begin(), cartProximities.end(), [&](auto a, auto b) { return a.dist < b.dist; });
-		waypoint->reserverId = cartProximities[0].cart->id;
-		waypoint->reserveUntil = Sim::tick+30;
-		cartProximities[0].cart->status = fmt("%u reserves %u", waypoint->reserverId, waypoint->id);
-	}
-
 	for (auto& cart: all) cart.update();
 	for (auto& cart: all) if (cart.blocked) Sim::alerts.vehiclesBlocked++;
 }
@@ -149,11 +88,12 @@ float Cart::maxSpeed() {
 	return slab ? en->spec->cartSpeed*1.5: en->spec->cartSpeed;
 }
 
-std::vector<Point> Cart::sensors() {
-	Point front = en->pos() + (en->dir() * (en->spec->collision.d*0.5f));
-	Point left  = front + (en->dir().transform(Mat4::rotateY(glm::radians( 90.0f))) * (en->spec->collision.w*0.25f));
-	Point right = front + (en->dir().transform(Mat4::rotateY(glm::radians(-90.0f))) * (en->spec->collision.w*0.25f));
-	return std::vector<Point>{left, right};
+const std::array<Point,2> Cart::sensors() {
+	Point right = en->dir().transform(Mat4::rotateY(glm::radians( 90.0f)));
+	Point front = en->pos() + (en->dir() * (en->spec->collision.d*0.51f));
+	msensors[0] = front + (right * (en->spec->collision.w*0.25f));
+	msensors[1] = front + (right * (-en->spec->collision.w*0.25f));
+	return msensors;
 }
 
 Point Cart::ahead() {
@@ -257,77 +197,53 @@ void Cart::travel() {
 		return;
 	}
 
-	for (auto point: sensors()) {
-		if (!world.isLand(point)) {
-			halt = true;
-			blocked = true;
-			pause = Sim::tick + 30;
-			return;
-		}
-	}
-
-	bool overReservedWaypoint = false;
 	auto nearEntities = Entity::intersecting(en->box().grow(2.0f));
 
-	for (auto ec: nearEntities) {
-		if (ec->id == id) continue;
-
-		if (ec->spec->junk) {
-			ec->deconstruct();
-		}
-
-		if (ec->spec->cartWaypoint && ec->box().contains(en->pos().floor(0.0f))) {
-			if (ec->cartWaypoint().reserverId == id) {
-				overReservedWaypoint = true;
-			}
-		}
-
-		float offset = en->spec->collision.d/2.0f;
-		Point ahead = en->pos() + (en->dir()*(offset*1.1f));
-
-		if (ec->spec->cartWaypoint && ec->box().contains(ahead.floor(0.0f))) {
-			auto& waypoint = ec->cartWaypoint();
-			if (waypoint.reserveUntil < Sim::tick) {
-				waypoint.reserverId = id;
-				waypoint.reserveUntil = Sim::tick+30;
-				status = fmt("%u waypoint reserved", ec->id);
-			}
-		}
-
-		if (ec->spec->cart) {
-			if (ec->cuboid().intersects(Sphere(ahead, 0.1f))) {
-				halt = true;
-				blocked = std::abs(en->dir().degrees(ec->dir())) > 120.0f;
-				status = fmt("%u crash cart %u", id, ec->id);
-			}
-		}
+	// remove previous colliders out of range
+	minivec<uint> drop;
+	for (auto cid: colliders) {
+		bool near = false;
+		for (auto ec: nearEntities)
+			 if (ec->id == cid && ec->cart().halt) near = true;
+		if (!near) drop.push(cid);
+	}
+	for (auto cid: drop) {
+		colliders.erase(cid);
 	}
 
-	if (!halt && !overReservedWaypoint) {
+	for (auto point: sensors()) {
+		if (halt) break;
+
+		if (regionNext < Sim::tick) {
+			region = world.region(en->box().grow(5));
+			regionNext = Sim::tick+180;
+		}
+
+		if (!region.isLand(point)) {
+			halt = true;
+			blocked = true;
+			break;
+		}
+
 		for (auto ec: nearEntities) {
 			if (ec->id == id) continue;
+			if (ec->spec->cartWaypoint) continue;
 			if (ec->spec->drone) continue;
-//			if (ec->isGhost() && ec->spec->junk) continue;
+			if (ec->spec->slab) continue;
 
-			float offset = en->spec->collision.d/2.0f;
-			Point ahead = en->pos() + (en->dir()*(offset*1.1f));
+			if (!ec->spec->cart && !ec->box().contains(point)) continue;
+			if (!ec->cuboid().contains(point)) continue;
 
-			if (ec->spec->cartWaypoint && ec->box().contains(ahead.floor(0.0f))) {
-				auto& waypoint = ec->cartWaypoint();
-				if (waypoint.reserverId != id) {
-					halt = true;
-					blocked = false;
-					status = fmt("%u waypoint ahead not reserved %u", id, ec->id);
-				}
-				continue;
+			if (ec->spec->cart) {
+				// they've seen us and stopped; carry on
+				if (colliders.has(ec->id)) continue;
+				// they haven't seen us; stop and let them know
+				ec->cart().colliders.insert(id);
 			}
 
-			if (ec->box().contains(ahead)) {
-				halt = true;
-				blocked = true;
-				status = fmt("%u crash %u", id, ec->id);
-				continue;
-			}
+			blocked = !ec->spec->cart;
+			halt = true;
+			break;
 		}
 	}
 
@@ -385,10 +301,8 @@ void Cart::travel() {
 // if truck pulled up slightly short, ease ahead to exit cleanly
 // no-op for carts
 void Cart::ease() {
-
 	fueled = en->consumeRate(en->spec->energyConsume);
 	speed = std::max(0.01f, maxSpeed() * fueled);
-
 	if (en->pos().distance(target) < speed) {
 		CartWaypoint* waypoint = getWaypoint(en->pos());
 		if (waypoint) {

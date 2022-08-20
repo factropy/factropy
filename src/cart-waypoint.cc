@@ -14,8 +14,6 @@ CartWaypoint& CartWaypoint::create(uint id) {
 	waypoint.relative[Red] = Point::Zero;
 	waypoint.relative[Blue] = Point::Zero;
 	waypoint.relative[Green] = Point::Zero;
-	waypoint.reserverId = 0;
-	waypoint.reserveUntil = 0;
 	return waypoint;
 }
 
@@ -85,14 +83,6 @@ void CartWaypoint::setup(CartWaypointSettings* settings) {
 	redirections.clear();
 	for (auto& redirection: settings->redirections)
 		redirections.push_back(redirection);
-}
-
-bool CartWaypoint::reserve(uint rid) {
-	if (reserverId && reserverId != rid && reserveUntil > Sim::tick)
-		return false;
-	reserverId = rid;
-	reserveUntil = Sim::tick + 30;
-	return true;
 }
 
 int CartWaypoint::redirect(int line, minimap<Signal,&Signal::key> signals) {
