@@ -4983,10 +4983,10 @@ void MapPopup::draw() {
 
 		PopStyleVar(1);
 
-		auto tile = world.get({
+		auto tile = world.get(World::XY(
 			(int)std::floor(pointer.x),
 			(int)std::floor(pointer.y)
-		});
+		));
 
 		if (tile && scene.keyDown(SDLK_SPACE)) {
 			auto box = Point(tile->x, 0, tile->y).box().grow(0.5);

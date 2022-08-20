@@ -45,13 +45,20 @@ struct Cart {
 	uint64_t pause;
 	uint64_t surface;
 	Signal signal;
-	std::string status;
 	float fueled;
 	float speed;
 	bool halt;
 	bool lost;
 	bool slab;
 	bool blocked;
+
+	miniset<uint> colliders;
+
+	std::array<Point,2> msensors;
+	const std::array<Point,2> sensors();
+
+	World::Region region;
+	uint64_t regionNext = 0;
 
 	void start();
 	void travel();
@@ -60,7 +67,7 @@ struct Cart {
 	void travelTo(Point point);
 	CartStop* getStop(Point point);
 	CartWaypoint* getWaypoint(Point point);
-	std::vector<Point> sensors();
+
 	Sphere groundSphere();
 	Point ahead();
 	Point park();

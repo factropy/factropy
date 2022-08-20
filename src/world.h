@@ -128,6 +128,7 @@ struct World {
 	bool flag(const XY& at, bool state);
 
 	Tile* get(const XY& at);
+	Tile* get(const Point& p);
 
 	int nextHill = 1;
 	int nextLake = -1;
@@ -144,17 +145,13 @@ struct World {
 	float blast(const Sphere& s);
 
 	float elevation(const XY& at);
-	float elevation(const Point& p);
 	uint resource(const XY& at);
 
 	bool isLand(const XY& at);
-	bool isLand(const Point& p);
 	bool isLand(const Box& b);
 	bool isLake(const XY& at);
-	bool isLake(const Point& p);
 	bool isLake(const Box& b);
 	bool isHill(const XY& at);
-	bool isHill(const Point& p);
 	bool isHill(const Box& b);
 
 	float hillPlatform(const Box& b);
@@ -175,6 +172,9 @@ struct World {
 		World::Tile* get(const XY& at);
 		float elevation(const XY& at);
 		uint resource(const XY& at);
+		bool isLand(const XY& at);
+		bool isLake(const XY& at);
+		bool isHill(const XY& at);
 		struct {
 			World::XY at = {0,0};
 			uint offset = 0;

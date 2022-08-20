@@ -1280,6 +1280,17 @@ void GuiEntity::overlayHovering(bool full) {
 		});
 	}
 
+	if (spec->cart) {
+		Sim::locked([&]() {
+			auto en = Entity::find(id);
+			if (!en) return;
+			auto& cart = en->cart();
+			for (auto& point: cart.sensors()) {
+				scene.sphere(Sphere(point, 0.1), 0xff0000ff);
+			}
+		});
+	}
+
 	if (spec->balancer && detail) {
 		Sim::locked([&]() {
 			auto en = Entity::find(id);
