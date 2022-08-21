@@ -66,6 +66,7 @@ struct Store {
 	bool transmit;
 	bool overflow;
 	bool purge;
+	bool block;
 
 	struct {
 		uint64_t checked;
@@ -116,6 +117,7 @@ struct Store {
 	uint countActiveProviding(uint iid);
 	bool isAccepting(uint iid);
 	uint countAccepting(uint iid);
+	uint countInsertable(uint iid);
 	minimap<Signal,&Signal::key> signals();
 };
 
@@ -123,5 +125,7 @@ struct StoreSettings {
 	minivec<Store::Level> levels;
 	minivec<Stack> stacks;
 	bool transmit;
+	bool purge;
+	bool block;
 	StoreSettings(Store& store);
 };

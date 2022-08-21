@@ -160,7 +160,7 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 			if (filter.size() && !filter.count(stack.iid)) continue;
 			uint have = src.countProviding(stack.iid);
 			if (!have) continue;
-			uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+			uint space = dst.countInsertable(stack.iid);
 			if (!space) continue;
 			return {stack.iid,1};
 		}
@@ -172,7 +172,7 @@ Stack Arm::transferStoreToStore(Store& dst, Store& src) {
 		if (filter.size() && !filter.count(stack.iid)) continue;
 		uint have = src.countLessReserved(stack.iid);
 		if (!have) continue;
-		uint space = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+		uint space = dst.countInsertable(stack.iid);
 		if (!space) continue;
 		return {stack.iid,1};
 	}
@@ -214,7 +214,7 @@ Stack Arm::transferBeltToStore(Store& dst, Stack stack) {
 		return {0,0};
 	}
 
-	uint have = dst.level(stack.iid) ? dst.countAccepting(stack.iid): dst.countSpace(stack.iid);
+	uint have = dst.countInsertable(stack.iid);
 	if (have) return {stack.iid,1};
 
 	return {0,0};

@@ -885,6 +885,10 @@ void Store::saveAll(const char* name) {
 			state["purge"] = store.purge;
 		}
 
+		if (store.block) {
+			state["block"] = store.block;
+		}
+
 		int i = 0;
 		for (Stack stack: store.stacks) {
 			state["stacks"][i++] = {
@@ -937,6 +941,10 @@ void Store::loadAll(const char* name) {
 
 		if (state.contains("purge")) {
 			store.purge = state["purge"];
+		}
+
+		if (state.contains("block")) {
+			store.block = state["block"];
 		}
 
 		for (auto stack: state["stacks"]) {

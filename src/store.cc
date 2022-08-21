@@ -153,6 +153,11 @@ void Store::update() {
 			break;
 		}
 	}
+
+	if (overflow) {
+		ensure(!block);
+		ensure(!purge);
+	}
 }
 
 Store& Store::create(uint id, uint sid, Mass cap) {
@@ -172,6 +177,7 @@ Store& Store::create(uint id, uint sid, Mass cap) {
 	store.overflow = spec->overflow;
 	store.transmit = false;
 	store.purge = spec->zeppelin;
+	store.block = false;
 	store.hint.checked = 0;
 	store.hint.iid = 0;
 	store.hint.requesting = false;
@@ -255,6 +261,8 @@ StoreSettings::StoreSettings(Store& store) {
 		levels.push_back(level);
 	}
 	transmit = store.transmit;
+	purge = store.purge;
+	block = store.block;
 }
 
 void Store::setup(StoreSettings* settings) {
@@ -263,6 +271,8 @@ void Store::setup(StoreSettings* settings) {
 		levelSet(level.iid, level.lower, level.upper);
 	}
 	transmit = settings->transmit;
+	purge = settings->purge;
+	block = settings->block;
 }
 
 bool Store::strict() {
@@ -483,6 +493,7 @@ uint Store::countRequesting(uint iid) {
 	int spaceB = (limit()-usagePredict()).items(iid);
 	int space = std::max(0, std::min(spaceA, spaceB));
 	if (fuel && Item::get(iid)->fuel.category == fuelCategory) return space;
+	if (!lvl && block) return 0;
 	if (!lvl) return 0;
 	return std::max(0, std::min(space, (int)lvl->lower - n));
 }
@@ -529,8 +540,15 @@ uint Store::countAccepting(uint iid) {
 	int spaceB = (limit()-usagePredict()).items(iid);
 	int space = std::max(0, std::min(spaceA, spaceB));
 	if (fuel && Item::get(iid)->fuel.category == fuelCategory) return space;
+	if (!lvl && block) return 0;
 	if (!lvl) return 0;
 	return std::max(0, std::min(space, (int)lvl->upper - n));
+}
+
+uint Store::countInsertable(uint iid) {
+	if (level(iid) || strict()) return countAccepting(iid);
+	if (!block) return countSpace(iid);
+	return 0;
 }
 
 minimap<Signal,&Signal::key> Store::signals() {

@@ -1737,31 +1737,54 @@ void EntityPopup2::draw() {
 						store.levelSet(Item::get(itemPicked)->id, 0, 0);
 					}
 
-					SameLine();
-					if (Button(" + Construction ")) {
-						std::set<Item*> items;
-						for (auto [_,spec]: Spec::all) {
-							if (!spec->licensed) continue;
-							if (spec->junk) continue;
-							for (auto [iid,_]: spec->materials) {
-								items.insert(Item::get(iid));
+					if (en.spec->construction || en.spec->depot) {
+						SameLine();
+						if (Button(" + Construction ")) {
+							std::set<Item*> items;
+							for (auto [_,spec]: Spec::all) {
+								if (!spec->licensed) continue;
+								if (spec->junk) continue;
+								for (auto [iid,_]: spec->materials) {
+									items.insert(Item::get(iid));
+								}
+							}
+							for (auto item: items) {
+								if (store.level(item->id)) continue;
+								int limit = (int)store.limit().value/item->mass.value;
+								int step  = (int)std::max(1U, (uint)limit/100);
+								store.levelSet(item->id, 0, store.magic ? step: 0);
 							}
 						}
-						for (auto item: items) {
-							if (store.level(item->id)) continue;
-							int limit = (int)store.limit().value/item->mass.value;
-							int step  = (int)std::max(1U, (uint)limit/100);
-							store.levelSet(item->id, 0, store.magic ? step: 0);
-						}
+						if (IsItemHovered()) tip(
+							"Accept all construction materials with limits."
+						);
 					}
-					if (IsItemHovered()) tip(
-						"Accept all construction materials with limits."
-					);
 
-					if (en.spec->depot) {
+					if (!en.spec->overflow) {
+						const char* policy = "Allow";
+						if (!store.block && store.purge) policy = "Purge";
+						if (store.block) policy = "Block";
+
 						SameLine();
-						Checkbox("Purge", &store.purge);
-						if (IsItemHovered()) tip("Drones will move items without limits to overflow containers.");
+						SetNextItemWidth(-1);
+						if (BeginCombo("##other-items", fmtc("Other items: %s", policy))) {
+							if (Selectable("Allow", !store.block && !store.purge)) {
+								store.block = false;
+								store.purge = false;
+							}
+							if (IsItemHovered()) tip("Other items will be allowed.");
+							if (en.spec->logistic && Selectable("Purge", !store.block && store.purge)) {
+								store.block = false;
+								store.purge = true;
+							}
+							if (IsItemHovered()) tip("Other items will be allowed, then moved to overflow containers by drones.");
+							if (Selectable("Block", store.block)) {
+								store.block = true;
+								store.purge = true;
+							}
+							if (IsItemHovered()) tip("Other items will be blocked.");
+							EndCombo();
+						}
 					}
 
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
@@ -1827,6 +1850,7 @@ void EntityPopup2::draw() {
 //								Print(fmtc("countProviding %u", store.countProviding(item->id)));
 //								Print(fmtc("countActiveProviding %u", store.countActiveProviding(item->id)));
 //								Print(fmtc("countAccepting %u", store.countAccepting(item->id)));
+//								Print(fmtc("countAllowing %u", store.countAllowing(item->id)));
 //								tipEnd();
 //							}
 
