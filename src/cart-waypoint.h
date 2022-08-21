@@ -28,15 +28,12 @@ struct CartWaypoint {
 	static const int Blue = 1;
 	static const int Green = 2;
 	Point relative[3];
-	uint reserverId;
-	uint64_t reserveUntil;
 
 	void setNext(int line, Point absolute);
 	void clrNext(int line);
 	Point getPos() const;
 	Point getNext(int line) const;
 	bool hasNext(int line) const;
-	bool reserve(uint rid);
 
 	struct Redirection {
 		Signal::Condition condition;

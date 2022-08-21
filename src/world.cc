@@ -563,6 +563,10 @@ World::Tile* World::get(const XY& at) {
 	return nullptr;
 }
 
+World::Tile* World::get(const Point& p) {
+	return get((XY){(int)std::floor(p.x), (int)std::floor(p.z)});
+}
+
 World::Region World::region(const Box& b) {
 	Region region;
 	region.box = b;
@@ -627,10 +631,6 @@ float World::elevation(const XY& at) {
 	return tile ? tile->elevation: 0;
 }
 
-float World::elevation(const Point& p) {
-	return elevation((XY){(int)std::floor(p.x), (int)std::floor(p.z)});
-}
-
 float World::Region::elevation(const XY& at) {
 	auto tile = get(at);
 	return tile ? tile->elevation: 0;
@@ -650,8 +650,8 @@ bool World::isLand(const XY& at) {
 	return within(at) && !isLake(at) && !isHill(at);
 }
 
-bool World::isLand(const Point& p) {
-	return isLand((XY){(int)std::floor(p.x), (int)std::floor(p.z)});
+bool World::Region::isLand(const XY& at) {
+	return world.within(at) && !isLake(at) && !isHill(at);
 }
 
 bool World::isLand(const Box& b) {
@@ -665,8 +665,8 @@ bool World::isLake(const XY& at) {
 	return within(at) && elevation(at) < -0.001;
 }
 
-bool World::isLake(const Point& p) {
-	return isLake((XY){(int)std::floor(p.x), (int)std::floor(p.z)});
+bool World::Region::isLake(const XY& at) {
+	return world.within(at) && elevation(at) < -0.001;
 }
 
 bool World::isLake(const Box& b) {
@@ -680,8 +680,8 @@ bool World::isHill(const XY& at) {
 	return within(at) && elevation(at) > 0.001;
 }
 
-bool World::isHill(const Point& p) {
-	return isHill((XY){(int)std::floor(p.x), (int)std::floor(p.z)});
+bool World::Region::isHill(const XY& at) {
+	return world.within(at) && elevation(at) > 0.001;
 }
 
 bool World::isHill(const Box& b) {

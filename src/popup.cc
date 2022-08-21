@@ -438,6 +438,188 @@ Recipe* Popup::recipePicker(bool open, std::function<bool(Recipe*)> show) {
 	return recipePicked;
 }
 
+bool Popup::signalPicker(bool open, bool metas) {
+
+	if (open) OpenPopup("##signal-picker");
+
+	w = (float)Config::height(0.375f);
+	h = w*0.6;
+
+	const ImVec2 size = {
+		(float)w,(float)h
+	};
+
+	const ImVec2 pos = {
+		((float)Config::window.width-size.x)/2.0f,
+		((float)Config::window.height-size.y)/2.0f
+	};
+
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(pos, ImGuiCond_Appearing);
+
+	bool chosen = false;
+	signalPicked = Signal::Key();
+
+	if (BeginPopup("##signal-picker")) {
+		if (!open && scene.keyReleased(SDLK_ESCAPE)) CloseCurrentPopup();
+
+		PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(GetStyle().ItemSpacing.x, GetStyle().ItemSpacing.x));
+
+		float cell = (GetContentRegionAvail().x - (GetStyle().ItemSpacing.x*19)) / 10;
+		int row = 0;
+		int col = 0;
+
+		auto cr = [&]() {
+			if (row++ > 0 && col > 0) {
+				NewLine();
+				col = 0;
+			}
+		};
+
+		auto next = [&]() {
+			if (col++ == 10) {
+				NewLine();
+				col = 1;
+			}
+		};
+
+		for (auto category: Item::display) {
+			for (auto group: category->display) {
+				cr();
+				for (auto item: group->display) {
+					next();
+					if (itemIconButton(item, cell)) {
+						signalPicked = Signal::Key(item);
+						chosen = true;
+						CloseCurrentPopup();
+					}
+					if (IsItemHovered()) {
+						tip(item->title.c_str());
+					}
+					SameLine();
+				}
+			}
+		}
+
+		minivec<Fluid*> fluids;
+		for (auto& [_,fluid]: Fluid::names) fluids.push(fluid);
+		std::sort(fluids.begin(), fluids.end(), Fluid::sort);
+
+		cr();
+
+		for (auto fluid: fluids) {
+			next();
+			if (fluidIconButton(fluid, cell)) {
+				signalPicked = Signal::Key(fluid);
+				chosen = true;
+				CloseCurrentPopup();
+			}
+			if (IsItemHovered()) {
+				tip(fluid->title.c_str());
+			}
+			SameLine();
+		}
+
+		auto button = ImVec2(
+			cell + GetStyle().ItemSpacing.x,
+			cell + GetStyle().ItemSpacing.y
+		);
+
+		if (metas) {
+			cr();
+
+			for (auto meta: std::vector<Signal::Meta>{
+				Signal::Meta::Any,
+				Signal::Meta::All,
+				Signal::Meta::Now,
+			}){
+				next();
+
+				auto mkey = Signal::Key(meta);
+				if (Button(mkey.title().c_str(), button)) {
+					signalPicked = mkey;
+					chosen = true;
+					CloseCurrentPopup();
+				}
+				SameLine();
+			}
+		}
+
+		cr();
+		Separator();
+
+		for (auto letter: std::vector<Signal::Letter>{
+			Signal::Letter::A,
+			Signal::Letter::B,
+			Signal::Letter::C,
+			Signal::Letter::D,
+			Signal::Letter::E,
+			Signal::Letter::F,
+			Signal::Letter::G,
+			Signal::Letter::H,
+			Signal::Letter::I,
+			Signal::Letter::J,
+			Signal::Letter::K,
+			Signal::Letter::L,
+			Signal::Letter::M,
+			Signal::Letter::N,
+			Signal::Letter::O,
+			Signal::Letter::P,
+			Signal::Letter::Q,
+			Signal::Letter::R,
+			Signal::Letter::S,
+			Signal::Letter::T,
+			Signal::Letter::U,
+			Signal::Letter::V,
+			Signal::Letter::W,
+			Signal::Letter::X,
+			Signal::Letter::Y,
+			Signal::Letter::Z,
+		}){
+			next();
+
+			auto lkey = Signal::Key(letter);
+			if (Button(lkey.name().c_str(), button)) {
+				signalPicked = lkey;
+				chosen = true;
+				CloseCurrentPopup();
+			}
+			SameLine();
+		}
+
+		cr();
+
+		for (auto& label: Signal::labels) {
+			if (label.drop) continue;
+
+			next();
+
+			auto lkey = Signal::Key(label.name);
+			if (Button(lkey.title().c_str(), button)) {
+				signalPicked = lkey;
+				chosen = true;
+				CloseCurrentPopup();
+			}
+			SameLine();
+		}
+
+		cr();
+		Separator();
+
+		if (Button(" Clear Signal ", ImVec2(0,button.y))) {
+			signalPicked = Signal::Key();
+			chosen = true;
+			CloseCurrentPopup();
+		}
+
+		PopStyleVar(1);
+		EndPopup();
+	}
+
+	return chosen;
+}
+
+
 void Popup::topRight() {
 
 	const ImVec2 size = {
@@ -1230,114 +1412,10 @@ void EntityPopup2::draw() {
 		};
 
 		auto signalKey = [&](int id, Signal::Key& key, bool metas = true) {
-			enum EntryType {
-				ITEM = 0,
-				FLUID,
-			};
-
-			struct Entry {
-				EntryType type;
-				std::string name;
-				union {
-					Item* item;
-					Fluid* fluid;
-				};
-			};
-
-			std::vector<Entry> entries;
-
-			for (auto& [_,item]: Item::names) {
-				entries.push_back((Entry){.type = ITEM, .name = item->title, .item = item});
-			}
-
-			for (auto& [_,fluid]: Fluid::names) {
-				entries.push_back((Entry){.type = FLUID, .name = fluid->title, .fluid = fluid});
-			}
-
-			reorder(entries, [&](auto& a, auto& b) {
-				return a.name < b.name;
-			});
-
-			std::string selected = "(empty)";
-
-			if (key.valid()) {
-				selected = (key == Signal::Key(Signal::Meta::Now))
-					? fmt("Now %llds", (int64_t)Sim::tick/60U): key.title();
-			}
-
-			if (BeginCombo(fmtc("##key%d", id), selected.c_str())) {
-				if (Selectable("(empty)", key == Signal::Key())) {
-					key = Signal::Key();
-				}
-				for (auto& label: Signal::labels) {
-					auto lkey = Signal::Key(label.name);
-					if (label.drop && key != lkey) continue;
-					if (Selectable(lkey.title().c_str(), key == lkey)) {
-						key = Signal::Key(label.name);
-					}
-				}
-				if (metas) {
-					for (auto meta: std::vector<Signal::Meta>{
-						Signal::Meta::Any,
-						Signal::Meta::All,
-						Signal::Meta::Now,
-					}){
-						auto mkey = Signal::Key(meta);
-						if (Selectable(mkey.title().c_str(), key == mkey)) {
-							key = Signal::Key(meta);
-						}
-					}
-				}
-				for (auto& entry: entries) {
-					if (entry.type == ITEM && Selectable(entry.name.c_str(), key == Signal::Key(entry.item))) {
-						key = Signal::Key(entry.item);
-					}
-					if (entry.type == FLUID && Selectable(entry.name.c_str(), key == Signal::Key(entry.fluid))) {
-						key = Signal::Key(entry.fluid);
-					}
-				}
-				for (auto letter: std::vector<Signal::Letter>{
-					Signal::Letter::A,
-					Signal::Letter::B,
-					Signal::Letter::C,
-					Signal::Letter::D,
-					Signal::Letter::E,
-					Signal::Letter::F,
-					Signal::Letter::G,
-					Signal::Letter::H,
-					Signal::Letter::I,
-					Signal::Letter::J,
-					Signal::Letter::K,
-					Signal::Letter::L,
-					Signal::Letter::M,
-					Signal::Letter::N,
-					Signal::Letter::O,
-					Signal::Letter::P,
-					Signal::Letter::Q,
-					Signal::Letter::R,
-					Signal::Letter::S,
-					Signal::Letter::T,
-					Signal::Letter::U,
-					Signal::Letter::V,
-					Signal::Letter::W,
-					Signal::Letter::X,
-					Signal::Letter::Y,
-					Signal::Letter::Z,
-				}){
-					auto lkey = Signal::Key(letter);
-					if (Selectable(lkey.name().c_str(), key == lkey)) {
-						key = Signal::Key(letter);
-					}
-				}
-				EndCombo();
-
-				if (key == Signal::Key(Signal::Meta::Now) && IsItemHovered()) tip(
-					"!% means divisible modulo without remainder. (SIGNAL % VALUE) == 0."
-					" Similar to the pure math | (vertical pipe) operator meaning 'divides',"
-					" but players with a software background see the pipe as the more"
-					" familiar logical OR."
-				);
-			}
+			auto title = key ? key.title(): "(no signal)";
+			auto pick = Button(title.c_str(), ImVec2(-1,0));
+			if (IsItemHovered()) tip("Change signal");
+			if (signalPicker(pick, false)) key = signalPicked;
 		};
 
 		auto signalConstant = [&](int id, Signal& signal, bool lone = true) {
@@ -1348,8 +1426,7 @@ void EntityPopup2::draw() {
 				if (lone) TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, space*0.334);
 
 				TableNextColumn();
-				SetNextItemWidth(-1);
-				signalKey(id, signal.key, false);
+				signalKey(id, signal.key);
 
 				TableNextColumn();
 				SetNextItemWidth(-1);
@@ -1400,6 +1477,13 @@ void EntityPopup2::draw() {
 				}
 				EndCombo();
 			}
+
+			if (condition.key == Signal::Key(Signal::Meta::Now) && IsItemHovered()) tip(
+				"!% means divisible modulo without remainder. (SIGNAL % VALUE) == 0."
+				" Similar to the pure math | (vertical pipe) operator meaning 'divides',"
+				" but players with a software background see the pipe as the more"
+				" familiar logical OR."
+			);
 
 			TableNextColumn();
 			SetNextItemWidth(-1);
@@ -1653,31 +1737,54 @@ void EntityPopup2::draw() {
 						store.levelSet(Item::get(itemPicked)->id, 0, 0);
 					}
 
-					SameLine();
-					if (Button(" + Construction ")) {
-						std::set<Item*> items;
-						for (auto [_,spec]: Spec::all) {
-							if (!spec->licensed) continue;
-							if (spec->junk) continue;
-							for (auto [iid,_]: spec->materials) {
-								items.insert(Item::get(iid));
+					if (en.spec->construction || en.spec->depot) {
+						SameLine();
+						if (Button(" + Construction ")) {
+							std::set<Item*> items;
+							for (auto [_,spec]: Spec::all) {
+								if (!spec->licensed) continue;
+								if (spec->junk) continue;
+								for (auto [iid,_]: spec->materials) {
+									items.insert(Item::get(iid));
+								}
+							}
+							for (auto item: items) {
+								if (store.level(item->id)) continue;
+								int limit = (int)store.limit().value/item->mass.value;
+								int step  = (int)std::max(1U, (uint)limit/100);
+								store.levelSet(item->id, 0, store.magic ? step: 0);
 							}
 						}
-						for (auto item: items) {
-							if (store.level(item->id)) continue;
-							int limit = (int)store.limit().value/item->mass.value;
-							int step  = (int)std::max(1U, (uint)limit/100);
-							store.levelSet(item->id, 0, store.magic ? step: 0);
-						}
+						if (IsItemHovered()) tip(
+							"Accept all construction materials with limits."
+						);
 					}
-					if (IsItemHovered()) tip(
-						"Accept all construction materials with limits."
-					);
 
-					if (en.spec->depot) {
+					if (!en.spec->overflow) {
+						const char* policy = "Allow";
+						if (!store.block && store.purge) policy = "Purge";
+						if (store.block) policy = "Block";
+
 						SameLine();
-						Checkbox("Purge", &store.purge);
-						if (IsItemHovered()) tip("Drones will move items without limits to overflow containers.");
+						SetNextItemWidth(-1);
+						if (BeginCombo("##other-items", fmtc("Other items: %s", policy))) {
+							if (Selectable("Allow", !store.block && !store.purge)) {
+								store.block = false;
+								store.purge = false;
+							}
+							if (IsItemHovered()) tip("Other items will be allowed.");
+							if (en.spec->logistic && Selectable("Purge", !store.block && store.purge)) {
+								store.block = false;
+								store.purge = true;
+							}
+							if (IsItemHovered()) tip("Other items will be allowed, then moved to overflow containers by drones.");
+							if (Selectable("Block", store.block)) {
+								store.block = true;
+								store.purge = true;
+							}
+							if (IsItemHovered()) tip("Other items will be blocked.");
+							EndCombo();
+						}
 					}
 
 					PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GetStyle().ItemInnerSpacing.x/2,GetStyle().ItemInnerSpacing.y/2));
@@ -1743,6 +1850,7 @@ void EntityPopup2::draw() {
 //								Print(fmtc("countProviding %u", store.countProviding(item->id)));
 //								Print(fmtc("countActiveProviding %u", store.countActiveProviding(item->id)));
 //								Print(fmtc("countAccepting %u", store.countAccepting(item->id)));
+//								Print(fmtc("countAllowing %u", store.countAllowing(item->id)));
 //								tipEnd();
 //							}
 
@@ -4983,10 +5091,10 @@ void MapPopup::draw() {
 
 		PopStyleVar(1);
 
-		auto tile = world.get({
+		auto tile = world.get(World::XY(
 			(int)std::floor(pointer.x),
 			(int)std::floor(pointer.y)
-		});
+		));
 
 		if (tile && scene.keyDown(SDLK_SPACE)) {
 			auto box = Point(tile->x, 0, tile->y).box().grow(0.5);

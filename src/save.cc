@@ -885,6 +885,10 @@ void Store::saveAll(const char* name) {
 			state["purge"] = store.purge;
 		}
 
+		if (store.block) {
+			state["block"] = store.block;
+		}
+
 		int i = 0;
 		for (Stack stack: store.stacks) {
 			state["stacks"][i++] = {
@@ -937,6 +941,10 @@ void Store::loadAll(const char* name) {
 
 		if (state.contains("purge")) {
 			store.purge = state["purge"];
+		}
+
+		if (state.contains("block")) {
+			store.block = state["block"];
 		}
 
 		for (auto stack: state["stacks"]) {
@@ -1183,9 +1191,17 @@ void Cart::saveAll(const char* name) {
 		state["line"] = cart.line;
 		state["wait"] = cart.wait;
 		state["pause"] = cart.pause;
+		state["lost"] = cart.lost;
+		state["halt"] = cart.halt;
+		state["blocked"] = cart.blocked;
 
 		if (cart.signal.valid()) {
 			state["signal"] = cart.signal.serialize();
+		}
+
+		int i = 0;
+		for (auto cid: cart.colliders) {
+			state["colliders"][i++] = cid;
 		}
 
 		out << state << "\n";
@@ -1213,8 +1229,16 @@ void Cart::loadAll(const char* name) {
 		cart.wait = state["wait"];
 		cart.pause = state["pause"];
 
+		if (state.contains("lost")) cart.lost = state["lost"];
+		if (state.contains("halt")) cart.halt = state["halt"];
+		if (state.contains("blocked")) cart.blocked = state["blocked"];
+
 		if (state.contains("signal")) {
 			cart.signal = Signal::unserialize(state["signal"]);
+		}
+
+		for (auto cid: state["colliders"]) {
+			cart.colliders.push_back(cid);
 		}
 	}
 
@@ -1271,8 +1295,6 @@ void CartWaypoint::saveAll(const char* name) {
 		state["red"] = {waypoint.relative[CartWaypoint::Red].x, waypoint.relative[CartWaypoint::Red].y, waypoint.relative[CartWaypoint::Red].z};
 		state["blue"] = {waypoint.relative[CartWaypoint::Blue].x, waypoint.relative[CartWaypoint::Blue].y, waypoint.relative[CartWaypoint::Blue].z};
 		state["green"] = {waypoint.relative[CartWaypoint::Green].x, waypoint.relative[CartWaypoint::Green].y, waypoint.relative[CartWaypoint::Green].z};
-		state["reserverId"] = waypoint.reserverId;
-		state["reserveUntil"] = waypoint.reserveUntil;
 
 		int i = 0;
 		for (auto& redirection: waypoint.redirections) {
@@ -1301,8 +1323,6 @@ void CartWaypoint::loadAll(const char* name) {
 		waypoint.relative[CartWaypoint::Red] = {state["red"][0], state["red"][1], state["red"][2]};
 		waypoint.relative[CartWaypoint::Blue] = {state["blue"][0], state["blue"][1], state["blue"][2]};
 		waypoint.relative[CartWaypoint::Green] = {state["green"][0], state["green"][1], state["green"][2]};
-		waypoint.reserverId = state["reserverId"];
-		waypoint.reserveUntil = state["reserveUntil"];
 
 		for (auto rstate: state["redirections"]) {
 			waypoint.redirections.push_back((CartWaypoint::Redirection){
