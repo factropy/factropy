@@ -4096,25 +4096,37 @@ void RecipePopup::drawSpec(Spec* spec) {
 
 	PushFont(Config::sidebar.font.imgui);
 
-	if (spec->consumeElectricity && spec->energyConsume) {
+	Spec* dspec = spec->statsGroup;
+
+	if (spec->unveyor) {
 		SameLine();
-		PrintRight(spec->energyConsume.formatRate(), true);
-		if (IsItemHovered()) tip(fmt("%s electricity consumer", (spec->energyConsume + spec->conveyorEnergyDrain).formatRate()));
+		PrintRight(dspec->conveyorEnergyDrain.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s electricity consumer scaled by length, reported as a belt", (dspec->energyConsume + dspec->conveyorEnergyDrain).formatRate()));
 	} else
-	if (spec->consumeFuel && spec->energyConsume) {
+	if (spec->balancer) {
 		SameLine();
-		PrintRight(spec->energyConsume.formatRate(), true);
-		if (IsItemHovered()) tip(fmt("%s fuel consumer", spec->energyConsume.formatRate()));
+		PrintRight(dspec->conveyorEnergyDrain.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s electricity consumer, reported as a belt", (dspec->energyConsume + dspec->conveyorEnergyDrain).formatRate()));
 	} else
-	if (spec->conveyorEnergyDrain) {
+	if ((dspec->consumeElectricity || dspec->tube) && dspec->energyConsume) {
 		SameLine();
-		PrintRight(spec->conveyorEnergyDrain.formatRate(), true);
-		if (IsItemHovered()) tip(fmt("%s electricity consumer", spec->conveyorEnergyDrain.formatRate()));
+		PrintRight(dspec->energyConsume.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s electricity consumer", (dspec->energyConsume + dspec->conveyorEnergyDrain).formatRate()));
 	} else
-	if (spec->energyGenerate) {
+	if (dspec->consumeFuel && dspec->energyConsume) {
 		SameLine();
-		PrintRight(spec->energyGenerate.formatRate(), true);
-		if (IsItemHovered()) tip(fmt("%s electricity generator", spec->energyGenerate.formatRate()));
+		PrintRight(dspec->energyConsume.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s fuel consumer", dspec->energyConsume.formatRate()));
+	} else
+	if (dspec->conveyorEnergyDrain) {
+		SameLine();
+		PrintRight(dspec->conveyorEnergyDrain.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s electricity consumer", dspec->conveyorEnergyDrain.formatRate()));
+	} else
+	if (dspec->energyGenerate) {
+		SameLine();
+		PrintRight(dspec->energyGenerate.formatRate(), true);
+		if (IsItemHovered()) tip(fmt("%s electricity generator", dspec->energyGenerate.formatRate()));
 	} else
 	if (spec->depot) {
 		SameLine();
