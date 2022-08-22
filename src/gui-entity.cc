@@ -1651,7 +1651,7 @@ GuiFakeEntity* GuiFakeEntity::setConfig(Entity& en, bool plan) {
 		scene.exclaim(en.spec->iconPoint(en.pos(), en.dir()));
 		return this;
 	}
-	if (en.setup(settings)) {
+	if (settings && en.setup(settings)) {
 		scene.tick(en.spec->iconPoint(en.pos(), en.dir()));
 	}
 	return this;
