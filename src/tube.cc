@@ -371,7 +371,7 @@ bool Tube::connect(uint nid) {
 		auto posB = other.en->pos();
 		auto dist = posA.distance(posB);
 		auto distGround = posA.floor(0).distance(posB.floor(0));
-		if (distGround > 0.5 && dist > 0.5 && dist < ((real)other.en->spec->tubeSpan / 1000.0)) {
+		if (distGround > 0.5 && dist > 0.5 && dist < ((real)other.en->spec->tubeSpan / 1000.0 + 0.01)) {
 			other.next = id;
 			return true;
 		}

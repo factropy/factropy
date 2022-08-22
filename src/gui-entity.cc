@@ -543,7 +543,7 @@ void GuiEntity::updateTransform() {
 // can other connect to this
 bool GuiEntity::connectable(GuiEntity* other) const {
 	if (spec->tube) {
-		return id != other->id && other->spec->tube && pos().distance(other->pos()) < ((real)spec->tubeSpan / 1000.0);
+		return id != other->id && other->spec->tube && pos().distance(other->pos()) < ((real)spec->tubeSpan / 1000.0 + 0.01);
 	}
 	return false;
 }
@@ -1360,6 +1360,11 @@ void GuiEntity::overlayHovering(bool full) {
 			}
 		});
 	}
+
+	if (spec->tube) {
+		Point p = ground() + (Point::Up * 0.05);
+		scene.circle(p, (float)spec->tubeSpan/1000.0f, Config::window.grid, scene.pen());
+	}
 }
 
 void GuiEntity::overlayDirecting() {
@@ -1717,7 +1722,7 @@ GuiFakeEntity* GuiFakeEntity::update() {
 		auto target = pos() + (Point::Up * spec->tubeOrigin);
 		auto origin = scene.connecting->pos() + (Point::Up * scene.connecting->spec->tubeOrigin);
 		uint length = std::floor(origin.distance(target) * 1000.0f); // mm
-		if (length < spec->tubeSpan) {
+		if (length < spec->tubeSpan+1) {
 			tube->origin = origin;
 			tube->target = target;
 			tube->length = length;
