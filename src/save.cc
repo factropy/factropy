@@ -3302,3 +3302,554 @@ void Message::loadAll(const char* name) {
 	in.close();
 }
 
+namespace {
+	json serialize(StoreSettings* store) {
+		json state;
+		state["transmit"] = store->transmit;
+		state["purge"] = store->purge;
+		state["block"] = store->block;
+
+		int i = 0;
+		for (auto level: store->levels)
+			state["levels"][i++] = {level.iid, level.lower, level.upper};
+
+		return state;
+	}
+
+	void unserialize(StoreSettings* store, json state) {
+		store->transmit = state["transmit"];
+		store->purge = state["purge"];
+		store->block = state["block"];
+
+		for (auto level: state["levels"])
+			store->levels.push_back({level[0], level[1], level[2]});
+	}
+
+	json serialize(CrafterSettings* crafter) {
+		json state;
+		state["transmit"] = state["transmit"];
+
+		if (crafter->recipe)
+			state["recipe"] = crafter->recipe->name;
+
+		return state;
+	}
+
+	void unserialize(CrafterSettings* crafter, json state) {
+		crafter->transmit = state["transmit"];
+
+		if (state.contains("recipe"))
+			crafter->recipe = Recipe::byName(state["recipe"]);
+	}
+
+	json serialize(ArmSettings* arm) {
+		json state;
+		state["io"][0] = arm->inputNear;
+		state["io"][1] = arm->inputFar;
+		state["io"][2] = arm->outputNear;
+		state["io"][3] = arm->outputFar;
+
+		int i = 0;
+		for (uint iid: arm->filter) {
+			state["filter"][i++] = Save::itemOut(iid);
+		}
+
+		switch (arm->monitor) {
+			case Arm::Monitor::InputStore: {
+				break;
+			}
+			case Arm::Monitor::OutputStore: {
+				state["monitor"] = "outputstore";
+				break;
+			}
+			case Arm::Monitor::Network: {
+				state["monitor"] = "network";
+				break;
+			}
+		}
+
+		if (arm->condition.valid()) {
+			state["condition"] = arm->condition.serialize();
+		}
+
+		return state;
+	}
+
+	void unserialize(ArmSettings* arm, json state) {
+		if (state.contains("io")) {
+			arm->inputNear = state["io"][0];
+			arm->inputFar = state["io"][1];
+			arm->outputNear = state["io"][2];
+			arm->outputFar = state["io"][3];
+		}
+
+		for (std::string name: state["filter"]) {
+			arm->filter.insert(Save::itemIn(name));
+		}
+
+		if (state.contains("monitor")) {
+			if (state["monitor"] == "outputstore") {
+				arm->monitor = Arm::Monitor::OutputStore;
+			}
+			if (state["monitor"] == "network") {
+				arm->monitor = Arm::Monitor::Network;
+			}
+		}
+
+		if (state.contains("condition")) {
+			arm->condition = Signal::Condition::unserialize(state["condition"]);
+		}
+	}
+
+	json serialize(LoaderSettings* loader) {
+		json state;
+
+		int i = 0;
+		for (uint iid: loader->filter) {
+			state["filter"][i++] = Item::get(iid)->name;
+		}
+
+		switch (loader->monitor) {
+			case Loader::Monitor::Store: {
+				break;
+			}
+			case Loader::Monitor::Network: {
+				state["monitor"] = "network";
+				break;
+			}
+		}
+
+		if (loader->condition.valid()) {
+			state["condition"] = loader->condition.serialize();
+		}
+
+		return state;
+	}
+
+	void unserialize(LoaderSettings* loader, json state) {
+		for (std::string name: state["filter"]) {
+			loader->filter.insert(Item::byName(name)->id);
+		}
+
+		if (state.contains("monitor")) {
+			if (state["monitor"] == "network") {
+				loader->monitor = Loader::Monitor::Network;
+			}
+		}
+
+		if (state.contains("condition")) {
+			loader->condition = Signal::Condition::unserialize(state["condition"]);
+		}
+	}
+
+	json serialize(BalancerSettings* balancer) {
+		json state;
+		if (balancer->priority.input || balancer->priority.output) {
+			state["priority"]["input"] = balancer->priority.input;
+			state["priority"]["output"] = balancer->priority.output;
+		}
+
+		int i = 0;
+		for (uint iid: balancer->filter) {
+			state["filter"][i++] = Save::itemOut(iid);
+		}
+
+		return state;
+	}
+
+	void unserialize(BalancerSettings* balancer, json state) {
+		if (state.contains("priority")) {
+			balancer->priority.input = state["priority"]["input"];
+			balancer->priority.output = state["priority"]["output"];
+		}
+
+		for (std::string name: state["filter"]) {
+			balancer->filter.insert(Save::itemIn(name));
+		}
+	}
+
+	json serialize(PipeSettings* pipe) {
+		json state;
+		state["overflow"] = pipe->overflow;
+
+		if (pipe->filter)
+			state["filter"] = Save::fluidOut(pipe->filter);
+
+		return state;
+	}
+
+	void unserialize(PipeSettings* pipe, json state) {
+		pipe->overflow = state["overflow"];
+
+		if (state.contains("filter"))
+			pipe->filter = Save::fluidIn(state["filter"]);
+	}
+
+	json serialize(CartSettings* cart) {
+		json state;
+		state["line"] = cart->line;
+
+		if (cart->signal.valid()) {
+			state["signal"] = cart->signal.serialize();
+		}
+
+		return state;
+	}
+
+	void unserialize(CartSettings* cart, json state) {
+		cart->line = state["line"];
+
+		if (state.contains("signal")) {
+			cart->signal = Signal::unserialize(state["signal"]);
+		}
+	}
+
+	json serialize(CartStopSettings* stop) {
+		json state;
+
+		switch (stop->depart) {
+			case CartStop::Depart::Inactivity: state["depart"] = "inactivity"; break;
+			case CartStop::Depart::Empty: state["depart"] = "empty"; break;
+			case CartStop::Depart::Full: state["depart"] = "full"; break;
+		}
+
+		if (stop->condition.valid()) {
+			state["signal"] = stop->condition.serialize();
+		}
+
+		return state;
+	}
+
+	void unserialize(CartStopSettings* stop, json state) {
+		stop->depart = CartStop::Depart::Inactivity;
+		if (state["depart"] == "empty") stop->depart = CartStop::Depart::Empty;
+		if (state["depart"] == "full") stop->depart = CartStop::Depart::Full;
+
+		if (state.contains("condition")) {
+			stop->condition = Signal::Condition::unserialize(state["signal"]);
+		}
+	}
+
+	json serialize(CartWaypointSettings* waypoint) {
+		json state;
+
+		state["dir"] = {waypoint->dir.x, waypoint->dir.y, waypoint->dir.z};
+
+		state["red"] = {waypoint->relative[CartWaypoint::Red].x, waypoint->relative[CartWaypoint::Red].y, waypoint->relative[CartWaypoint::Red].z};
+		state["blue"] = {waypoint->relative[CartWaypoint::Blue].x, waypoint->relative[CartWaypoint::Blue].y, waypoint->relative[CartWaypoint::Blue].z};
+		state["green"] = {waypoint->relative[CartWaypoint::Green].x, waypoint->relative[CartWaypoint::Green].y, waypoint->relative[CartWaypoint::Green].z};
+
+		int i = 0;
+		for (auto& redirection: waypoint->redirections) {
+			if (redirection.condition.valid()) {
+				state["redirections"][i][0] = redirection.condition.serialize();
+				state["redirections"][i][1] = redirection.line;
+				i++;
+			}
+		}
+
+		return state;
+	}
+
+	void unserialize(CartWaypointSettings* waypoint, json state) {
+		waypoint->dir = Point(
+			state["dir"][0],
+			state["dir"][1],
+			state["dir"][2]
+		);
+
+		waypoint->relative[CartWaypoint::Red] = {state["red"][0], state["red"][1], state["red"][2]};
+		waypoint->relative[CartWaypoint::Blue] = {state["blue"][0], state["blue"][1], state["blue"][2]};
+		waypoint->relative[CartWaypoint::Green] = {state["green"][0], state["green"][1], state["green"][2]};
+
+		for (auto rstate: state["redirections"]) {
+			waypoint->redirections.push_back((CartWaypoint::Redirection){
+				.condition = Signal::Condition::unserialize(rstate[0]),
+				.line = rstate[1],
+			});
+		}
+
+	}
+
+	json serialize(NetworkerSettings* networker) {
+		json state;
+
+		int i = 0;
+		for (auto& ssid: networker->ssids) {
+			state["ssids"][i++] = ssid;
+		}
+
+		return state;
+	}
+
+	void unserialize(NetworkerSettings* networker, json state) {
+		for (auto& ssid: state["ssids"]) {
+			networker->ssids.push_back(ssid);
+		}
+	}
+
+	json serialize(TubeSettings* tube) {
+		json state;
+		state["target"] = {
+			tube->target.x,
+			tube->target.y,
+			tube->target.z
+		};
+
+		auto mode = [&](Tube::Mode m) {
+			switch (m) {
+				case Tube::Mode::BeltOrTube: return "belt-or-tube";
+				case Tube::Mode::BeltOnly: return "belt-only";
+				case Tube::Mode::TubeOnly: return "tube-only";
+				case Tube::Mode::BeltPriority: return "belt-priority";
+				case Tube::Mode::TubePriority: return "tube-priority";
+			}
+			return "belt-or-tube";
+		};
+
+		state["input"] = mode(tube->input);
+		state["output"] = mode(tube->output);
+
+		return state;
+	}
+
+	void unserialize(TubeSettings* tube, json state) {
+		tube->target = Point(
+			state["target"][0],
+			state["target"][1],
+			state["target"][2]
+		);
+
+		auto mode = [&](std::string m) {
+			if (m == "belt-only") return Tube::Mode::BeltOnly;
+			if (m == "tube-only") return Tube::Mode::TubeOnly;
+			if (m == "belt-priority") return Tube::Mode::BeltPriority;
+			if (m == "tube-priority") return Tube::Mode::TubePriority;
+			return Tube::Mode::BeltOrTube;
+		};
+
+		if (state.contains("input")) {
+			tube->input = mode(state["input"]);
+		}
+
+		if (state.contains("output")) {
+			tube->output = mode(state["output"]);
+		}
+	}
+
+	json serialize(MonorailSettings* monorail) {
+		json state;
+		state["filling"] = monorail->filling;
+		state["emptying"] = monorail->emptying;
+		state["transmit"]["contents"] = monorail->transmit.contents;
+
+		state["dir"] = {monorail->dir.x, monorail->dir.y, monorail->dir.z};
+		state["out"][0] = {monorail->out[0].x, monorail->out[0].y, monorail->out[0].z};
+		state["out"][1] = {monorail->out[1].x, monorail->out[1].y, monorail->out[1].z};
+		state["out"][2] = {monorail->out[2].x, monorail->out[2].y, monorail->out[2].z};
+
+		int i = 0;
+		for (auto& redirection: monorail->redirections) {
+			if (redirection.condition.valid()) {
+				state["redirections"][i][0] = redirection.condition.serialize();
+				state["redirections"][i][1] = redirection.line;
+				i++;
+			}
+		}
+
+		return state;
+	}
+
+	void unserialize(MonorailSettings* monorail, json state) {
+		monorail->filling = state["filling"];
+		monorail->emptying = state["emptying"];
+		monorail->transmit.contents = state["transmit"]["contents"];
+
+		monorail->dir = Point(state["dir"][0], state["dir"][1], state["dir"][2]);
+		monorail->out[0] = Point(state["out"][0][0], state["out"][0][1], state["out"][0][2]);
+		monorail->out[1] = Point(state["out"][1][0], state["out"][1][1], state["out"][1][2]);
+		monorail->out[2] = Point(state["out"][2][0], state["out"][2][1], state["out"][2][2]);
+
+		for (auto rstate: state["redirections"]) {
+			monorail->redirections.push_back((Monorail::Redirection){
+				.condition = Signal::Condition::unserialize(rstate[0]),
+				.line = rstate[1],
+			});
+		}
+	}
+
+	json serialize(RouterSettings* router) {
+		json state;
+		int i = 0;
+		for (auto& rule: router->rules) {
+			state["rules"][i]["condition"] = rule.condition.serialize();
+			state["rules"][i]["signal"] = rule.signal.serialize();
+			state["rules"][i]["nicSrc"] = rule.nicSrc;
+			state["rules"][i]["nicDst"] = rule.nicDst;
+			state["rules"][i]["icon"] = rule.icon;
+			switch (rule.mode) {
+				case Router::Rule::Mode::Forward:
+					state["rules"][i]["mode"] = "forward";
+					break;
+				case Router::Rule::Mode::Generate:
+					state["rules"][i]["mode"] = "generate";
+					break;
+				case Router::Rule::Mode::Alert:
+					state["rules"][i]["mode"] = "alert";
+					break;
+			}
+			i++;
+		}
+		return state;
+	}
+
+	void unserialize(RouterSettings* router, json state) {
+		for (auto entry: state["rules"]) {
+			Router::Rule rule;
+			rule.condition = Signal::Condition::unserialize(entry["condition"]);
+			rule.signal = Signal::unserialize(entry["signal"]);
+			rule.nicSrc = entry["nicSrc"];
+			rule.nicDst = entry["nicDst"];
+			rule.icon = entry["icon"];
+			rule.mode = Router::Rule::Mode::Forward;
+			if (entry["mode"] == "generate") rule.mode = Router::Rule::Mode::Generate;
+			if (entry["mode"] == "alert") rule.mode = Router::Rule::Mode::Alert;
+			router->rules.push(rule);
+		}
+	}
+
+	json serializeSettings(Entity::Settings* settings) {
+		json state;
+		state["enabled"] = settings->enabled;
+		state["applicable"] = settings->applicable;
+		state["color"] = {
+			settings->color.r,
+			settings->color.g,
+			settings->color.b,
+			settings->color.a
+		};
+		if (settings->store)
+			state["store"] = serialize(settings->store);
+		if (settings->crafter)
+			state["crafter"] = serialize(settings->crafter);
+		if (settings->arm)
+			state["arm"] = serialize(settings->arm);
+		if (settings->loader)
+			state["loader"] = serialize(settings->loader);
+		if (settings->balancer)
+			state["balancer"] = serialize(settings->balancer);
+		if (settings->pipe)
+			state["pipe"] = serialize(settings->pipe);
+		if (settings->cart)
+			state["cart"] = serialize(settings->cart);
+		if (settings->cartStop)
+			state["cartStop"] = serialize(settings->cartStop);
+		if (settings->cartWaypoint)
+			state["cartWaypoint"] = serialize(settings->cartWaypoint);
+		if (settings->networker)
+			state["networker"] = serialize(settings->networker);
+		if (settings->tube)
+			state["tube"] = serialize(settings->tube);
+		if (settings->monorail)
+			state["monorail"] = serialize(settings->monorail);
+		if (settings->router)
+			state["router"] = serialize(settings->router);
+		return state;
+	}
+
+	Entity::Settings* unserializeSettings(json state) {
+		auto settings = new Entity::Settings();
+		settings->enabled = state["enabled"];
+		settings->applicable = state["applicable"];
+		settings->color = Color(
+			(float)state["color"][0],
+			(float)state["color"][1],
+			(float)state["color"][2],
+			(float)state["color"][3]
+		);
+		if (state.contains("store"))
+			unserialize(settings->store, state["store"]);
+		if (state.contains("crafter"))
+			unserialize(settings->crafter, state["crafter"]);
+		if (state.contains("arm"))
+			unserialize(settings->arm, state["arm"]);
+		if (state.contains("loader"))
+			unserialize(settings->loader, state["loader"]);
+		if (state.contains("balancer"))
+			unserialize(settings->balancer, state["balancer"]);
+		if (state.contains("pipe"))
+			unserialize(settings->pipe, state["pipe"]);
+		if (state.contains("cart"))
+			unserialize(settings->cart, state["cart"]);
+		if (state.contains("cartStop"))
+			unserialize(settings->cartStop, state["cartStop"]);
+		if (state.contains("cartWaypoint"))
+			unserialize(settings->cartWaypoint, state["cartWaypoint"]);
+		if (state.contains("networker"))
+			unserialize(settings->networker, state["networker"]);
+		if (state.contains("tube"))
+			unserialize(settings->tube, state["tube"]);
+		if (state.contains("monorail"))
+			unserialize(settings->monorail, state["monorail"]);
+		if (state.contains("router"))
+			unserialize(settings->router, state["router"]);
+		return settings;
+	}
+}
+
+void Plan::saveAll() {
+	auto out = std::ofstream(Config::plansPath());
+
+	for (auto [_,plan]: all) {
+		if (!plan->save) continue;
+
+		json state;
+		state["title"] = plan->title;
+		state["config"] = plan->config;
+
+		int i = 0;
+		for (auto ge: plan->entities) {
+			auto& gstate = state["entities"][i++];
+			auto pos = ge->pos() - plan->position;
+			auto dir = ge->dir();
+			gstate["spec"] = ge->spec->name;
+			gstate["pos"] = {pos.x, pos.y, pos.z};
+			gstate["dir"] = {dir.x, dir.y, dir.z};
+			if (ge->settings) {
+				gstate["settings"] = serializeSettings(ge->settings);
+			}
+		}
+
+		out << state << "\n";
+	}
+
+	out.close();
+}
+
+void Plan::loadAll() {
+	auto in = std::ifstream(Config::plansPath());
+
+	for (std::string line; std::getline(in, line);) {
+		auto state = json::parse(line);
+		Plan* plan = new Plan();
+		plan->title = state["title"];
+		plan->config = state["config"];
+		plan->save = true;
+
+		for (auto estate: state["entities"]) {
+			if (!Spec::all.count(state["spec"])) continue;
+			auto ge = new GuiFakeEntity(Spec::byName(state["spec"]));
+
+			ge->move(
+				Point(estate["pos"][0], estate["pos"][1], estate["pos"][2]),
+				Point(estate["dir"][0], estate["dir"][1], estate["dir"][2])
+			);
+
+			if (estate.contains("settings")) {
+				ge->settings = unserializeSettings(estate["settings"]);
+			}
+		}
+	}
+
+	in.close();
+}

@@ -186,6 +186,7 @@ namespace Config {
 	void save();
 	std::string dataPath(const std::string& name);
 	std::string savePath(const std::string& name);
+	std::string plansPath();
 	bool saveDelete(const std::string& name);
 	bool saveRename(const std::string& from, const std::string& name);
 	bool saveBackup(const std::string& from, const std::string& name);

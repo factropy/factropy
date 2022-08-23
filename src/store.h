@@ -123,7 +123,6 @@ struct Store {
 
 struct StoreSettings {
 	minivec<Store::Level> levels;
-	minivec<Stack> stacks;
 	bool transmit;
 	bool purge;
 	bool block;

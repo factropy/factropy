@@ -62,6 +62,5 @@ struct LoaderSettings {
 	miniset<uint> filter;
 	Loader::Monitor monitor;
 	Signal::Condition condition;
-	bool loading;
 	LoaderSettings(Loader& arm);
 };

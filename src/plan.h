@@ -10,11 +10,19 @@ struct Plan;
 struct Plan {
 	static inline uint sequence = 0;
 
+	static void reset();
+	static void saveAll();
+	static void loadAll();
+
+	static inline std::map<uint,Plan*> all;
+
 	uint id = 0;
+	std::string title;
 	Point position;
 	std::vector<GuiFakeEntity*> entities;
 	std::vector<Point> offsets;
 	bool config;
+	bool save;
 
 	struct {
 		uint64_t stamp = 0;

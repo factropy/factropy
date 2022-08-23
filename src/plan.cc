@@ -5,10 +5,17 @@
 // A plan is a collection of entities including layout and configuration.
 // A temporary base blueprint.
 
+void Plan::reset() {
+}
+
 Plan::Plan() {
 	id = ++sequence;
 	position = Point::Zero;
 	config = false;
+	save = false;
+	ensuref(!all.count(id), "duplicate plan id: %u", id);
+	all[id] = this;
+	title = "untitled";
 }
 
 Plan::Plan(Point p) : Plan() {
@@ -18,6 +25,7 @@ Plan::Plan(Point p) : Plan() {
 Plan::~Plan() {
 	for (auto te: entities) delete te;
 	entities.clear();
+	all.erase(id);
 }
 
 void Plan::add(GuiFakeEntity* ge) {
