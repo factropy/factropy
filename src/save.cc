@@ -3798,7 +3798,7 @@ namespace {
 }
 
 void Plan::saveAll() {
-	auto out = std::ofstream(Config::plansPath());
+	deflation def;
 
 	for (auto plan: all) {
 		if (!plan->save) continue;
@@ -3820,38 +3820,51 @@ void Plan::saveAll() {
 			}
 		}
 
-		out << state << "\n";
+		def.push(state);
 	}
 
-	out.close();
+	def.save(Config::plansPath());
 }
 
 void Plan::loadAll() {
-	auto in = std::ifstream(Config::plansPath());
+	try {
+		inflation inf;
+		for (auto line: inf.load(Config::plansPath()).parts()) {
+			auto state = json::parse(line);
 
-	for (std::string line; std::getline(in, line);) {
-		auto state = json::parse(line);
-		Plan* plan = new Plan();
-		plan->title = state["title"];
-		plan->config = state["config"];
-		plan->save = true;
+			Plan* plan = new Plan();
+			plan->title = state["title"];
+			plan->config = state["config"];
+			plan->save = true;
 
-		for (auto estate: state["entities"]) {
-			if (!Spec::all.count(state["spec"])) continue;
-			auto ge = new GuiFakeEntity(Spec::byName(state["spec"]));
+			for (auto estate: state["entities"]) {
+				auto specName = state["spec"];
 
-			ge->move(
-				Point(estate["pos"][0], estate["pos"][1], estate["pos"][2]),
-				Point(estate["dir"][0], estate["dir"][1], estate["dir"][2])
-			);
+				if (!Spec::all.count(specName)) {
+					infof("Plan '%s' references missing specification '%s'; dropping ghost and disabling autosave");
+					plan->save = false;
+					continue;
+				}
 
-			if (estate.contains("settings")) {
-				ge->settings = unserializeSettings(estate["settings"]);
+				auto ge = new GuiFakeEntity(Spec::byName(specName));
+
+				ge->move(
+					Point(estate["pos"][0], estate["pos"][1], estate["pos"][2]),
+					Point(estate["dir"][0], estate["dir"][1], estate["dir"][2])
+				);
+
+				if (estate.contains("settings")) {
+					ge->settings = unserializeSettings(estate["settings"]);
+				}
+
+				plan->add(ge);
 			}
 
-			plan->add(ge);
+			if (!plan->entities.size()) delete plan;
 		}
 	}
-
-	in.close();
+	catch(std::exception& e) {
+		infof("saved blueprints not loaded: %s", e.what());
+		Plan::reset();
+	}
 }

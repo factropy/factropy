@@ -300,6 +300,8 @@ void game() {
 	scene.prepare();
 	gui.prepare();
 
+	Plan::loadAll();
+
 	gui.togglePopup(gui.loading);
 	gui.loading->progress = 1.0f;
 
@@ -470,6 +472,8 @@ void game() {
 		if (gui.doQuit) run = false;
 	}
 
+	Plan::saveAll();
+
 	scene.advanceDone.wait();
 
 	while (!Sim::saveTickets.send_if_empty(true)) {
@@ -493,6 +497,7 @@ void game() {
 	gui.reset();
 	sky.reset();
 	world.reset();
+	Plan::reset();
 	Chunk::reset();
 	Entity::reset();
 	Spec::reset();
