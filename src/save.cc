@@ -3800,7 +3800,7 @@ namespace {
 void Plan::saveAll() {
 	auto out = std::ofstream(Config::plansPath());
 
-	for (auto [_,plan]: all) {
+	for (auto plan: all) {
 		if (!plan->save) continue;
 
 		json state;
@@ -3848,6 +3848,8 @@ void Plan::loadAll() {
 			if (estate.contains("settings")) {
 				ge->settings = unserializeSettings(estate["settings"]);
 			}
+
+			plan->add(ge);
 		}
 	}
 
