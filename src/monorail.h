@@ -105,12 +105,13 @@ struct Monorail {
 };
 
 struct MonorailSettings {
+	MonorailSettings() = default;
 	MonorailSettings(Monorail& monorail);
 	minivec<Monorail::Redirection> redirections;
-	bool filling;
-	bool emptying;
+	bool filling = false;
+	bool emptying = false;
 	struct {
-		bool contents;
+		bool contents = false;
 	} transmit;
 	Point out[3];
 	Point dir; // original direction

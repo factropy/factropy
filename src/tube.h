@@ -110,5 +110,6 @@ struct TubeSettings {
 	Point target;
 	Tube::Mode input;
 	Tube::Mode output;
+	TubeSettings() = default;
 	TubeSettings(Tube& tube);
 };

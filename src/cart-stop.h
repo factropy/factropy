@@ -40,5 +40,6 @@ struct CartStop {
 struct CartStopSettings {
 	CartStop::Depart depart;
 	Signal::Condition condition;
+	CartStopSettings() = default;
 	CartStopSettings(CartStop& stop);
 };

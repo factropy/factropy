@@ -619,6 +619,65 @@ bool Popup::signalPicker(bool open, bool metas) {
 	return chosen;
 }
 
+bool Popup::tagPicker(bool open, const std::set<std::string>& tags, bool create) {
+
+	if (open) {
+		OpenPopup("##tag-picker");
+		tagEdit[0] = 0;
+	}
+
+	w = (float)Config::height(0.375f);
+	h = w*0.6;
+
+	const ImVec2 size = {
+		(float)w,(float)h
+	};
+
+//	const ImVec2 pos = {
+//		((float)Config::window.width-size.x)/2.0f,
+//		((float)Config::window.height-size.y)/2.0f
+//	};
+
+	SetNextWindowSize(size, ImGuiCond_Always);
+	SetNextWindowPos(GetMousePos(), ImGuiCond_Appearing);
+
+	bool chosen = false;
+	tagPicked.clear();
+
+	if (BeginPopup("##tag-picker")) {
+		if (!open && scene.keyReleased(SDLK_ESCAPE)) CloseCurrentPopup();
+
+		if (create && BeginTable("##tag-new-table", 2)) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+
+			TableNextColumn();
+				SetNextItemWidth(-1);
+				bool ok = InputTextWithHint("##tag-new", "(new tag)", tagEdit, sizeof(tagEdit), ImGuiInputTextFlags_EnterReturnsTrue);
+
+			TableNextColumn();
+				if (Button(fmtc(" %s ##tag-save", ICON_FA_FLOPPY_O)) || ok) {
+					tagPicked = std::string(tagEdit);
+					CloseCurrentPopup();
+					return tagPicked.size() > 0;
+				}
+			EndTable();
+		}
+
+		int i = 0;
+		for (auto tag: tags) {
+			if (ButtonStrip(i++, fmtc(" %s ", tag))) {
+				tagPicked = tag;
+				CloseCurrentPopup();
+				return tagPicked.size() > 0;
+			}
+		}
+
+		EndPopup();
+	}
+
+	return chosen;
+}
 
 void Popup::topRight() {
 
@@ -4633,26 +4692,6 @@ void SignalsPopup::draw() {
 	});
 }
 
-PlanPopup::PlanPopup() : Popup() {
-}
-
-PlanPopup::~PlanPopup() {
-}
-
-void PlanPopup::draw() {
-	bool showing = true;
-
-	Sim::locked([&]() {
-		small();
-		Begin("Blueprint##blueprint", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-
-		mouseOver = IsWindowHovered();
-		subpopup = IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopup);
-		End();
-		if (visible) show(showing);
-	});
-}
 
 PaintPopup::PaintPopup() : Popup() {
 }

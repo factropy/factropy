@@ -49,5 +49,6 @@ struct CartWaypointSettings {
 	Point dir; // original direction
 	Point relative[3];
 	minivec<CartWaypoint::Redirection> redirections;
+	CartWaypointSettings() = default;
 	CartWaypointSettings(CartWaypoint& waypoint);
 };

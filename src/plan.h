@@ -14,6 +14,7 @@ struct Plan {
 	static inline uint sequence = 0;
 
 	static void reset();
+	static void gc();
 	static void saveAll();
 	static void loadAll();
 
@@ -26,6 +27,13 @@ struct Plan {
 	std::vector<Point> offsets;
 	bool config; // pipette vs blueprint
 	bool save; // user requests save
+
+	void touch();
+	uint64_t touched = 0;
+
+	static Plan* latest();
+	static Plan* latestTemp();
+	std::set<std::string> tags;
 
 	// last time this plan was pasted.
 	// used to avoid double-up and do belt snapping

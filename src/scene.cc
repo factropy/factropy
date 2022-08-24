@@ -114,8 +114,6 @@ void Scene::reset() {
 	hoveringFuture = 0;
 	directRevert = 0;
 
-	for (auto plan: plans) delete plan;
-	plans.clear();
 	placing = nullptr;
 	placingFits = false;
 
@@ -2645,25 +2643,19 @@ Scene::Texture Scene::loadTexture(const char* path) {
 }
 
 void Scene::planPush(Plan* plan) {
-	if (!plans.size() || plans.front() != plan) {
-		plans.shove(plan);
-	}
-
-	while (plans.size() > 2) {
-		delete plans.pop();
-	}
-
-	placing = plans.front();
+	placing = plan;
+	if (placing) placing->touch();
+	Plan::gc();
 }
 
 void Scene::planDrop() {
 	placing = nullptr;
+	Plan::gc();
 }
 
 void Scene::planPaste() {
-	planDrop();
-	if (plans.size()) {
-		placing = plans.front();
-	}
+	placing = Plan::latest();
+	if (placing) placing->touch();
+	Plan::gc();
 }
 

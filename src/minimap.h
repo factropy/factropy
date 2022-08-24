@@ -90,4 +90,10 @@ public:
 
 		return refer(k);
 	}
+
+	minivec<key_type> keys() {
+		minivec<key_type> out;
+		for (auto pair: *this) out.push(pair.*ID);
+		return out;
+	}
 };

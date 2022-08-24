@@ -31,7 +31,7 @@ struct Popup {
 	void bottomLeft();
 
 	uint itemPicked = 0;
-	uint itemPicker(bool open = false, std::function<bool(Item*)> show = nullptr);
+	uint itemPicker(bool open, std::function<bool(Item*)> show = nullptr);
 	static int iconTier(float pix = 0);
 	static ImTextureID itemIconChoose(Item* item, float pix = 0);
 	static void itemIcon(Item* item, float pix = 0);
@@ -47,10 +47,14 @@ struct Popup {
 	static bool specIconButton(Spec* spec, float pix = 0);
 
 	Recipe* recipePicked = nullptr;
-	Recipe* recipePicker(bool open = false, std::function<bool(Recipe*)> show = nullptr);
+	Recipe* recipePicker(bool open, std::function<bool(Recipe*)> show = nullptr);
 
 	Signal::Key signalPicked;
-	bool signalPicker(bool open = false, bool metas = false);
+	bool signalPicker(bool open, bool metas = false);
+
+	std::string tagPicked;
+	char tagEdit[50];
+	bool tagPicker(bool open, const std::set<std::string>& tags, bool create = false);
 
 	float relativeWidth(float w);
 
@@ -210,6 +214,18 @@ struct UpgradePopup : Popup {
 };
 
 struct PlanPopup : Popup {
+	struct {
+		char edit[50];
+		bool active = false;
+		uint from = 0;
+	} rename;
+
+	uint pickTagFor = 0;
+	bool pickTagFilter = false;
+	std::set<std::string> showTags;
+
+	Plan* drop = nullptr;
+
 	PlanPopup();
 	~PlanPopup();
 	void draw() override;

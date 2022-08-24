@@ -136,6 +136,9 @@ bool GUI::active() {
 }
 
 void GUI::update() {
+	if (scene.placing) scene.placing->touch();
+	if (Sim::tick%60 == 0) Plan::gc();
+
 	controlHintsRelated.clear();
 	controlHintsSpecific.clear();
 	controlHintsGeneral.clear();
@@ -337,13 +340,15 @@ void GUI::update() {
 		}
 	};
 
-	if (!scene.placing && scene.plans.size()) {
+	if (!scene.placing && Plan::all.size()) {
 		controlHintsGeneral["Ctrl+V"] = "Paste last";
 		actionsEnabled.insert(Config::Action::Paste);
 	}
 
 	auto actionPaste = [&]() {
-		scene.planPaste();
+		Sim::locked([&]() {
+			scene.planPaste();
+		});
 	};
 
 	if (hoveringConfigurable()) {

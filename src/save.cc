@@ -3327,7 +3327,7 @@ namespace {
 
 	json serialize(CrafterSettings* crafter) {
 		json state;
-		state["transmit"] = state["transmit"];
+		state["transmit"] = crafter->transmit;
 
 		if (crafter->recipe)
 			state["recipe"] = crafter->recipe->name;
@@ -3718,16 +3718,18 @@ namespace {
 		}
 	}
 
-	json serializeSettings(Entity::Settings* settings) {
+	json serializeSettings(Spec* spec, Entity::Settings* settings) {
 		json state;
 		state["enabled"] = settings->enabled;
 		state["applicable"] = settings->applicable;
-		state["color"] = {
-			settings->color.r,
-			settings->color.g,
-			settings->color.b,
-			settings->color.a
-		};
+		if (spec->coloredCustom) {
+			state["color"] = {
+				settings->color.r,
+				settings->color.g,
+				settings->color.b,
+				settings->color.a
+			};
+		}
 		if (settings->store)
 			state["store"] = serialize(settings->store);
 		if (settings->crafter)
@@ -3761,38 +3763,66 @@ namespace {
 		auto settings = new Entity::Settings();
 		settings->enabled = state["enabled"];
 		settings->applicable = state["applicable"];
-		settings->color = Color(
-			(float)state["color"][0],
-			(float)state["color"][1],
-			(float)state["color"][2],
-			(float)state["color"][3]
-		);
-		if (state.contains("store"))
+		if (state.contains("color")) {
+			settings->color = Color(
+				(float)state["color"][0],
+				(float)state["color"][1],
+				(float)state["color"][2],
+				(float)state["color"][3]
+			);
+		}
+		if (state.contains("store")) {
+			settings->store = new StoreSettings();
 			unserialize(settings->store, state["store"]);
-		if (state.contains("crafter"))
+		}
+		if (state.contains("crafter")) {
+			settings->crafter = new CrafterSettings();
 			unserialize(settings->crafter, state["crafter"]);
-		if (state.contains("arm"))
+		}
+		if (state.contains("arm")) {
+			settings->arm = new ArmSettings();
 			unserialize(settings->arm, state["arm"]);
-		if (state.contains("loader"))
+		}
+		if (state.contains("loader")) {
+			settings->loader = new LoaderSettings();
 			unserialize(settings->loader, state["loader"]);
-		if (state.contains("balancer"))
+		}
+		if (state.contains("balancer")) {
+			settings->balancer = new BalancerSettings();
 			unserialize(settings->balancer, state["balancer"]);
-		if (state.contains("pipe"))
+		}
+		if (state.contains("pipe")) {
+			settings->pipe = new PipeSettings();
 			unserialize(settings->pipe, state["pipe"]);
-		if (state.contains("cart"))
+		}
+		if (state.contains("cart")) {
+			settings->cart = new CartSettings();
 			unserialize(settings->cart, state["cart"]);
-		if (state.contains("cartStop"))
+		}
+		if (state.contains("cartStop")) {
+			settings->cartStop = new CartStopSettings();
 			unserialize(settings->cartStop, state["cartStop"]);
-		if (state.contains("cartWaypoint"))
+		}
+		if (state.contains("cartWaypoint")) {
+			settings->cartWaypoint = new CartWaypointSettings();
 			unserialize(settings->cartWaypoint, state["cartWaypoint"]);
-		if (state.contains("networker"))
+		}
+		if (state.contains("networker")) {
+			settings->networker = new NetworkerSettings();
 			unserialize(settings->networker, state["networker"]);
-		if (state.contains("tube"))
+		}
+		if (state.contains("tube")) {
+			settings->tube = new TubeSettings();
 			unserialize(settings->tube, state["tube"]);
-		if (state.contains("monorail"))
+		}
+		if (state.contains("monorail")) {
+			settings->monorail = new MonorailSettings();
 			unserialize(settings->monorail, state["monorail"]);
-		if (state.contains("router"))
+		}
+		if (state.contains("router")) {
+			settings->router = new RouterSettings();
 			unserialize(settings->router, state["router"]);
+		}
 		return settings;
 	}
 }
@@ -3808,6 +3838,12 @@ void Plan::saveAll() {
 		state["config"] = plan->config;
 
 		int i = 0;
+
+		for (auto tag: plan->tags) {
+			state["tags"][i++] = tag;
+		}
+
+		i = 0;
 		for (auto ge: plan->entities) {
 			auto& gstate = state["entities"][i++];
 			auto pos = ge->pos() - plan->position;
@@ -3815,12 +3851,13 @@ void Plan::saveAll() {
 			gstate["spec"] = ge->spec->name;
 			gstate["pos"] = {pos.x, pos.y, pos.z};
 			gstate["dir"] = {dir.x, dir.y, dir.z};
+
 			if (ge->settings) {
-				gstate["settings"] = serializeSettings(ge->settings);
+				gstate["settings"] = serializeSettings(ge->spec, ge->settings);
 			}
 		}
 
-		def.push(state);
+		def.push(state.dump());
 	}
 
 	def.save(Config::plansPath());
@@ -3837,34 +3874,46 @@ void Plan::loadAll() {
 			plan->config = state["config"];
 			plan->save = true;
 
+			for (auto tag: state["tags"]) {
+				plan->tags.insert(std::string(tag));
+			}
+
 			for (auto estate: state["entities"]) {
-				auto specName = state["spec"];
+				auto specName = estate["spec"];
 
 				if (!Spec::all.count(specName)) {
-					infof("Plan '%s' references missing specification '%s'; dropping ghost and disabling autosave");
+					notef("Plan '%s' references missing specification '%s'; dropping ghost and disabling autosave", plan->title, specName);
 					plan->save = false;
 					continue;
 				}
 
 				auto ge = new GuiFakeEntity(Spec::byName(specName));
 
-				ge->move(
-					Point(estate["pos"][0], estate["pos"][1], estate["pos"][2]),
-					Point(estate["dir"][0], estate["dir"][1], estate["dir"][2])
-				);
+				try {
+					ge->move(
+						Point(estate["pos"][0], estate["pos"][1], estate["pos"][2]),
+						Point(estate["dir"][0], estate["dir"][1], estate["dir"][2])
+					);
 
-				if (estate.contains("settings")) {
-					ge->settings = unserializeSettings(estate["settings"]);
+					if (estate.contains("settings")) {
+						ge->settings = unserializeSettings(estate["settings"]);
+					}
+
+					plan->add(ge);
 				}
-
-				plan->add(ge);
+				catch (std::exception& e) {
+					notef("Plan '%s' has a broken entity '%s'; dropping ghost and disabling autosave", plan->title, ge->spec->title);
+					plan->save = false;
+					delete ge;
+					continue;
+				}
 			}
 
 			if (!plan->entities.size()) delete plan;
 		}
 	}
 	catch(std::exception& e) {
-		infof("saved blueprints not loaded: %s", e.what());
+		notef("saved blueprints not loaded: %s", e.what());
 		Plan::reset();
 	}
 }

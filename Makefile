@@ -95,3 +95,5 @@ $(GTEST)/src/gtest-all.o:
 $(GTEST)/src/gtest_main.o:
 	$(CPP) -std=c++11 -isystem $(GTEST)/include -I$(GTEST) -c $(GTEST)/src/gtest_main.cc -o $(GTEST)/src/gtest_main.o
 
+utils:
+	$(CPP) -std=c++17 -o build/flatecat util/flatecat.cc

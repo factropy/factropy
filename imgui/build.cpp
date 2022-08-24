@@ -81,7 +81,7 @@ namespace ImGui {
 		SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + GetStyle().ItemSpacing.y));
 	}
 
-	void panel(std::string s, bool spacing, ImU32 bg, ImU32 fg = 0) {
+	void panel(std::string s, bool spacing, bool center, ImU32 bg, ImU32 fg = 0) {
 		ImVec2 size = CalcTextSize(s.c_str(), nullptr, true);
 		ImVec2 space = GetContentRegionAvail();
 
@@ -96,7 +96,9 @@ namespace ImGui {
 		auto p1 = ImVec2(origin.x + space.x, origin.y + size.y + GetStyle().FramePadding.y*2);
 		GetWindowDrawList()->AddRectFilled(p0, p1, bg, GetStyle().FrameRounding);
 
-		SetCursorPos(ImVec2(top.x + space.x/2 - size.x/2, top.y + GetStyle().FramePadding.y));
+		if (center) SetCursorPos(ImVec2(top.x + space.x/2 - size.x/2, top.y + GetStyle().FramePadding.y));
+		else SetCursorPos(ImVec2(top.x + GetStyle().FramePadding.x, top.y + GetStyle().FramePadding.y));
+
 		if (fg) PushStyleColor(ImGuiCol_Text, fg);
 		Print(s.c_str());
 		if (fg) PopStyleColor(1);
@@ -106,23 +108,23 @@ namespace ImGui {
 	}
 
 	void Header(std::string s, bool spacing) {
-		panel(s, spacing, GetColorU32(ImGuiCol_TitleBgActive));
+		panel(s, spacing, true, GetColorU32(ImGuiCol_TitleBgActive));
 	}
 
 	void Section(std::string s, bool spacing) {
-		panel(s, spacing, ImColorSRGB(0x333333ff));
+		panel(s, spacing, true, ImColorSRGB(0x333333ff));
 	}
 
 	void Alert(std::string s, bool spacing) {
-		panel(s, spacing, ImColorSRGB(0xcc0000ff), ImColorSRGB(0xffffffff));
+		panel(s, spacing, true, ImColorSRGB(0xcc0000ff), ImColorSRGB(0xffffffff));
 	}
 
 	void Notice(std::string s, bool spacing) {
-		panel(s, spacing, ImColorSRGB(0x006600ff), ImColorSRGB(0xffffffff));
+		panel(s, spacing, true, ImColorSRGB(0x006600ff), ImColorSRGB(0xffffffff));
 	}
 
 	void Warning(std::string s, bool spacing) {
-		panel(s, spacing, ImColorSRGB(0xdd8800ff), ImColorSRGB(0xffffffff));
+		panel(s, spacing, true, ImColorSRGB(0xdd8800ff), ImColorSRGB(0xffffffff));
 	}
 
 	void Title(std::string s) {

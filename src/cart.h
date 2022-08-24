@@ -76,7 +76,8 @@ struct Cart {
 };
 
 struct CartSettings {
-	int line;
+	int line = 0;
 	Signal signal;
+	CartSettings() = default;
 	CartSettings(Cart& cart);
 };

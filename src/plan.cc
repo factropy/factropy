@@ -6,17 +6,65 @@
 // A single-entity pipette is a blueprint without configuration.
 
 void Plan::reset() {
-	for (auto plan: all) delete plan;
+	for (auto plan: std::vector<Plan*>{all.begin(), all.end()}) delete plan;
 	ensure(!all.size());
+}
+
+void Plan::gc() {
+	auto old = [&](auto plan, uint ticks) {
+		return Sim::tick > ticks && plan->touched < Sim::tick-ticks;
+	};
+
+	miniset<Plan*> drop;
+
+	for (auto plan: all) {
+		if (plan->save) continue;
+
+		bool oldPipette = !plan->config && old(plan, 600);
+		bool oldCopyPaste = plan->config && old(plan, 36000);
+
+		if (oldPipette) {
+			notef("drop pipette %u", plan->id);
+			drop.insert(plan);
+		}
+
+		if (oldCopyPaste) {
+			notef("drop blueprint %u", plan->id);
+			drop.insert(plan);
+		}
+	}
+
+	for (auto plan: drop) delete plan;
+}
+
+Plan* Plan::latest() {
+	Plan* latest = nullptr;
+	for (auto plan: all) {
+		if (!plan->config) continue;
+		if (!latest) latest = plan;
+		if (plan->touched > latest->touched) latest = plan;
+	}
+	return latest;
+}
+
+Plan* Plan::latestTemp() {
+	Plan* latest = nullptr;
+	for (auto plan: all) {
+		if (!plan->config) continue;
+		if (plan->save) continue;
+		if (!latest) latest = plan;
+		if (plan->touched > latest->touched) latest = plan;
+	}
+	return latest;
 }
 
 Plan::Plan() {
 	all.insert(this);
-	id = sequence++;
+	id = ++sequence;
 	position = Point::Zero;
 	config = false;
 	save = false;
-	title = "untitled";
+	touched = Sim::tick;
 }
 
 Plan::Plan(Point p) : Plan() {
@@ -27,6 +75,10 @@ Plan::~Plan() {
 	for (auto te: entities) delete te;
 	entities.clear();
 	all.erase(this);
+}
+
+void Plan::touch() {
+	touched = Sim::tick;
 }
 
 void Plan::add(GuiFakeEntity* ge) {

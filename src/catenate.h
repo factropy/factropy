@@ -48,7 +48,7 @@ class discatenate {
 
 		explicit iterator(const discatenate* ddis, std::size_t ppos) {
 			dis = ddis;
-			pos = ppos;
+			pos = ppos == std::string::npos || ppos >= dis->doc.size() ? std::string::npos: ppos;
 			end = pos == std::string::npos ? std::string::npos: dis->doc.find(dis->sep, pos);
 		}
 
