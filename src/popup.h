@@ -224,11 +224,12 @@ struct PlanPopup : Popup {
 	bool pickTagFilter = false;
 	std::set<std::string> showTags;
 
-	Plan* drop = nullptr;
+	uint current = 0;
 
 	PlanPopup();
 	~PlanPopup();
 	void draw() override;
+	void preview(Plan* plan, ImVec2 size);
 };
 
 struct ZeppelinPopup : Popup {

@@ -18,10 +18,11 @@ void PlanPopup::draw() {
 	Sim::locked([&]() {
 		Plan::gc();
 
+		Plan* currentPlan = nullptr;
 		bool pickTagForNow = false;
 		bool pickTagFilterNow = false;
 
-		medium();
+		big();
 		Begin("Blueprints##blueprints", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
 		float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
@@ -131,6 +132,7 @@ void PlanPopup::draw() {
 			drawPlanTags(plan);
 			drawPlanIcons(plan);
 			PopFont();
+
 			SpacingV();
 			SpacingV();
 			Separator();
@@ -204,50 +206,75 @@ void PlanPopup::draw() {
 			PushFont(Config::sidebar.font.imgui);
 			drawPlanIcons(plan);
 			PopFont();
+
 			SpacingV();
 			SpacingV();
 			Separator();
 			SpacingV();
 		};
 
-		std::vector<Plan*> plans = {Plan::all.begin(), Plan::all.end()};
-		std::sort(plans.begin(), plans.end(), [](const auto a, const auto b) {
-			return a->title < b->title || (a->title == b->title && a->id < b->id);
-		});
+		if (BeginTable("##two-pane", 2)) {
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.4));
+			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
-		auto latest = Plan::latest();
-		if (latest && !latest->save) {
-			Notice("Clipboard");
-			drawPlanTemp(latest);
-		}
+			TableNextColumn(); {
+				std::vector<Plan*> plans = {Plan::all.begin(), Plan::all.end()};
+				std::sort(plans.begin(), plans.end(), [](const auto a, const auto b) {
+					return a->title < b->title || (a->title == b->title && a->id < b->id);
+				});
 
-		SpacingV();
-
-		int i = 0;
-		pickTagFilterNow = ButtonStrip(i++, fmtc(" + Filter ##add-filter"));
-		if (pickTagFilterNow) { pickTagFilter = true; pickTagFor = 0; }
-
-		for (auto tag: showTags) {
-			if (ButtonStrip(i++, fmtc(" %s ##filter-tag-%s", tag, tag))) showTags.erase(tag);
-		}
-
-		SpacingV();
-		SpacingV();
-		Separator();
-		SpacingV();
-		SpacingV();
-
-		BeginGroup();
-			for (auto plan: plans) {
-				if (!plan->save) continue;
-				bool show = true;
-				if (showTags.size()) {
-					for (auto tag: showTags)
-						if (!plan->tags.count(tag)) show = false;
+				auto latest = Plan::latest();
+				if (latest && !latest->save) {
+					BeginGroup();
+					Notice("Clipboard");
+					drawPlanTemp(latest);
+					EndGroup();
+					if (IsItemClicked()) current = latest->id;
+					if (current == latest->id) currentPlan = latest;
 				}
-				if (show) drawPlanPerm(plan);
+
+				SpacingV();
+
+				int i = 0;
+				pickTagFilterNow = ButtonStrip(i++, fmtc(" + Filter ##add-filter"));
+				if (pickTagFilterNow) { pickTagFilter = true; pickTagFor = 0; }
+
+				for (auto it = showTags.begin(); it != showTags.end(); ) {
+					if (ButtonStrip(i++, fmtc(" %s ##filter-tag-%s", *it, *it)))
+						it = showTags.erase(it); else ++it;
+				}
+
+				SpacingV();
+				SpacingV();
+				Separator();
+				SpacingV();
+				SpacingV();
+
+				BeginGroup();
+					for (auto plan: plans) {
+						if (!plan->save) continue;
+						bool show = true;
+						if (showTags.size()) {
+							for (auto tag: showTags)
+								if (!plan->tags.count(tag)) show = false;
+						}
+						if (show) {
+							BeginGroup();
+							drawPlanPerm(plan);
+							EndGroup();
+							if (IsItemClicked()) current = plan->id;
+							if (current == plan->id) currentPlan = plan;
+						}
+					}
+				EndGroup();
 			}
-		EndGroup();
+
+			TableNextColumn(); {
+				if (currentPlan) preview(currentPlan, GetContentRegionAvail());
+			}
+
+			EndTable();
+		}
 
 		std::set<std::string> tags;
 		for (auto plan: Plan::all) for (auto tag: plan->tags) tags.insert(tag);
@@ -270,3 +297,66 @@ void PlanPopup::draw() {
 	});
 }
 
+void PlanPopup::preview(Plan* plan, ImVec2 size) {
+	auto cursor = GetCursorPos();
+	SetCursorPos(ImVec2(cursor.x, cursor.y + size.y));
+
+	auto origin = cursor;
+	origin.x += GetWindowPos().x - GetScrollX();
+	origin.y += GetWindowPos().y - GetScrollY();
+
+	auto topLeft = ImVec2(origin.x, origin.y);
+	auto bottomRight = ImVec2(origin.x + size.x, origin.y + size.y);
+
+	if (!IsRectVisible(topLeft, bottomRight)) return;
+	GetWindowDrawList()->PushClipRect(topLeft, bottomRight, true);
+
+	struct {
+		float x = 0;
+		float y = 0;
+	} range;
+
+	for (uint i = 0, l = plan->entities.size(); i < l; i++) {
+		auto ge = plan->entities[i];
+		auto offset = plan->offsets[i];
+		range.x = std::max(range.x, (float)(std::abs(offset.x) + ge->spec->collision.w*0.5));
+		range.y = std::max(range.y, (float)(std::abs(offset.z) + ge->spec->collision.d*0.5));
+	}
+
+	float d = std::max(range.x, range.y)*2;
+	float s = std::min(size.x, size.y);
+	float r = (s/d)*0.8;
+
+	auto tile = ImVec2(r,r);
+	auto pad = tile.x/8;
+
+	auto centroid = ImVec2(origin.x + size.x/2, origin.y + size.y/2);
+
+	auto x = [&](float n) { return n*tile.x; };
+	auto y = [&](float n) { return n*tile.y; };
+
+	auto maxIcon = Config::toolbar.icon.sizes[iconTier(1024)];
+
+	for (uint i = 0, l = plan->entities.size(); i < l; i++) {
+		auto ge = plan->entities[i];
+		auto offset = plan->offsets[i];
+		auto box = ge->spec->box(offset, ge->dir(), ge->spec->collision);
+		auto p0 = ImVec2(centroid.x + x(box.x) - x(box.w*0.5) + pad, centroid.y + y(box.z) - y(box.d*0.5) + pad);
+		auto p1 = ImVec2(centroid.x + x(box.x) + x(box.w*0.5) - pad, centroid.y + y(box.z) + y(box.d*0.5) - pad);
+		GetWindowDrawList()->AddRect(p0, p1, GetColorU32(Color(0xffffffff)));
+		auto icon = std::min(maxIcon, std::min(x(box.w), y(box.d))) * 0.9;
+		p0 = ImVec2(centroid.x + x(box.x) - icon*0.5, centroid.y + y(box.z) - icon*0.5);
+		p1 = ImVec2(centroid.x + x(box.x) + icon*0.5, centroid.y + y(box.z) + icon*0.5);
+		GetWindowDrawList()->AddImage(specIconChoose(ge->spec, tile.x), p0, p1, ImVec2(0, 1), ImVec2(1, 0));
+	}
+
+	auto h = GetFontSize();
+	auto w = CalcTextSize("W").x;
+
+	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y - size.y*0.5), GetColorU32(Color(0xffffffff)), "N");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y + size.y*0.5 - h), GetColorU32(Color(0xffffffff)), "S");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x - size.x*0.5 + w*0.5, centroid.y - h*0.5), GetColorU32(Color(0xffffffff)), "W");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x + size.x*0.5 - w, centroid.y - h*0.5), GetColorU32(Color(0xffffffff)), "E");
+
+	GetWindowDrawList()->PopClipRect();
+}

@@ -2195,78 +2195,78 @@ bool Scene::renderSpecIcon() {
 
 	Mesh::prepareAll();
 
-	int pixels = 128;
+	for (int i = 0, il = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < il; i++) {
+		int pixels = Config::toolbar.icon.sizes[i];
 
-	GLuint iconFrameBufferMS = 0;
-	GLuint iconDepthBufferMS = 0;
-	GLuint iconTextureMS = 0;
-	GLuint iconFrameBuffer = 0;
-	GLuint iconTexture = 0;
+		GLuint iconFrameBufferMS = 0;
+		GLuint iconDepthBufferMS = 0;
+		GLuint iconTextureMS = 0;
+		GLuint iconFrameBuffer = 0;
+		GLuint iconTexture = 0;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
-	glViewport(0, 0, 4096, 4096);
-	glDrawBuffer(GL_NONE);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+		glViewport(0, 0, 4096, 4096);
+		glDrawBuffer(GL_NONE);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glGenTextures(1, &iconTextureMS);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
-	glGenRenderbuffers(1, &iconDepthBufferMS);
-	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+		glGenTextures(1, &iconTextureMS);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+		glGenRenderbuffers(1, &iconDepthBufferMS);
+		glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
 
-	glGenFramebuffers(1, &iconFrameBufferMS);
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+		glGenFramebuffers(1, &iconFrameBufferMS);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
 
-	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
 
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glViewport(0, 0, pixels, pixels);
-	glClearColor(0,0,0,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glViewport(0, 0, pixels, pixels);
+		glClearColor(0,0,0,0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_MULTISAMPLE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_MULTISAMPLE);
 
-	glm::mat4 p = perspective;
-	glm::mat4 v = viewCamera;
-	glm::mat4 l = orthographic * sunView;
-	glm::vec3 c = camera;
-	Color sunColor = 0xffffffff;
-	float fogOffset = (float)Config::window.fog;
+		glm::mat4 p = perspective;
+		glm::mat4 v = viewCamera;
+		glm::mat4 l = orthographic * sunView;
+		glm::vec3 c = camera;
+		Color sunColor = 0xffffffff;
+		float fogOffset = (float)Config::window.fog;
 
-	glUseProgram(shader.part.id());
+		glUseProgram(shader.part.id());
 
-	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
-	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
-	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
-	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
-	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+		glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+		glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+		glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+		glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+		glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
 
-	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
-	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
-	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+		glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+		glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+		glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
 
-	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+		Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
 
-	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
 		glGenTextures(1, &iconTexture);
 		glBindTexture(GL_TEXTURE_2D, iconTexture);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 		glGenFramebuffers(1, &iconFrameBuffer);
@@ -2287,11 +2287,11 @@ bool Scene::renderSpecIcon() {
 		specIconTextures[spec].push_back(iconTexture);
 
 		glDeleteFramebuffers(1, &iconFrameBuffer);
-	}
 
-	glDeleteRenderbuffers(1, &iconDepthBufferMS);
-	glDeleteFramebuffers(1, &iconFrameBufferMS);
-	glDeleteTextures(1, &iconTextureMS);
+		glDeleteRenderbuffers(1, &iconDepthBufferMS);
+		glDeleteFramebuffers(1, &iconFrameBufferMS);
+		glDeleteTextures(1, &iconTextureMS);
+	}
 
 	position = savePosition;
 	direction = saveDirection;
@@ -2352,78 +2352,78 @@ bool Scene::renderItemIcon() {
 
 	Mesh::prepareAll();
 
-	int pixels = 128;
+	for (int i = 0, il = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < il; i++) {
+		int pixels = Config::toolbar.icon.sizes[i];
 
-	GLuint iconFrameBufferMS = 0;
-	GLuint iconDepthBufferMS = 0;
-	GLuint iconTextureMS = 0;
-	GLuint iconFrameBuffer = 0;
-	GLuint iconTexture = 0;
+		GLuint iconFrameBufferMS = 0;
+		GLuint iconDepthBufferMS = 0;
+		GLuint iconTextureMS = 0;
+		GLuint iconFrameBuffer = 0;
+		GLuint iconTexture = 0;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
-	glViewport(0, 0, 4096, 4096);
-	glDrawBuffer(GL_NONE);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+		glViewport(0, 0, 4096, 4096);
+		glDrawBuffer(GL_NONE);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glGenTextures(1, &iconTextureMS);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
-	glGenRenderbuffers(1, &iconDepthBufferMS);
-	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+		glGenTextures(1, &iconTextureMS);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+		glGenRenderbuffers(1, &iconDepthBufferMS);
+		glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
 
-	glGenFramebuffers(1, &iconFrameBufferMS);
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+		glGenFramebuffers(1, &iconFrameBufferMS);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
 
-	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
 
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glViewport(0, 0, pixels, pixels);
-	glClearColor(0,0,0,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glViewport(0, 0, pixels, pixels);
+		glClearColor(0,0,0,0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_MULTISAMPLE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_MULTISAMPLE);
 
-	glm::mat4 p = perspective;
-	glm::mat4 v = viewCamera;
-	glm::mat4 l = orthographic * sunView;
-	glm::vec3 c = camera;
-	Color sunColor = 0xffffffff;
-	float fogOffset = (float)Config::window.fog;
+		glm::mat4 p = perspective;
+		glm::mat4 v = viewCamera;
+		glm::mat4 l = orthographic * sunView;
+		glm::vec3 c = camera;
+		Color sunColor = 0xffffffff;
+		float fogOffset = (float)Config::window.fog;
 
-	glUseProgram(shader.part.id());
+		glUseProgram(shader.part.id());
 
-	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
-	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
-	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
-	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
-	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+		glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+		glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+		glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+		glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+		glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
 
-	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
-	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
-	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+		glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+		glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+		glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
 
-	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+		Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
 
-	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
 		glGenTextures(1, &iconTexture);
 		glBindTexture(GL_TEXTURE_2D, iconTexture);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 		glGenFramebuffers(1, &iconFrameBuffer);
@@ -2444,11 +2444,11 @@ bool Scene::renderItemIcon() {
 		itemIconTextures[item->id].push_back(iconTexture);
 
 		glDeleteFramebuffers(1, &iconFrameBuffer);
-	}
 
-	glDeleteRenderbuffers(1, &iconDepthBufferMS);
-	glDeleteFramebuffers(1, &iconFrameBufferMS);
-	glDeleteTextures(1, &iconTextureMS);
+		glDeleteRenderbuffers(1, &iconDepthBufferMS);
+		glDeleteFramebuffers(1, &iconFrameBufferMS);
+		glDeleteTextures(1, &iconTextureMS);
+	}
 
 	position = savePosition;
 	direction = saveDirection;
@@ -2504,78 +2504,78 @@ bool Scene::renderFluidIcon() {
 
 	Mesh::prepareAll();
 
-	int pixels = 128;
+	for (int i = 0, il = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < il; i++) {
+		int pixels = Config::toolbar.icon.sizes[i];
 
-	GLuint iconFrameBufferMS = 0;
-	GLuint iconDepthBufferMS = 0;
-	GLuint iconTextureMS = 0;
-	GLuint iconFrameBuffer = 0;
-	GLuint iconTexture = 0;
+		GLuint iconFrameBufferMS = 0;
+		GLuint iconDepthBufferMS = 0;
+		GLuint iconTextureMS = 0;
+		GLuint iconFrameBuffer = 0;
+		GLuint iconTexture = 0;
 
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
-	glViewport(0, 0, 4096, 4096);
-	glDrawBuffer(GL_NONE);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFrameBuffer);
+		glViewport(0, 0, 4096, 4096);
+		glDrawBuffer(GL_NONE);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glGenTextures(1, &iconTextureMS);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
-	glGenRenderbuffers(1, &iconDepthBufferMS);
-	glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
+		glGenTextures(1, &iconTextureMS);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA, pixels, pixels, GL_TRUE);
+		glGenRenderbuffers(1, &iconDepthBufferMS);
+		glBindRenderbuffer(GL_RENDERBUFFER, iconDepthBufferMS);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, pixels, pixels);
 
-	glGenFramebuffers(1, &iconFrameBufferMS);
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
+		glGenFramebuffers(1, &iconFrameBufferMS);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, iconTextureMS, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, iconDepthBufferMS);
 
-	ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
+		ensuref(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE, "B %s", glErr());
 
-	glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
-	glViewport(0, 0, pixels, pixels);
-	glClearColor(0,0,0,0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, iconFrameBufferMS);
+		glViewport(0, 0, pixels, pixels);
+		glClearColor(0,0,0,0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_MULTISAMPLE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CCW);
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_MULTISAMPLE);
 
-	glm::mat4 p = perspective;
-	glm::mat4 v = viewCamera;
-	glm::mat4 l = orthographic * sunView;
-	glm::vec3 c = camera;
-	Color sunColor = 0xffffffff;
-	float fogOffset = (float)Config::window.fog;
+		glm::mat4 p = perspective;
+		glm::mat4 v = viewCamera;
+		glm::mat4 l = orthographic * sunView;
+		glm::vec3 c = camera;
+		Color sunColor = 0xffffffff;
+		float fogOffset = (float)Config::window.fog;
 
-	glUseProgram(shader.part.id());
+		glUseProgram(shader.part.id());
 
-	glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
-	glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
-	glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
-	glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
-	glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
-	glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
+		glUniformMatrix4fv(shader.part.uniform("projection"), 1, GL_FALSE, &p[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("view"), 1, GL_FALSE, &v[0][0]);
+		glUniformMatrix4fv(shader.part.uniform("lightSpace"), 1, GL_FALSE, &l[0][0]);
+		glUniform3fv(shader.part.uniform("camera"), 1, &c[0]);
+		glUniform4fv(shader.part.uniform("ambient"), 1, &Config::window.ambient[0]);
+		glUniform4fv(shader.part.uniform("sunColor"), 1, &sunColor[0]);
+		glUniform3fv(shader.part.uniform("sunPosition"), 1, &sun[0]);
 
-	glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
-	glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
-	glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
+		glUniform1f(shader.part.uniform("fogDensity"), Config::window.fogDensity);
+		glUniform1f(shader.part.uniform("fogOffset"), fogOffset);
+		glUniform4fv(shader.part.uniform("fogColor"), 1, &Config::window.fogColor[0]);
 
-	Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
+		Mesh::renderAll(shader.part.id(), shadowMapDepthTexture);
 
-	for (int i = 0, l = sizeof(Config::toolbar.icon.sizes)/sizeof(Config::toolbar.icon.sizes[0]); i < l; i++) {
 		glGenTextures(1, &iconTexture);
 		glBindTexture(GL_TEXTURE_2D, iconTexture);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixels, pixels, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 		glGenFramebuffers(1, &iconFrameBuffer);
@@ -2596,11 +2596,11 @@ bool Scene::renderFluidIcon() {
 		fluidIconTextures[fluid->id].push_back(iconTexture);
 
 		glDeleteFramebuffers(1, &iconFrameBuffer);
-	}
 
-	glDeleteRenderbuffers(1, &iconDepthBufferMS);
-	glDeleteFramebuffers(1, &iconFrameBufferMS);
-	glDeleteTextures(1, &iconTextureMS);
+		glDeleteRenderbuffers(1, &iconDepthBufferMS);
+		glDeleteFramebuffers(1, &iconFrameBufferMS);
+		glDeleteTextures(1, &iconTextureMS);
+	}
 
 	position = savePosition;
 	direction = saveDirection;
