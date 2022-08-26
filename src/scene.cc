@@ -2644,6 +2644,7 @@ Scene::Texture Scene::loadTexture(const char* path) {
 
 void Scene::planPush(Plan* plan) {
 	placing = plan;
+	gui.planPopup->current = plan->id;
 	Plan::gc();
 }
 

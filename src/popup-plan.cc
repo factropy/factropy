@@ -25,18 +25,7 @@ void PlanPopup::draw() {
 		big();
 		Begin("Blueprints##blueprints", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
-		if (IsWindowAppearing()) {
-			if (scene.placing) {
-				current = scene.placing->id;
-				scroll = current;
-			}
-			else
-			if (Plan::clipboard) {
-				current = Plan::clipboard->id;
-				scroll = current;
-			}
-		}
-
+		if (IsWindowAppearing()) scroll = current;
 		float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
 
 		auto drawPlanEntities = [&](auto plan) {
@@ -108,7 +97,10 @@ void PlanPopup::draw() {
 						if (Button(fmtc("%s##drop-%u", plan->save ? ICON_FA_TRASH_O: ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
 							scroll = plan->id;
 							plan->save = !plan->save;
+							Plan::saveAll();
 						}
+						if (IsItemHovered() && plan->save) tip("Remove from library");
+						if (IsItemHovered() && !plan->save) tip("Add to library");
 
 					TableNextColumn();
 						if (rename.active && rename.from == plan->id) {
