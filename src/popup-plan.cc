@@ -18,12 +18,12 @@ void PlanPopup::draw() {
 	Sim::locked([&]() {
 		Plan::gc();
 
-		Plan* currentPlan = nullptr;
 		bool pickTagForNow = false;
 		bool pickTagFilterNow = false;
+		uint scroll = 0;
 
 		big();
-		Begin("Blueprints##blueprints", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+		Begin("Blueprints##blueprints", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
 		float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
 
@@ -57,6 +57,7 @@ void PlanPopup::draw() {
 				pickTagForNow = true;
 				pickTagFilter = false;
 			}
+			if (IsItemHovered()) tip("Add tag to plan");
 			for (auto it = plan->tags.begin(); it != plan->tags.end(); ) {
 				auto tag = *it;
 				if (ButtonStrip(i++, fmtc(" %s ##tag-%u-%s", tag, plan->id, tag)))
@@ -65,183 +66,155 @@ void PlanPopup::draw() {
 			}
 		};
 
-		auto drawPlanPerm = [&](auto plan) {
-			if (BeginTable(fmtc("##plan-%u", plan->id), 4)) {
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+		auto drawPlan = [&](auto plan) {
+			auto start = GetCursorAbs();
+
+			bool renameNow = false;
+
+			float margin = GetStyle().ItemSpacing.x*2;
+
+			GetWindowDrawList()->ChannelsSplit(2);
+			GetWindowDrawList()->ChannelsSetCurrent(1);
+
+			SetCursorPos(ImVec2(GetCursorPos().x + margin, GetCursorPos().y + margin - GetStyle().CellPadding.y));
+
+			if (BeginTable(fmtc("##plan-%u", plan->id), 1, 0, ImVec2(GetContentRegionAvail().x - margin, 0))) {
 
 				TableNextColumn();
-					if (Button(fmtc("%s##drop-%u", ICON_FA_TRASH_O, plan->id), ImVec2(button,0))) {
-						plan->save = false;
-						plan->touch();
-					}
+				if (BeginTable(fmtc("##plan-inner-%u", plan->id), 4)) {
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+					TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
 
-				TableNextColumn();
-					if (rename.active && rename.from == plan->id) {
-						auto rname = std::string(rename.edit);
-
-						if (Button(fmtc("%s##rename-%u", ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
-							plan->title = rname;
-							rename.active = false;
-							rename.from = 0;
+					TableNextColumn();
+						if (Button(fmtc("%s##drop-%u", plan->save ? ICON_FA_TRASH_O: ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
+							scroll = plan->id;
+							plan->save = !plan->save;
 						}
-					}
-					else {
-						if (Button(fmtc("%s##rename-%u", ICON_FA_PENCIL_SQUARE_O, plan->id), ImVec2(button,0))) {
-							rename.active = true;
-							rename.from = plan->id;
-							snprintf(rename.edit, sizeof(rename.edit), "%s", plan->title.c_str());
-						}
-					}
-					if (IsItemHovered()) tip("Rename");
 
-				TableNextColumn();
-					if (rename.active && rename.from == plan->id) {
-						SetNextItemWidth(-1);
-						bool ok = InputTextWithHint("##rename", plan->title.c_str(), rename.edit, sizeof(rename.edit), ImGuiInputTextFlags_EnterReturnsTrue);
-
-						if (ok) {
+					TableNextColumn();
+						if (rename.active && rename.from == plan->id) {
 							auto rname = std::string(rename.edit);
-							plan->title = rname;
-							rename.active = false;
-							rename.from = 0;
-						}
-					}
-					else {
-						if (!plan->title.size()) {
-							Print(plan->config ? "(untitled)": "(pipette)");
+
+							if (Button(fmtc("%s##rename-%u", ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
+								plan->title = rname;
+								rename.active = false;
+								rename.from = 0;
+								scroll = !plan->save ? plan->id: 0;
+								plan->save = true;
+								current = plan->id;
+							}
+							if (IsItemHovered()) tip("Save");
 						}
 						else {
-							Print(plan->title.c_str());
+							if (Button(fmtc("%s##rename-%u", ICON_FA_PENCIL_SQUARE_O, plan->id), ImVec2(button,0))) {
+								rename.active = true;
+								rename.from = plan->id;
+								snprintf(rename.edit, sizeof(rename.edit), "%s", plan->title.c_str());
+								renameNow = true;
+							}
+							if (IsItemHovered()) tip("Rename");
 						}
-					}
 
-				TableNextColumn();
-					if (Button(fmtc("%s##use-%u", ICON_FA_CLIPBOARD, plan->id), ImVec2(button,0))) {
-						scene.planPush(plan);
-						show(false);
-					}
-					if (IsItemHovered()) tip("Paste");
+					TableNextColumn();
+						if (rename.active && rename.from == plan->id) {
+							SetNextItemWidth(-1);
+							if (renameNow) SetKeyboardFocusHere();
+							bool ok = InputTextWithHint("##rename", plan->title.c_str(), rename.edit, sizeof(rename.edit), ImGuiInputTextFlags_EnterReturnsTrue);
+							inputFocused = IsItemFocused();
+
+							if (ok) {
+								auto rname = std::string(rename.edit);
+								plan->title = rname;
+								rename.active = false;
+								rename.from = 0;
+								scroll = !plan->save ? plan->id: 0;
+								plan->save = true;
+								current = plan->id;
+							}
+						}
+						else {
+							Print(!plan->title.size() ? "(untitled)": plan->title.c_str());
+						}
+
+					TableNextColumn();
+						if (Button(fmtc("%s##use-%u", ICON_FA_CLIPBOARD, plan->id), ImVec2(button,0))) {
+							scene.planPush(plan);
+							show(false);
+						}
+						if (IsItemHovered()) tip("Paste");
+
+					EndTable();
+				}
+
+				TableNextColumn(); {
+					PushFont(Config::sidebar.font.imgui);
+					drawPlanTags(plan);
+					drawPlanIcons(plan);
+					PopFont();
+				}
 
 				EndTable();
 			}
 
-			PushFont(Config::sidebar.font.imgui);
-			drawPlanTags(plan);
-			drawPlanIcons(plan);
-			PopFont();
+			SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + margin - GetStyle().CellPadding.y));
 
-			SpacingV();
-			SpacingV();
-			Separator();
-			SpacingV();
-			SpacingV();
-		};
+			auto end = ImVec2(start.x + GetContentRegionAvail().x, GetCursorAbs().y);
+			if (IsWindowHovered() && IsRectVisible(start, end) && IsMouseHoveringRect(start, end) && IsMouseClicked(ImGuiMouseButton_Left)) current = plan->id;
 
-		auto drawPlanTemp = [&](auto plan) {
-			if (BeginTable(fmtc("##plan-%u", plan->id), 4)) {
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-				TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, button);
+			GetWindowDrawList()->ChannelsSetCurrent(0);
+			if (current == plan->id) {
+				GetWindowDrawList()->AddRectFilled(start, end, GetColorU32(ImGuiCol_FrameBgActive), GetStyle().FrameRounding);
 
-				TableNextColumn();
-					if (Button(fmtc("%s##save-%u", ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
-						plan->save = true;
-					}
-					if (IsItemHovered()) tip("Save");
-
-				TableNextColumn();
-					if (rename.active && rename.from == plan->id) {
-						auto rname = std::string(rename.edit);
-
-						if (Button(fmtc("%s##rename-%u", ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
-							plan->title = rname;
-							rename.active = false;
-							rename.from = 0;
-						}
-					}
-					else {
-						if (Button(fmtc("%s##rename-%u", ICON_FA_PENCIL_SQUARE_O, plan->id), ImVec2(button,0))) {
-							rename.active = true;
-							rename.from = plan->id;
-							snprintf(rename.edit, sizeof(rename.edit), "%s", plan->title.c_str());
-						}
-					}
-					if (IsItemHovered()) tip("Rename");
-
-				TableNextColumn();
-					if (rename.active && rename.from == plan->id) {
-						SetNextItemWidth(-1);
-						bool ok = InputTextWithHint("##rename", plan->title.c_str(), rename.edit, sizeof(rename.edit), ImGuiInputTextFlags_EnterReturnsTrue);
-
-						if (ok) {
-							auto rname = std::string(rename.edit);
-							plan->title = rname;
-							rename.active = false;
-							rename.from = 0;
-						}
-					}
-					else {
-						if (!plan->title.size()) {
-							Print(plan->config ? "(untitled)": "(pipette)");
-						}
-						else {
-							Print(plan->title.c_str());
-						}
-					}
-
-				TableNextColumn();
-					if (Button(fmtc("%s##paste-%u", ICON_FA_CLIPBOARD, plan->id), ImVec2(button,0))) {
-						scene.planPush(plan);
-						show(false);
-					}
-					if (IsItemHovered()) tip("Paste");
-
-				EndTable();
+				GetWindowDrawList()->AddRectFilled(
+					ImVec2(start.x + GetStyle().FrameRounding, start.y + GetStyle().FrameRounding),
+					ImVec2(end.x - GetStyle().FrameRounding, end.y - GetStyle().FrameRounding),
+					GetColorU32(Color(0x000000ff)),
+					GetStyle().FrameRounding
+				);
 			}
+			else {
+				GetWindowDrawList()->AddRect(start, end, GetColorU32(ImGuiCol_FrameBg), GetStyle().FrameRounding);
+			}
+			GetWindowDrawList()->ChannelsSetCurrent(1);
 
-			PushFont(Config::sidebar.font.imgui);
-			drawPlanIcons(plan);
-			PopFont();
+			GetWindowDrawList()->ChannelsMerge();
 
 			SpacingV();
-			SpacingV();
-			Separator();
 			SpacingV();
 		};
+
+		std::vector<Plan*> listed;
+		std::vector<Plan*> sorted = {Plan::all.begin(), Plan::all.end()};
+		std::sort(sorted.begin(), sorted.end(), [](const auto a, const auto b) {
+			return a->title < b->title || (a->title == b->title && a->id < b->id);
+		});
 
 		if (BeginTable("##two-pane", 2)) {
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, relativeWidth(0.4));
 			TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
 
 			TableNextColumn(); {
-				std::vector<Plan*> plans = {Plan::all.begin(), Plan::all.end()};
-				std::sort(plans.begin(), plans.end(), [](const auto a, const auto b) {
-					return a->title < b->title || (a->title == b->title && a->id < b->id);
-				});
-
-				auto latest = Plan::latest();
+				auto latest = Plan::clipboard;
 				if (latest && !latest->save) {
-					BeginGroup();
+					listed.push_back(latest);
 					Notice("Clipboard");
-					drawPlanTemp(latest);
-					EndGroup();
-					if (IsItemClicked()) current = latest->id;
-					if (current == latest->id) currentPlan = latest;
+					drawPlan(latest);
 				}
 
+				Header("Library");
 				SpacingV();
 
 				int i = 0;
 				pickTagFilterNow = ButtonStrip(i++, fmtc(" + Filter ##add-filter"));
+				if (IsItemHovered()) tip("Filter by tag");
 				if (pickTagFilterNow) { pickTagFilter = true; pickTagFor = 0; }
 
 				for (auto it = showTags.begin(); it != showTags.end(); ) {
-					if (ButtonStrip(i++, fmtc(" %s ##filter-tag-%s", *it, *it)))
-						it = showTags.erase(it); else ++it;
+					bool click = ButtonStrip(i++, fmtc(" %s ##filter-tag-%s", *it, *it));
+					if (IsItemHovered()) tip(fmtc("Drop filter tag '%s'", *it));
+					if (click) it = showTags.erase(it); else ++it;
 				}
 
 				SpacingV();
@@ -250,8 +223,8 @@ void PlanPopup::draw() {
 				SpacingV();
 				SpacingV();
 
-				BeginGroup();
-					for (auto plan: plans) {
+				BeginChild("##plans-saved");
+					for (auto plan: sorted) {
 						if (!plan->save) continue;
 						bool show = true;
 						if (showTags.size()) {
@@ -259,18 +232,35 @@ void PlanPopup::draw() {
 								if (!plan->tags.count(tag)) show = false;
 						}
 						if (show) {
-							BeginGroup();
-							drawPlanPerm(plan);
-							EndGroup();
-							if (IsItemClicked()) current = plan->id;
-							if (current == plan->id) currentPlan = plan;
+							listed.push_back(plan);
+							drawPlan(plan);
+						}
+						if (scroll && plan->id == scroll) {
+							SetScrollHereY();
 						}
 					}
-				EndGroup();
+				EndChild();
 			}
 
 			TableNextColumn(); {
-				if (currentPlan) preview(currentPlan, GetContentRegionAvail());
+				Plan* active = nullptr;
+
+				for (auto plan: listed) {
+					if (plan->id == current) active = plan;
+				}
+
+				if (!active && Plan::clipboard && !Plan::clipboard->save) {
+					active = Plan::clipboard;
+				}
+
+				if (!active && listed.size()) {
+					active = listed.front();
+				}
+
+				if (active) {
+					current = active->id;
+					preview(active, GetContentRegionAvail());
+				}
 			}
 
 			EndTable();
@@ -310,6 +300,7 @@ void PlanPopup::preview(Plan* plan, ImVec2 size) {
 
 	if (!IsRectVisible(topLeft, bottomRight)) return;
 	GetWindowDrawList()->PushClipRect(topLeft, bottomRight, true);
+	GetWindowDrawList()->AddRectFilled(topLeft, bottomRight, GetColorU32(Color(0x000000ff)));
 
 	struct {
 		float x = 0;
@@ -337,26 +328,142 @@ void PlanPopup::preview(Plan* plan, ImVec2 size) {
 
 	auto maxIcon = Config::toolbar.icon.sizes[iconTier(1024)];
 
+	auto white = GetColorU32(Color(0xffffffff));
+
+	struct triangle {
+		Point v0, v1, v2;
+	};
+
+	std::map<Point,triangle> chevrons;
+
+	for (auto dir: std::array<Point,4>{Point::South,Point::West,Point::North,Point::East}) {
+		auto bump = (Point::North*0.05).transform(dir.rotation());
+		auto c0 = (Point::South*0.25).transform(dir.rotation());
+		auto c1 = c0.transform(Mat4::rotateY(glm::radians(120.0)));
+		auto c2 = c0.transform(Mat4::rotateY(glm::radians(240.0)));
+		chevrons[dir] = {c0+bump,c1+bump,c2+bump};
+	}
+
+	auto chevron = [&](Point pos, Point dir) {
+		auto it = chevrons.find(dir);
+		if (it == chevrons.end()) return;
+		auto v0 = it->second.v0 + pos;
+		auto v1 = it->second.v1 + pos;
+		auto v2 = it->second.v2 + pos;
+		auto p0 = ImVec2(centroid.x + x(v0.x), centroid.y + y(v0.z));
+		auto p1 = ImVec2(centroid.x + x(v1.x), centroid.y + y(v1.z));
+		auto p2 = ImVec2(centroid.x + x(v2.x), centroid.y + y(v2.z));
+		GetWindowDrawList()->AddTriangleFilled(p0, p1, p2, white);
+	};
+
+	auto specIcon = [&](Spec* spec, ImVec2 p0, ImVec2 p1) {
+		float w = p1.x-p0.x;
+		float h = p1.y-p0.y;
+		float ipix = std::min(w, h) * 0.8;
+		float apix = std::min(ipix, Config::toolbar.icon.sizes[iconTier(ipix)]);
+		auto pc = ImVec2(p0.x + w*0.5, p0.y + h*0.5);
+		auto p0i = ImVec2(pc.x - apix*0.5, pc.y - apix*0.5);
+		auto p1i = ImVec2(pc.x + apix*0.5, pc.y + apix*0.5);
+		GetWindowDrawList()->AddImage(specIconChoose(spec, ipix), p0i, p1i, ImVec2(0, 1), ImVec2(1, 0));
+	};
+
 	for (uint i = 0, l = plan->entities.size(); i < l; i++) {
 		auto ge = plan->entities[i];
 		auto offset = plan->offsets[i];
 		auto box = ge->spec->box(offset, ge->dir(), ge->spec->collision);
 		auto p0 = ImVec2(centroid.x + x(box.x) - x(box.w*0.5) + pad, centroid.y + y(box.z) - y(box.d*0.5) + pad);
 		auto p1 = ImVec2(centroid.x + x(box.x) + x(box.w*0.5) - pad, centroid.y + y(box.z) + y(box.d*0.5) - pad);
-		GetWindowDrawList()->AddRect(p0, p1, GetColorU32(Color(0xffffffff)));
-		auto icon = std::min(maxIcon, std::min(x(box.w), y(box.d))) * 0.9;
-		p0 = ImVec2(centroid.x + x(box.x) - icon*0.5, centroid.y + y(box.z) - icon*0.5);
-		p1 = ImVec2(centroid.x + x(box.x) + icon*0.5, centroid.y + y(box.z) + icon*0.5);
-		GetWindowDrawList()->AddImage(specIconChoose(ge->spec, tile.x), p0, p1, ImVec2(0, 1), ImVec2(1, 0));
+		GetWindowDrawList()->AddRect(p0, p1, white);
+
+		if (ge->spec->powerpole) {
+			for (uint ii = 0, ll = plan->entities.size(); ii < ll; ii++) {
+				if (i == ii) continue;
+				auto oe = plan->entities[ii];
+				auto ooffset = plan->offsets[ii];
+				if (!oe->spec->powerpole) continue;
+				float d = offset.distance(ooffset);
+				if (d < oe->spec->powerpoleRange+0.001 && d < ge->spec->powerpoleRange+0.001) {
+					auto grey = GetColorU32(Color(0x999999ff));
+					auto obox = oe->spec->box(ooffset, oe->dir(), oe->spec->collision);
+					auto t0 = ImVec2(centroid.x + x(box.x), centroid.y + y(box.z));
+					auto t1 = ImVec2(centroid.x + x(obox.x), centroid.y + y(obox.z));
+					GetWindowDrawList()->AddLine(t0, t1, grey, pad);
+				}
+			}
+		}
+
+		if (ge->spec->tube && ge->settings && ge->settings->tube) {
+			auto grey = GetColorU32(Color(0xffffff44));
+			auto t0 = ImVec2(centroid.x + x(box.x), centroid.y + y(box.z));
+			auto t1 = ImVec2(t0.x + x(ge->settings->tube->target.x), t0.y + y(ge->settings->tube->target.z));
+			GetWindowDrawList()->AddLine(t0, t1, grey, pad*3);
+		}
+
+		bool showSpecIcon = false
+			|| ge->spec->crafter
+			|| ge->spec->depot
+			|| ge->spec->storeSetUpper
+			|| ge->spec->storeSetLower
+			|| ge->spec->turret
+			|| ge->spec->generateElectricity
+			|| ge->spec->bufferElectricity
+			|| ge->spec->launcher;
+
+		if (ge->spec->conveyor || ge->spec->arm) chevron(offset, ge->dir());
+		else if (showSpecIcon) specIcon(ge->spec, p0, p1);
+
+		if (tipBegin(IsMouseHoveringRect(p0, p1))) {
+			PushFont(Config::sidebar.font.imgui);
+			Image(specIconChoose(ge->spec, maxIcon), ImVec2(maxIcon, maxIcon), ImVec2(0, 1), ImVec2(1, 0));
+
+			if (ge->spec->crafter) {
+				if (ge->settings && ge->settings->crafter && ge->settings->crafter->recipe) {
+					recipeIcon(ge->settings->crafter->recipe); SameLine();
+					Print(ge->settings->crafter->recipe->title.c_str());
+				}
+				else {
+					Print("(no recipe)");
+				}
+			}
+
+			if (ge->spec->storeSetUpper && ge->settings && ge->settings->store) {
+				for (auto level: ge->settings->store->levels) {
+					itemIcon(Item::get(level.iid)); SameLine();
+					Print(Item::get(level.iid)->title.c_str());
+				}
+			}
+
+			if (ge->spec->arm && ge->settings && ge->settings->arm) {
+				for (auto iid: ge->settings->arm->filter) {
+					itemIcon(Item::get(iid)); SameLine();
+					Print(Item::get(iid)->title.c_str());
+				}
+			}
+
+			if (ge->spec->loader && ge->settings && ge->settings->loader) {
+				for (auto iid: ge->settings->loader->filter) {
+					itemIcon(Item::get(iid)); SameLine();
+					Print(Item::get(iid)->title.c_str());
+				}
+			}
+
+			if (ge->spec->pipe && ge->settings && ge->settings->pipe && ge->settings->pipe->filter) {
+				fluidIcon(Fluid::get(ge->settings->pipe->filter)); SameLine();
+				Print(Fluid::get(ge->settings->pipe->filter)->title.c_str());
+			}
+
+			PopFont();
+			tipEnd();
+		}
 	}
 
 	auto h = GetFontSize();
 	auto w = CalcTextSize("W").x;
 
-	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y - size.y*0.5), GetColorU32(Color(0xffffffff)), "N");
-	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y + size.y*0.5 - h), GetColorU32(Color(0xffffffff)), "S");
-	GetWindowDrawList()->AddText(ImVec2(centroid.x - size.x*0.5 + w*0.5, centroid.y - h*0.5), GetColorU32(Color(0xffffffff)), "W");
-	GetWindowDrawList()->AddText(ImVec2(centroid.x + size.x*0.5 - w, centroid.y - h*0.5), GetColorU32(Color(0xffffffff)), "E");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y - size.y*0.5 + h), white, "N");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x, centroid.y + size.y*0.5 - h - h), white, "S");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x - size.x*0.5 + w*2, centroid.y - h*0.5), white, "W");
+	GetWindowDrawList()->AddText(ImVec2(centroid.x + size.x*0.5 - w*3, centroid.y - h*0.5), white, "E");
 
 	GetWindowDrawList()->PopClipRect();
 }

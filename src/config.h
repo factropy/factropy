@@ -125,8 +125,8 @@ namespace Config {
 			.icon = 0.55f,
 		};
 		struct {
-			int size = 1;
-			float sizes[4] = {32,64,96,128};
+			int size = 0;
+			float sizes[3] = {64,96,128};
 		} icon;
 	};
 

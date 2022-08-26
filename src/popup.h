@@ -59,6 +59,7 @@ struct Popup {
 	float relativeWidth(float w);
 
 	static bool tipBegin();
+	static bool tipBegin(bool state);
 	static void tipEnd();
 	static bool tipSmallBegin();
 	static void tipSmallEnd();

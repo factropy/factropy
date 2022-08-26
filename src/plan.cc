@@ -1,5 +1,6 @@
 #include "common.h"
 #include "plan.h"
+#include "scene.h"
 #include "glm-ex.h"
 
 // A plan is a blueprint of entities including layout and configuration.
@@ -11,51 +12,23 @@ void Plan::reset() {
 }
 
 void Plan::gc() {
-	auto old = [&](auto plan, uint ticks) {
-		return Sim::tick > ticks && plan->touched < Sim::tick-ticks;
-	};
-
 	miniset<Plan*> drop;
 
 	for (auto plan: all) {
 		if (plan->save) continue;
-
-		bool oldPipette = !plan->config && old(plan, 600);
-		bool oldCopyPaste = plan->config && old(plan, 36000);
-
-		if (oldPipette) {
-			notef("drop pipette %u", plan->id);
-			drop.insert(plan);
-		}
-
-		if (oldCopyPaste) {
-			notef("drop blueprint %u", plan->id);
-			drop.insert(plan);
-		}
+		if (plan == clipboard) continue;
+		if (plan == scene.placing) continue;
+		drop.insert(plan);
 	}
 
 	for (auto plan: drop) delete plan;
 }
 
-Plan* Plan::latest() {
-	Plan* latest = nullptr;
+Plan* Plan::find(uint id) {
 	for (auto plan: all) {
-		if (!plan->config) continue;
-		if (!latest) latest = plan;
-		if (plan->touched > latest->touched) latest = plan;
+		if (plan->id == id) return plan;
 	}
-	return latest;
-}
-
-Plan* Plan::latestTemp() {
-	Plan* latest = nullptr;
-	for (auto plan: all) {
-		if (!plan->config) continue;
-		if (plan->save) continue;
-		if (!latest) latest = plan;
-		if (plan->touched > latest->touched) latest = plan;
-	}
-	return latest;
+	return nullptr;
 }
 
 Plan::Plan() {
@@ -64,7 +37,7 @@ Plan::Plan() {
 	position = Point::Zero;
 	config = false;
 	save = false;
-	touched = Sim::tick;
+	clipboard = this;
 }
 
 Plan::Plan(Point p) : Plan() {
@@ -75,10 +48,6 @@ Plan::~Plan() {
 	for (auto te: entities) delete te;
 	entities.clear();
 	all.erase(this);
-}
-
-void Plan::touch() {
-	touched = Sim::tick;
 }
 
 void Plan::add(GuiFakeEntity* ge) {

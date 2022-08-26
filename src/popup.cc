@@ -626,6 +626,7 @@ bool Popup::tagPicker(bool open, const std::set<std::string>& tags, bool create)
 			TableNextColumn();
 				SetNextItemWidth(-1);
 				bool ok = InputTextWithHint("##tag-new", "(new tag)", tagEdit, sizeof(tagEdit), ImGuiInputTextFlags_EnterReturnsTrue);
+				inputFocused = IsItemFocused();
 
 			TableNextColumn();
 				if (Button(fmtc(" %s ##tag-save", ICON_FA_FLOPPY_O)) || ok) {
@@ -712,7 +713,11 @@ std::string Popup::wrap(uint line, std::string text) {
 }
 
 bool Popup::tipBegin() {
-	if (IsItemHovered()) {
+	return tipBegin(IsItemHovered());
+}
+
+bool Popup::tipBegin(bool state) {
+	if (state) {
 		auto& style = GetStyle();
 		ImVec2 tooltip_pos = GetMousePos();
 		tooltip_pos.x += (Config::window.hdpi/96.0) * 16;

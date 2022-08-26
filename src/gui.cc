@@ -136,9 +136,6 @@ bool GUI::active() {
 }
 
 void GUI::update() {
-	if (scene.placing) scene.placing->touch();
-	if (Sim::tick%60 == 0) Plan::gc();
-
 	controlHintsRelated.clear();
 	controlHintsSpecific.clear();
 	controlHintsGeneral.clear();

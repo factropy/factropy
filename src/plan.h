@@ -28,11 +28,8 @@ struct Plan {
 	bool config; // pipette vs blueprint
 	bool save; // user requests save
 
-	void touch();
-	uint64_t touched = 0;
-
-	static Plan* latest();
-	static Plan* latestTemp();
+	static inline Plan* clipboard = nullptr;
+	static Plan* find(uint id);
 	std::set<std::string> tags;
 
 	// last time this plan was pasted.

@@ -2644,7 +2644,6 @@ Scene::Texture Scene::loadTexture(const char* path) {
 
 void Scene::planPush(Plan* plan) {
 	placing = plan;
-	if (placing) placing->touch();
 	Plan::gc();
 }
 
@@ -2654,8 +2653,7 @@ void Scene::planDrop() {
 }
 
 void Scene::planPaste() {
-	placing = Plan::latest();
-	if (placing) placing->touch();
+	placing = Plan::clipboard;
 	Plan::gc();
 }
 
