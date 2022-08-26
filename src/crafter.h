@@ -87,7 +87,8 @@ struct Crafter {
 };
 
 struct CrafterSettings {
-	Recipe* recipe;
-	bool transmit;
+	Recipe* recipe = nullptr;
+	bool transmit = false;
+	CrafterSettings() = default;
 	CrafterSettings(Crafter& crafter);
 };

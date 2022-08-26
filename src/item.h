@@ -4,7 +4,16 @@
 
 struct Item;
 struct Fuel;
-struct Stack;
+
+#include "common.h"
+
+struct Stack {
+	uint iid;
+	uint size;
+
+	Stack();
+	Stack(std::initializer_list<uint>);
+};
 
 #include "spec.h"
 #include "part.h"
@@ -23,14 +32,6 @@ struct Fuel {
 
 	Fuel();
 	Fuel(std::string, Energy);
-};
-
-struct Stack {
-	uint iid;
-	uint size;
-
-	Stack();
-	Stack(std::initializer_list<uint>);
 };
 
 struct Item {
@@ -118,4 +119,5 @@ struct Item {
 	void supply(int count);
 	bool hasLOD(float distance);
 	miniset<Recipe*> recipes();
+	Recipe* cheapestRecipe();
 };

@@ -123,9 +123,9 @@ struct Store {
 
 struct StoreSettings {
 	minivec<Store::Level> levels;
-	minivec<Stack> stacks;
-	bool transmit;
-	bool purge;
-	bool block;
+	bool transmit = false;
+	bool purge = false;
+	bool block = false;
+	StoreSettings() = default;
 	StoreSettings(Store& store);
 };

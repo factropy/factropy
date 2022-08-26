@@ -75,3 +75,21 @@ Amount::Amount(std::initializer_list<uint> l) {
 	size = *i++;
 }
 
+miniset<Recipe*> Fluid::recipes() {
+	miniset<Recipe*> out;
+	for (auto& [_,recipe]: Recipe::names) {
+		if (!recipe->licensed) continue;
+		if (recipe->drill == id) out.insert(recipe);
+		if (recipe->outputFluids.count(id)) out.insert(recipe);
+	}
+	return out;
+}
+
+Recipe* Fluid::cheapestRecipe() {
+	Recipe* cheapest = nullptr;
+	for (auto recipe: recipes()) {
+		if (!cheapest || recipe->totalEnergy() < cheapest->totalEnergy()) cheapest = recipe;
+	}
+	return cheapest;
+}
+

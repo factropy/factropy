@@ -80,5 +80,6 @@ struct Networker {
 
 struct NetworkerSettings {
 	std::vector<std::string> ssids;
+	NetworkerSettings() = default;
 	NetworkerSettings(Networker& networker);
 };

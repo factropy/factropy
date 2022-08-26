@@ -60,6 +60,7 @@ struct Router {
 
 struct RouterSettings {
 	minivec<Router::Rule> rules;
+	RouterSettings() = default;
 	RouterSettings(Router& router);
 };
 

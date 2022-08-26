@@ -134,7 +134,6 @@ struct Scene {
 	uint hoveringFuture = 0;
 	uint directRevert = 0;
 
-	minivec<Plan*> plans;
 	Plan* placing = nullptr;
 	bool placingFits = false;
 

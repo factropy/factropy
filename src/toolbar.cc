@@ -47,7 +47,7 @@ void Toolbar::draw() {
 
 		if (scene.directing) {
 			PushStyleColor(ImGuiCol_Button, Color(0xffa50066).gamma());
-			if (ImageButton((ImTextureID)scene.specIconTextures[scene.directing->spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
+			if (ImageButton(Popup::specIconChoose(scene.directing->spec, iconPix), ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
 				scene.view(scene.directing->pos());
 			}
 			if (IsItemHovered()) {
@@ -60,7 +60,7 @@ void Toolbar::draw() {
 		for (auto spec: buttons) {
 			if (!spec->licensed) continue;
 			if (i) SameLine();
-			if (ImageButton((ImTextureID)scene.specIconTextures[spec][iconSize], ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
+			if (ImageButton(Popup::specIconChoose(spec, iconPix), ImVec2(iconPix, iconPix), ImVec2(0, 1), ImVec2(1, 0))) {
 				scene.build(spec);
 			}
 			if (IsItemHovered()) {

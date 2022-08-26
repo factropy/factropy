@@ -98,7 +98,8 @@ struct PipeNetwork {
 };
 
 struct PipeSettings {
-	float overflow;
-	uint filter;
+	float overflow = 0;
+	uint filter = 0;
+	PipeSettings() = default;
 	PipeSettings(Pipe& pipe);
 };

@@ -85,9 +85,10 @@ struct ArmSettings {
 	miniset<uint> filter;
 	Arm::Monitor monitor;
 	Signal::Condition condition;
-	bool inputNear;
-	bool inputFar;
-	bool outputNear;
-	bool outputFar;
+	bool inputNear = false;
+	bool inputFar = false;
+	bool outputNear = false;
+	bool outputFar = false;
+	ArmSettings() = default;
 	ArmSettings(Arm& arm);
 };

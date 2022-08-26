@@ -64,8 +64,9 @@ struct BalancerGroup {
 struct BalancerSettings {
 	miniset<uint> filter;
 	struct {
-		bool input;
-		bool output;
+		bool input = false;
+		bool output = false;
 	} priority;
+	BalancerSettings() = default;
 	BalancerSettings(Balancer& balancer);
 };

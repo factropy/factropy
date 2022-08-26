@@ -38,9 +38,11 @@ namespace ImGui {
 	void TrySameLine(const char* label, int margin = 0);
 	bool WideButton(const char* label);
 	bool ButtonStrip(int i, const char* label);
+	void IconLabelStrip(int i, GLuint icon, const char* label);
 	bool SmallButtonInline(const char* label);
 	bool SmallButtonInlineRight(const char* label, bool spacing = false);
 	void SmallBar(float n);
 	bool ExpandingHeader(bool* state, const char* label, ImGuiTreeNodeFlags flags = 0);
 	void ImageBanner(GLuint id, int w, int h);
+	ImVec2 GetCursorAbs();
 }

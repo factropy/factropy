@@ -131,6 +131,11 @@ namespace Config {
 		return path.make_preferred().string();
 	}
 
+	std::string plansPath() {
+		auto path = std::filesystem::path(fmt("%splans", mode.dataPath));
+		return path.make_preferred().string();
+	}
+
 	bool saveDelete(const std::string& name) {
 		std::filesystem::remove_all(savePath(name));
 		return true;

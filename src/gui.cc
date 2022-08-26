@@ -337,13 +337,15 @@ void GUI::update() {
 		}
 	};
 
-	if (!scene.placing && scene.plans.size()) {
+	if (!scene.placing && Plan::all.size()) {
 		controlHintsGeneral["Ctrl+V"] = "Paste last";
 		actionsEnabled.insert(Config::Action::Paste);
 	}
 
 	auto actionPaste = [&]() {
-		scene.planPaste();
+		Sim::locked([&]() {
+			scene.planPaste();
+		});
 	};
 
 	if (hoveringConfigurable()) {
@@ -1198,6 +1200,7 @@ void GUI::update() {
 	auto actionEscape = [&]() {
 		// cascade to open main menu or close popup
 		doEscape = true;
+		if (popup) return;
 
 		if (scene.placing) {
 			scene.planDrop();
@@ -1222,8 +1225,6 @@ void GUI::update() {
 			scene.selecting = false;
 			doEscape = popup == paintPopup;
 		}
-
-		return doEscape;
 	};
 
 	actionsEnabled.insert(Config::Action::Save);

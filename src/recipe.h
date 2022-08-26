@@ -10,6 +10,7 @@ struct Recipe;
 #include "fluid.h"
 #include "energy.h"
 #include "spec.h"
+#include "minimap.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -80,8 +81,8 @@ struct Recipe {
 	bool launch = false;
 
 	Energy totalEnergy(std::vector<Recipe*>* path = nullptr);
-	std::vector<Stack> totalRawItems(std::vector<Recipe*>* path = nullptr);
-	std::vector<Amount> totalRawFluids(std::vector<Recipe*>* path = nullptr);
+	minimap<Stack,&Stack::iid> totalRawItems(std::vector<Recipe*>* path = nullptr);
+	minimap<Amount,&Amount::fid> totalRawFluids(std::vector<Recipe*>* path = nullptr);
 
 	bool manufacturable();
 };

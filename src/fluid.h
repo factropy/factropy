@@ -1,14 +1,26 @@
 #pragma once
 
 struct Fluid;
-struct Amount;
+
+#include "common.h"
+
+struct Amount {
+	uint fid;
+	uint size;
+
+	Amount();
+	Amount(std::initializer_list<uint>);
+};
 
 #include "item.h"
 #include "mass.h"
 #include "energy.h"
 #include "color.h"
+#include "recipe.h"
 #include "time-series.h"
 #include "slabarray.h"
+#include "miniset.h"
+#include "minimap.h"
 
 struct Fluid {
 	uint id;
@@ -52,12 +64,6 @@ struct Fluid {
 	bool manufacturable();
 	void produce(int count);
 	void consume(int count);
-};
-
-struct Amount {
-	uint fid;
-	uint size;
-
-	Amount();
-	Amount(std::initializer_list<uint>);
+	miniset<Recipe*> recipes();
+	Recipe* cheapestRecipe();
 };

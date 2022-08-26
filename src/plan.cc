@@ -1,14 +1,43 @@
 #include "common.h"
 #include "plan.h"
+#include "scene.h"
 #include "glm-ex.h"
 
-// A plan is a collection of entities including layout and configuration.
-// A temporary base blueprint.
+// A plan is a blueprint of entities including layout and configuration.
+// A single-entity pipette is a blueprint without configuration.
+
+void Plan::reset() {
+	for (auto plan: std::vector<Plan*>{all.begin(), all.end()}) delete plan;
+	ensure(!all.size());
+}
+
+void Plan::gc() {
+	miniset<Plan*> drop;
+
+	for (auto plan: all) {
+		if (plan->save) continue;
+		if (plan == clipboard) continue;
+		if (plan == scene.placing) continue;
+		drop.insert(plan);
+	}
+
+	for (auto plan: drop) delete plan;
+}
+
+Plan* Plan::find(uint id) {
+	for (auto plan: all) {
+		if (plan->id == id) return plan;
+	}
+	return nullptr;
+}
 
 Plan::Plan() {
+	all.insert(this);
 	id = ++sequence;
 	position = Point::Zero;
 	config = false;
+	save = false;
+	clipboard = this;
 }
 
 Plan::Plan(Point p) : Plan() {
@@ -18,6 +47,7 @@ Plan::Plan(Point p) : Plan() {
 Plan::~Plan() {
 	for (auto te: entities) delete te;
 	entities.clear();
+	all.erase(this);
 }
 
 void Plan::add(GuiFakeEntity* ge) {
@@ -89,7 +119,6 @@ void Plan::rotate() {
 			offsets[i].x = std::round(offsets[i].x*2.0f)/2.0f;
 			offsets[i].z = std::round(offsets[i].z*2.0f)/2.0f;
 		}
-		//te->dir(te->dir().rotateHorizontal());
 		te->rotate();
 		te->pos(te->spec->aligned(position + offsets[i], te->dir()));
 		te->updateTransform();
@@ -115,14 +144,6 @@ void Plan::cycle() {
 	auto ce = new GuiFakeEntity(ge->spec->cycle);
 	ce->dir(ge->spec->cycleReverseDirection ? -ge->dir(): ge->dir());
 	ce->move(Point(ge->pos().x, position.y + ce->spec->collision.h/2.0f, ge->pos().z));
-
-//	if (ge->spec->raise) {
-//		offsets[0].y = ge->pos().y;
-//	}
-
-//	if (!ge->spec->raise) {
-//		offsets[0].y = ge->ground().y + ce->spec->collision.h/2.0f;
-//	}
 
 	entities[0] = ce;
 	offsets[0] = Point(0, ce->spec->collision.h/2.0f, 0);
@@ -175,6 +196,7 @@ void Plan::follow() {
 	delete ge;
 }
 
+// PageUp + unlocked
 Spec* Plan::canUpward() {
 	if (entities.size() > 1) return nullptr;
 	auto repl = entities[0]->spec->upward;
@@ -182,6 +204,7 @@ Spec* Plan::canUpward() {
 	return repl;
 }
 
+// PageUp
 void Plan::upward() {
 	if (!canUpward()) return;
 
@@ -206,6 +229,7 @@ void Plan::upward() {
 	delete ge;
 }
 
+// PageDown + unlocked
 Spec* Plan::canDownward() {
 	if (entities.size() > 1) return nullptr;
 	auto repl = entities[0]->spec->downward;
@@ -213,6 +237,7 @@ Spec* Plan::canDownward() {
 	return repl;
 }
 
+// PageDown
 void Plan::downward() {
 	if (!canDownward()) return;
 
@@ -237,72 +262,14 @@ void Plan::downward() {
 	delete ge;
 }
 
-bool Plan::canRaise() {
-	for (auto& ge: entities) {
-		if (!ge->spec->raise) return false;
-		if (ge->pos().y > ge->spec->collision.h*1.4f) return false;
-	}
-	return true;
-}
-
-void Plan::raise() {
-	if (canRaise()) {
-		for (uint i = 0; i < entities.size(); i++) {
-			auto& ge = entities[i];
-			ge->pos(Point(ge->pos().x, ge->spec->collision.h*1.5f, ge->pos().z));
-			offsets[i] = ge->pos() - position;
-		}
-	}
-}
-
-bool Plan::canLower() {
-	for (auto& ge: entities) {
-		if (!ge->spec->raise) return false;
-		if (ge->pos().y < ge->spec->collision.h*0.6f) return false;
-	}
-	return true;
-}
-
-void Plan::lower() {
-	if (canLower()) {
-		for (uint i = 0; i < entities.size(); i++) {
-			auto& ge = entities[i];
-			ge->pos(Point(ge->pos().x, ge->spec->collision.h*0.5f, ge->pos().z));
-			offsets[i] = ge->pos() - position;
-		}
-	}
-}
-
+// Similar to Entity::fits() but looser to allow plans to be pasted
+// over existing ghosts and entities, or partially force-placed over terrain
 bool Plan::fits() {
 	for (uint i = 0; i < entities.size(); i++) {
 		auto te = entities[i];
 		if (!Entity::fits(te->spec, te->pos(), te->dir()) && !entityFits(te->spec, te->pos(), te->dir())) {
 			return false;
 		}
-	}
-	return true;
-}
-
-bool Plan::conforms() {
-	if (entities.size() > 1) return true;
-	if (last.stamp < Sim::tick-30U) return true;
-
-	auto ge = entities[0];
-
-	// Spec is placed rapidly aligned in series, like straight belts.
-	// Plans will prevent accidentally placing an identical entity
-	// out of line for a short while after the last placement
-	if (last.spec->snapAlign && last.spec == ge->spec) {
-		if (last.dir != ge->dir()) return false;
-
-		auto eq = [](float a, float b) {
-			return std::abs(a-b) < 0.001;
-		};
-
-		if (last.dir == Point::North && !eq(last.pos.x, ge->pos().x)) return false;
-		if (last.dir == Point::South && !eq(last.pos.x, ge->pos().x)) return false;
-		if (last.dir == Point::East  && !eq(last.pos.z, ge->pos().z)) return false;
-		if (last.dir == Point::West  && !eq(last.pos.z, ge->pos().z)) return false;
 	}
 	return true;
 }
@@ -366,6 +333,34 @@ bool Plan::entityFits(Spec *spec, Point pos, Point dir) {
 	return true;
 }
 
+// Used when placing a single entity in series, when the next placement
+// depends in some way on the last placement. Eg belts in line
+bool Plan::conforms() {
+	if (entities.size() > 1) return true;
+	if (last.stamp < Sim::tick-30U) return true;
+
+	auto ge = entities[0];
+
+	// Spec is placed rapidly aligned in series, like straight belts.
+	// Plans will prevent accidentally placing an identical entity
+	// out of line for a short while after the last placement
+	if (last.spec->snapAlign && last.spec == ge->spec) {
+		if (last.dir != ge->dir()) return false;
+
+		auto eq = [](float a, float b) {
+			return std::abs(a-b) < 0.001;
+		};
+
+		if (last.dir == Point::North && !eq(last.pos.x, ge->pos().x)) return false;
+		if (last.dir == Point::South && !eq(last.pos.x, ge->pos().x)) return false;
+		if (last.dir == Point::East  && !eq(last.pos.z, ge->pos().z)) return false;
+		if (last.dir == Point::West  && !eq(last.pos.z, ge->pos().z)) return false;
+	}
+	return true;
+}
+
+// Choose a roughly central entity.
+// Used for rendering alignment and direction overlay hints.
 GuiFakeEntity* Plan::central() {
 	GuiFakeEntity* ce = nullptr;
 	real dist = 0.0;
@@ -378,5 +373,15 @@ GuiFakeEntity* Plan::central() {
 	}
 	ensure(ce);
 	return ce;
+}
+
+minimap<Stack,&Stack::iid> Plan::materials() {
+	minimap<Stack,&Stack::iid> stacks;
+	for (auto ge: entities) {
+		for (auto stack: ge->spec->materials) {
+			stacks[stack.iid].size += stack.size;
+		}
+	}
+	return stacks;
 }
 

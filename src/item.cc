@@ -97,6 +97,14 @@ miniset<Recipe*> Item::recipes() {
 	return out;
 }
 
+Recipe* Item::cheapestRecipe() {
+	Recipe* cheapest = nullptr;
+	for (auto recipe: recipes()) {
+		if (!cheapest || recipe->totalEnergy() < cheapest->totalEnergy()) cheapest = recipe;
+	}
+	return cheapest;
+}
+
 bool Item::manufacturable() {
 	if (free) return true;
 	for (auto& [_,recipe]: Recipe::names) {

@@ -49,14 +49,12 @@ LoaderSettings* Loader::settings() {
 
 LoaderSettings::LoaderSettings(Loader& loader) {
 	filter = loader.filter;
-	loading = loader.loading;
 	monitor = loader.monitor;
 	condition = loader.condition;
 }
 
 void Loader::setup(LoaderSettings* settings) {
 	filter = settings->filter;
-	loading = settings->loading;
 	monitor = settings->monitor;
 	condition = settings->condition;
 }
