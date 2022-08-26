@@ -375,3 +375,13 @@ GuiFakeEntity* Plan::central() {
 	return ce;
 }
 
+minimap<Stack,&Stack::iid> Plan::materials() {
+	minimap<Stack,&Stack::iid> stacks;
+	for (auto ge: entities) {
+		for (auto stack: ge->spec->materials) {
+			stacks[stack.iid].size += stack.size;
+		}
+	}
+	return stacks;
+}
+

@@ -3916,4 +3916,6 @@ void Plan::loadAll() {
 		notef("saved blueprints not loaded: %s", e.what());
 		Plan::reset();
 	}
+
+	Plan::clipboard = nullptr;
 }

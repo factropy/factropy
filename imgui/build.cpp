@@ -209,6 +209,19 @@ namespace ImGui {
 		return Button(label);
 	}
 
+	void IconLabelStrip(int i, GLuint icon, const char* label) {
+		if (i) {
+			SameLine();
+			ImVec2 size = CalcTextSize(label, nullptr, true);
+			size.x += GetFontSize();
+			ImVec2 space = GetContentRegionAvail();
+			if (space.x < size.x + GetStyle().ItemSpacing.x) NewLine();
+		}
+		Image(icon, ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
+		SameLine();
+		Print(label);
+	}
+
 	bool SmallButtonInline(const char* label) {
 		TrySameLine(label, GetStyle().ItemSpacing.x + GetStyle().FramePadding.x*2);
 		return SmallButton(label);
@@ -239,5 +252,12 @@ namespace ImGui {
 		float iw = ImGui::GetContentRegionAvail().x;
 		float ih = iw * ((float)h/(float)w);
 		Image((ImTextureID)id, ImVec2(iw, ih));
+	}
+
+	ImVec2 GetCursorAbs() {
+		auto cursor = GetCursorPos();
+		cursor.x += GetWindowPos().x - GetScrollX();
+		cursor.y += GetWindowPos().y - GetScrollY();
+		return cursor;
 	}
 }

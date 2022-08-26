@@ -25,9 +25,21 @@ void PlanPopup::draw() {
 		big();
 		Begin("Blueprints##blueprints", &showing, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
+		if (IsWindowAppearing()) {
+			if (scene.placing) {
+				current = scene.placing->id;
+				scroll = current;
+			}
+			else
+			if (Plan::clipboard) {
+				current = Plan::clipboard->id;
+				scroll = current;
+			}
+		}
+
 		float button = CalcTextSize(ICON_FA_FOLDER_OPEN).x*1.5;
 
-		auto drawPlanIcons = [&](auto plan) {
+		auto drawPlanEntities = [&](auto plan) {
 			struct Bucket {
 				Spec* spec = nullptr;
 				uint count = 0;
@@ -41,13 +53,18 @@ void PlanPopup::draw() {
 				return buckets[a].count < buckets[b].count;
 			});
 
+			int i = 0;
 			for (auto spec: specs) {
-				specIcon(spec);
-				SameLine();
-				Print(fmtc("(%u)", buckets[spec].count));
-				SameLine();
+				IconLabelStrip(i++, specIconChoose(spec), fmtc("%u", buckets[spec].count));
 			}
-			if (specs.size()) NewLine();
+		};
+
+		auto drawPlanMaterials = [&](auto plan) {
+			auto stacks = plan->materials();
+			int i = 0;
+			for (auto stack: stacks) {
+				IconLabelStrip(i++, itemIconChoose(Item::get(stack.iid)), fmtc("%u", stack.size));
+			}
 		};
 
 		auto drawPlanTags = [&](auto plan) {
@@ -97,12 +114,11 @@ void PlanPopup::draw() {
 						if (rename.active && rename.from == plan->id) {
 							auto rname = std::string(rename.edit);
 
-							if (Button(fmtc("%s##rename-%u", ICON_FA_FLOPPY_O, plan->id), ImVec2(button,0))) {
+							if (Button(fmtc("%s##rename-%u", ICON_FA_CHECK, plan->id), ImVec2(button,0))) {
 								plan->title = rname;
 								rename.active = false;
 								rename.from = 0;
 								scroll = !plan->save ? plan->id: 0;
-								plan->save = true;
 								current = plan->id;
 							}
 							if (IsItemHovered()) tip("Save");
@@ -130,7 +146,6 @@ void PlanPopup::draw() {
 								rename.active = false;
 								rename.from = 0;
 								scroll = !plan->save ? plan->id: 0;
-								plan->save = true;
 								current = plan->id;
 							}
 						}
@@ -151,14 +166,17 @@ void PlanPopup::draw() {
 				TableNextColumn(); {
 					PushFont(Config::sidebar.font.imgui);
 					drawPlanTags(plan);
-					drawPlanIcons(plan);
+					PushStyleColor(ImGuiCol_Text, GetColorU32(Color(0xeeeeeeff)));
+					drawPlanEntities(plan);
+					drawPlanMaterials(plan);
+					PopStyleColor();
 					PopFont();
 				}
 
 				EndTable();
 			}
 
-			SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + margin - GetStyle().CellPadding.y));
+			SetCursorPos(ImVec2(GetCursorPos().x, GetCursorPos().y + margin*0.5));
 
 			auto end = ImVec2(start.x + GetContentRegionAvail().x, GetCursorAbs().y);
 			if (IsWindowHovered() && IsRectVisible(start, end) && IsMouseHoveringRect(start, end) && IsMouseClicked(ImGuiMouseButton_Left)) current = plan->id;
@@ -181,6 +199,7 @@ void PlanPopup::draw() {
 
 			GetWindowDrawList()->ChannelsMerge();
 
+			SpacingV();
 			SpacingV();
 			SpacingV();
 		};
@@ -217,9 +236,6 @@ void PlanPopup::draw() {
 					if (click) it = showTags.erase(it); else ++it;
 				}
 
-				SpacingV();
-				SpacingV();
-				Separator();
 				SpacingV();
 				SpacingV();
 
@@ -329,6 +345,7 @@ void PlanPopup::preview(Plan* plan, ImVec2 size) {
 	auto maxIcon = Config::toolbar.icon.sizes[iconTier(1024)];
 
 	auto white = GetColorU32(Color(0xffffffff));
+	auto offwhite = GetColorU32(Color(0xeeeeeeff));
 
 	struct triangle {
 		Point v0, v1, v2;
@@ -353,7 +370,7 @@ void PlanPopup::preview(Plan* plan, ImVec2 size) {
 		auto p0 = ImVec2(centroid.x + x(v0.x), centroid.y + y(v0.z));
 		auto p1 = ImVec2(centroid.x + x(v1.x), centroid.y + y(v1.z));
 		auto p2 = ImVec2(centroid.x + x(v2.x), centroid.y + y(v2.z));
-		GetWindowDrawList()->AddTriangleFilled(p0, p1, p2, white);
+		GetWindowDrawList()->AddTriangleFilled(p0, p1, p2, offwhite);
 	};
 
 	auto specIcon = [&](Spec* spec, ImVec2 p0, ImVec2 p1) {

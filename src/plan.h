@@ -64,4 +64,6 @@ struct Plan {
 	bool conforms();
 	bool entityFits(Spec *spec, Point pos, Point dir);
 	GuiFakeEntity* central();
+
+	minimap<Stack,&Stack::iid> materials();
 };

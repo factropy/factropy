@@ -176,7 +176,7 @@ Energy Recipe::totalEnergy(std::vector<Recipe*>* path) {
 	return total + energyUsage;
 }
 
-std::vector<Stack> Recipe::totalRawItems(std::vector<Recipe*>* path) {
+minimap<Stack,&Stack::iid> Recipe::totalRawItems(std::vector<Recipe*>* path) {
 	minimap<Stack,&Stack::iid> total;
 	for (auto [iid,count]: inputItems) if (Item::get(iid)->raw) total[iid].size = count;
 
@@ -231,10 +231,10 @@ std::vector<Stack> Recipe::totalRawItems(std::vector<Recipe*>* path) {
 		}
 	}
 
-	return {total.begin(), total.end()};
+	return total;
 }
 
-std::vector<Amount> Recipe::totalRawFluids(std::vector<Recipe*>* path) {
+minimap<Amount,&Amount::fid> Recipe::totalRawFluids(std::vector<Recipe*>* path) {
 	minimap<Amount,&Amount::fid> total;
 	for (auto [fid,count]: inputFluids) if (Fluid::get(fid)->raw) total[fid].size = count;
 
@@ -289,7 +289,7 @@ std::vector<Amount> Recipe::totalRawFluids(std::vector<Recipe*>* path) {
 		}
 	}
 
-	return {total.begin(), total.end()};
+	return total;
 }
 
 bool Recipe::manufacturable() {

@@ -126,7 +126,7 @@ namespace Config {
 		};
 		struct {
 			int size = 0;
-			float sizes[3] = {64,96,128};
+			float sizes[4] = {32,64,96,128};
 		} icon;
 	};
 

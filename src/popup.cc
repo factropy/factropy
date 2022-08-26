@@ -625,6 +625,7 @@ bool Popup::tagPicker(bool open, const std::set<std::string>& tags, bool create)
 
 			TableNextColumn();
 				SetNextItemWidth(-1);
+				if (open) SetKeyboardFocusHere();
 				bool ok = InputTextWithHint("##tag-new", "(new tag)", tagEdit, sizeof(tagEdit), ImGuiInputTextFlags_EnterReturnsTrue);
 				inputFocused = IsItemFocused();
 
