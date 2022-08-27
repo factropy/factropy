@@ -1284,6 +1284,15 @@ Entity& Entity::index() {
 		gridPipesChange.set(aabb, Sim::tick);
 	}
 
+	if (spec->crafter) {
+		for (auto p: crafter().pipeConnections())
+			gridPipesChange.set(p.box().grow(0.1), Sim::tick);
+		for (auto p: crafter().pipeInputConnections())
+			gridPipesChange.set(p.box().grow(0.1), Sim::tick);
+		for (auto p: crafter().pipeOutputConnections())
+			gridPipesChange.set(p.box().grow(0.1), Sim::tick);
+	}
+
 	if (spec->enemyTarget) {
 		gridEnemyTargets.insert(aabb, this);
 	}
