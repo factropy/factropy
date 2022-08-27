@@ -44,16 +44,12 @@ void PlanPopup::draw() {
 
 			int i = 0;
 			for (auto spec: specs) {
-				IconLabelStrip(i++, specIconChoose(spec), fmtc("%u", buckets[spec].count));
+				specStrip(i++, spec, buckets[spec].count);
 			}
 		};
 
 		auto drawPlanMaterials = [&](auto plan) {
-			auto stacks = plan->materials();
-			int i = 0;
-			for (auto stack: stacks) {
-				IconLabelStrip(i++, itemIconChoose(Item::get(stack.iid)), fmtc("%u", stack.size));
-			}
+			stacksStrip(plan->materials());
 		};
 
 		auto drawPlanTags = [&](auto plan) {

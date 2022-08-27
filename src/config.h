@@ -256,6 +256,7 @@ namespace Config {
 		Plan,
 		Paint,
 		Zeppelins,
+		Vehicles,
 		Escape,
 		Save,
 		Build,

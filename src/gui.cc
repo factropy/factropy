@@ -21,6 +21,7 @@ void GUI::init() {
 	planPopup = new PlanPopup();
 	mapPopup = new MapPopup();
 	zeppelinPopup = new ZeppelinPopup();
+	vehiclePopup = new VehiclePopup();
 	paintPopup = new PaintPopup();
 	mainMenu = new MainMenu();
 	debugMenu = new DebugMenu();
@@ -42,6 +43,7 @@ void GUI::reset() {
 	doPlan = false;
 	doMap = false;
 	doZeppelins = false;
+	doVehicles = false;
 	doPaint = false;
 	doEscape = false;
 	doQuit = false;
@@ -64,6 +66,8 @@ void GUI::reset() {
 	mapPopup = nullptr;
 	delete zeppelinPopup;
 	zeppelinPopup = nullptr;
+	delete vehiclePopup;
+	vehiclePopup = nullptr;
 	delete paintPopup;
 	paintPopup = nullptr;
 	delete mainMenu;
@@ -98,6 +102,7 @@ void GUI::prepare() {
 	signalsPopup->prepare();
 	planPopup->prepare();
 	zeppelinPopup->prepare();
+	vehiclePopup->prepare();
 	paintPopup->prepare();
 	mapPopup->prepare();
 	mainMenu->prepare();
@@ -1178,6 +1183,12 @@ void GUI::update() {
 		doZeppelins = true;
 	};
 
+	actionsEnabled.insert(Config::Action::Vehicles);
+
+	auto actionVehicles = [&]() {
+		doVehicles = true;
+	};
+
 	bool selectedPaint = false;
 
 	if (scene.selected.size()) {
@@ -1487,6 +1498,12 @@ void GUI::update() {
 					actionZeppelins();
 				break;
 			}
+			case Action::Vehicles: {
+				//infof("Vehicles");
+				if (worldFocused || popup == vehiclePopup)
+					actionVehicles();
+				break;
+			}
 			case Action::Escape: {
 				//infof("Escape");
 				actionEscape();
@@ -1607,6 +1624,11 @@ void GUI::update() {
 	if (doZeppelins) {
 		doZeppelins = false;
 		togglePopup(zeppelinPopup);
+	}
+
+	if (doVehicles) {
+		doVehicles = false;
+		togglePopup(vehiclePopup);
 	}
 
 	if (doPaint) {

@@ -98,6 +98,8 @@ namespace Config {
 			{ .keysReleased = {SDLK_b}}},
 		{Action::Zeppelins,
 			{ .keysReleased = {SDLK_z}}},
+		{Action::Vehicles,
+			{ .keysReleased = {SDLK_v}}},
 		{Action::Paint,
 			{ .keysReleased = {SDLK_p}}},
 		{Action::Escape,

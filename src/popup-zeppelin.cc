@@ -46,7 +46,7 @@ void ZeppelinPopup::draw() {
 
 				TableNextColumn();
 				if (Button(fmtc(" Goto ##zeppelin-%d", zeppelin.id))) {
-					scene.view(en.pos());
+					scene.view(en.pos(), 300);
 					delete scene.directing;
 					scene.directing = new GuiEntity(&en);
 					show(false);

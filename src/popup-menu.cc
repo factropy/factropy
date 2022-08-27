@@ -134,6 +134,7 @@ void MainMenu::draw() {
 							gui.doZeppelins = true;
 						}
 						if (IsItemHovered()) tip("[Z]");
+						SpacingV();
 
 					TableNextColumn();
 
@@ -143,6 +144,15 @@ void MainMenu::draw() {
 						if (IsItemHovered()) tip(
 							"Custom signals for use in rules and on wifi."
 						);
+						SpacingV();
+
+					TableNextColumn();
+
+						if (Button("Vehicles", ImVec2(-1,0))) {
+							gui.doVehicles = true;
+						}
+
+					TableNextColumn();
 
 					EndTable();
 				}
