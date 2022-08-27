@@ -27,9 +27,7 @@ uint64_t World::memory() {
 }
 
 void World::reset() {
-	std::free(flags);
-	flags = nullptr;
-
+	flags.tiles.clear();
 	tiles.clear();
 	features.clear();
 	changes.clear();
@@ -41,7 +39,9 @@ void World::reset() {
 
 void World::init() {
 	ensure(scenario.size && scenario.size%sizeMin == 0);
-	flags = (char*)std::calloc(size()*size()/8, sizeof(uint8_t));
+
+	flags.tiles.clear();
+	flags.tiles.resize(size()*size()/8, 0);
 
 	int jobs = 0;
 	channel<bool,-1> done;
@@ -160,6 +160,7 @@ void World::init() {
 
 void World::detect() {
 	notef("Sorting terrain tiles...");
+
 	std::sort(tiles.begin(), tiles.end(), [](const auto& a, const auto& b) {
 		return XY(a.x, a.y) < XY(b.x, b.y);
 	});
@@ -178,6 +179,7 @@ void World::detect() {
 	nextLake = -1;
 
 	notef("Locating hills and lakes...");
+
 	for (uint i = 0; i < tiles.size(); i++) {
 		auto tile = &tiles[i];
 		if (tile->feature) continue;
@@ -201,10 +203,17 @@ void World::detect() {
 void World::flood(const XY& first, int id) {
 	ensure(id);
 
-	std::vector<XY> q;
+	std::vector<uint8_t> done(size()*size()/8, 0);
+	std::vector<Tile*> q;
 
 	auto spill = [&](XY at) {
-		if (within(at) && flag(at)) q.push_back(at);
+		if (!within(at)) return;
+
+		if (flag(at, done.data())) return;
+		flag(at, true, done.data());
+
+		auto tile = get(at);
+		if (tile) q.push_back(tile);
 	};
 
 	spill(first);
@@ -215,11 +224,8 @@ void World::flood(const XY& first, int id) {
 	ensure(ftile);
 
 	while (q.size()) {
-		auto at = q.back();
+		auto tile = q.back();
 		q.pop_back();
-
-		auto tile = get(at);
-		ensure(tile);
 
 		if (tile->feature) continue;
 
@@ -230,6 +236,7 @@ void World::flood(const XY& first, int id) {
 		if (lake) ensure(!hill);
 
 		if (hill || lake) {
+			auto at = tile->at();
 			tile->feature = id;
 			spill({at.x-1,at.y-1});
 			spill({at.x-1,at.y+0});
@@ -244,8 +251,6 @@ void World::flood(const XY& first, int id) {
 }
 
 void World::index() {
-//	notef("World: aggregating resources");
-
 	for (uint i = 0; i < tiles.size(); i++) {
 		auto tile = &tiles[i];
 		ensure(tile->feature && features.count(tile->feature));
@@ -332,7 +337,8 @@ void World::load(const char* name) {
 	notef("Found %u tiles with map width %dm x %dm", n, w, w);
 
 	scenario.size = w;
-	flags = (char*)std::calloc(size()*size()/8, sizeof(uint8_t));
+	flags.tiles.clear();
+	flags.tiles.resize(size()*size()/8, 0);
 
 	for (uint i = 0; i < n; i++) {
 		line = *it++;
@@ -483,21 +489,23 @@ float World::blast(const Sphere& s) {
 	return 1000;
 }
 
-bool World::flag(const XY& at) {
+bool World::flag(const XY& at, const uint8_t* buf) {
+	if (!buf) buf = flags.tiles.data();
 	uint slot = (at.x+size()/2) * size() + (at.y+size()/2);
 	uint cell = slot/8;
 	uint shift = slot%8;
-	return flags[cell] & (1<<shift) ? true:false;
+	return buf[cell] & (1<<shift) ? true:false;
 }
 
-bool World::flag(const XY& at, bool state) {
+bool World::flag(const XY& at, bool state, uint8_t* buf) {
+	if (!buf) buf = flags.tiles.data();
 	uint slot = (at.x+size()/2) * size() + (at.y+size()/2);
 	uint cell = slot/8;
 	uint shift = slot%8;
 	if (state) {
-		flags[cell] |= (1<<shift);
+		buf[cell] |= (1<<shift);
 	} else {
-		flags[cell] &= ~(1<<shift);
+		buf[cell] &= ~(1<<shift);
 	}
 	return state;
 }
