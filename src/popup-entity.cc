@@ -727,7 +727,7 @@ void EntityPopup2::draw() {
 							TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
 							TableSetupColumn("Resource", ImGuiTableColumnFlags_WidthStretch);
 							TableSetupColumn("Consumes", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
-							TableSetupColumn("Contains", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
+							TableSetupColumn("Available", ImGuiTableColumnFlags_WidthFixed, width*0.2f);
 
 							TableHeadersRow();
 
