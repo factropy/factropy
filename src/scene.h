@@ -274,7 +274,7 @@ struct Scene {
 	void planDrop();
 	void planPaste();
 
-	void view(Point pos);
+	void view(Point pos, float distance = 0.0f);
 
 	typedef Popup::Texture Texture;
 	Texture loadTexture(const char* path);

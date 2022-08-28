@@ -79,7 +79,7 @@ add_spec({
 	align = false,
 	drone = true,
 	droneSpeed = 0.1,
-	droneCargoSize = 2,
+	droneCargoSize = 3,
 	parts = [
 		{
 			color = 0xffffffff,

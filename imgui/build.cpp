@@ -217,9 +217,12 @@ namespace ImGui {
 			ImVec2 space = GetContentRegionAvail();
 			if (space.x < size.x + GetStyle().ItemSpacing.x) NewLine();
 		}
+		BeginGroup();
 		Image(icon, ImVec2(GetFontSize(), GetFontSize()), ImVec2(0, 1), ImVec2(1, 0));
 		SameLine();
+		SetCursorPos(ImVec2(GetCursorPos().x - GetStyle().ItemSpacing.x, GetCursorPos().y));
 		Print(label);
+		EndGroup();
 	}
 
 	bool SmallButtonInline(const char* label) {

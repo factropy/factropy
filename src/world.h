@@ -112,7 +112,10 @@ struct World {
 		uint64_t tick = 0;
 	};
 
-	char* flags = nullptr;
+	struct {
+		std::vector<uint8_t> tiles;
+	} flags;
+
 	std::vector<Tile> tiles;
 	std::map<int,Feature> features;
 	std::deque<Change> changes;
@@ -124,8 +127,8 @@ struct World {
 	void save(const char* path, channel<bool,3>* tickets);
 	void load(const char* path);
 
-	bool flag(const XY& at);
-	bool flag(const XY& at, bool state);
+	bool flag(const XY& at, const uint8_t* buf = nullptr);
+	bool flag(const XY& at, bool state, uint8_t* buf = nullptr);
 
 	Tile* get(const XY& at);
 	Tile* get(const Point& p);

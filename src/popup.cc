@@ -115,6 +115,7 @@ ImTextureID Popup::itemIconChoose(Item* item, float pix) {
 void Popup::itemIcon(Item* item, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	if (IsItemHovered()) tip(item->title.c_str());
 }
 
 bool Popup::itemIconButton(Item* item, float pix) {
@@ -129,6 +130,7 @@ ImTextureID Popup::fluidIconChoose(Fluid* fluid, float pix) {
 void Popup::fluidIcon(Fluid* fluid, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	if (IsItemHovered()) tip(fluid->title.c_str());
 }
 
 bool Popup::fluidIconButton(Fluid* fluid, float pix) {
@@ -194,6 +196,7 @@ ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
 void Popup::recipeIcon(Recipe* recipe, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	if (IsItemHovered()) tip(recipe->title.c_str());
 }
 
 bool Popup::recipeIconButton(Recipe* recipe, float pix) {
@@ -285,11 +288,73 @@ ImTextureID Popup::specIconChoose(Spec* spec, float pix) {
 void Popup::specIcon(Spec* spec, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	if (IsItemHovered()) tip(spec->title.c_str());
 }
 
 bool Popup::specIconButton(Spec* spec, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	return ImageButton(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+}
+
+void Popup::signalKeyIcon(Signal::Key key, float pix) {
+	pix = (pix < 4.0f) ? GetFontSize(): pix;
+
+	switch (key.type) {
+		case Signal::Type::Stack: {
+			itemIcon(key.item(), pix);
+			break;
+		}
+		case Signal::Type::Amount: {
+			fluidIcon(key.fluid(), pix);
+			break;
+		}
+		case Signal::Type::Virtual: {
+			Print(fmtc("[%s]", key.title().c_str()));
+			break;
+		}
+		case Signal::Type::Special: {
+			switch (key.meta()) {
+				case Signal::Meta::NONE: {
+					Print(ICON_FA_CIRCLE_O);
+					break;
+				}
+				case Signal::Meta::Any: {
+					Print(ICON_FA_DOT_CIRCLE_O);
+					break;
+				}
+				case Signal::Meta::All: {
+					Print(ICON_FA_CIRCLE);
+					break;
+				}
+				case Signal::Meta::Now: {
+					Print(ICON_FA_CLOCK_O);
+					break;
+				}
+			}
+			if (IsItemHovered()) tip(key.title().c_str());
+			break;
+		}
+		case Signal::Type::Label: {
+			Print(ICON_FA_PENCIL);
+			if (IsItemHovered()) tip(key.id ? fmt("Custom: %s", Signal::findLabel(key.id)->name): "(none)");
+			break;
+		}
+	}
+}
+
+void Popup::stackStrip(int i, const Stack& stack) {
+	auto item = Item::get(stack.iid);
+	IconLabelStrip(i, itemIconChoose(item), fmtc("%u", stack.size));
+	if (IsItemHovered()) tip(item->title.c_str());
+}
+
+void Popup::stacksStrip(const minivec<Stack>& stacks) {
+	int i = 0; for (auto& stack: stacks) stackStrip(i++, stack);
+}
+
+void Popup::specStrip(int i, Spec* spec, uint count) {
+	IconLabelStrip(i, specIconChoose(spec), fmtc("%u", count));
+	if (IsItemHovered()) tip(spec->title.c_str());
 }
 
 uint Popup::itemPicker(bool open, std::function<bool(Item*)> show) {

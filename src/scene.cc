@@ -161,15 +161,16 @@ void Scene::prepare() {
 	GuiEntity::prepareCaches();
 }
 
-void Scene::view(Point pos) {
+void Scene::view(Point pos, float distance) {
 	pos.x = std::min(pos.x,  (real)world.scenario.size/2);
 	pos.x = std::max(pos.x, -(real)world.scenario.size/2);
 	pos.z = std::min(pos.z,  (real)world.scenario.size/2);
 	pos.z = std::max(pos.z, -(real)world.scenario.size/2);
 
 	jump.target = pos.floor(0.0);
+	if (distance < 1) distance = 300;
 
-	auto from = (Point::South + Point::Up).normalize() * 300.0f;
+	auto from = (Point::South + Point::Up*1.5).normalize() * distance;
 	jump.position = jump.target + from;
 
 	selecting = false;

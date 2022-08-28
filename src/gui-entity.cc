@@ -297,11 +297,11 @@ void GuiEntity::loadCart() {
 			break;
 		}
 		auto& cart = Cart::get(id);
-		if (!isEnabled()) status = Status::Warning;
-		else if (cart.halt) status = Status::Alert;
-		else if (cart.lost) status = Status::Warning;
-		else if (cart.fueled < 0.99) status = Status::Warning;
-		else status = Status::Ok;
+
+		if (cart.state == Cart::State::Travel && cart.halt) status = Status::Warning;
+		else if (cart.state == Cart::State::Travel) status = Status::Ok;
+		else status = Status::Alert;
+
 		cartLine = cart.line;
 
 		if (cart.blocked) flags |= BLOCKED;

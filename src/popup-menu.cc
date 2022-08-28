@@ -49,9 +49,10 @@ void MainMenu::draw() {
 
 					TableNextColumn();
 
-						if (Button("Save [F5]", ImVec2(-1,0))) {
+						if (Button("Save", ImVec2(-1,0))) {
 							gui.doSave = true;
 						}
+						if (IsItemHovered()) tip("[F5] Background save current game");
 
 					TableNextColumn();
 
@@ -97,12 +98,10 @@ void MainMenu::draw() {
 
 					TableNextColumn();
 
-						if (Button("Signals", ImVec2(-1,0))) {
-							gui.doSignals = true;
+						if (Button("Log", ImVec2(-1,0))) {
+							gui.doLog = true;
 						}
-						if (IsItemHovered()) tip(
-							"Custom signals for use in rules and on wifi."
-						);
+						if (IsItemHovered()) tip("[`] (back tick) log window");
 						SpacingV();
 
 					TableNextColumn();
@@ -115,15 +114,36 @@ void MainMenu::draw() {
 
 					TableNextColumn();
 
-						if (Button("Zeppelins [Z]", ImVec2(-1,0))) {
-							gui.doZeppelins = true;
+						if (Button("Map", ImVec2(-1,0))) {
+							gui.doMap = true;
+						}
+						if (IsItemHovered()) tip("[M]");
+						SpacingV();
+
+					TableNextColumn();
+
+						if (Button("Blueprints", ImVec2(-1,0))) {
+							gui.doPlan = true;
+						}
+						if (IsItemHovered()) tip("[B]");
+						SpacingV();
+
+					TableNextColumn();
+
+						if (Button("Vehicles", ImVec2(-1,0))) {
+							gui.doVehicles = true;
 						}
 
 					TableNextColumn();
 
-						if (Button("Map [M]", ImVec2(-1,0))) {
-							gui.doMap = true;
+						if (Button("Signals", ImVec2(-1,0))) {
+							gui.doSignals = true;
 						}
+						if (IsItemHovered()) tip(
+							"Custom signals for use in rules and on wifi."
+						);
+
+					TableNextColumn();
 
 					EndTable();
 				}
@@ -591,8 +611,8 @@ void MainMenu::draw() {
 				display("Log", Config::controls[Config::Action::Log],
 					"Open the log window."
 				);
-				display("Zeppelins", Config::controls[Config::Action::Zeppelins],
-					"Open the Zeppelins window."
+				display("Vehicles", Config::controls[Config::Action::Vehicles],
+					"Open the Vehicles window."
 				);
 
 				EndTabItem();

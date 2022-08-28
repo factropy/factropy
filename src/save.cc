@@ -2559,7 +2559,10 @@ void Tube::saveAll(const char* name) {
 		state["id"] = tube.id;
 		state["next"] = tube.next;
 		state["length"] = tube.length;
-		state["accepted"] = tube.accepted;
+
+		if (tube.accepted) {
+			state["accepted"] = Save::itemOut(tube.accepted);
+		}
 
 		auto mode = [&](Mode m) {
 			switch (m) {
@@ -2600,8 +2603,9 @@ void Tube::loadAll(const char* name) {
 		tube.next = state["next"];
 		tube.length = state["length"];
 
-		if (state.contains("accepted")) {
-			tube.accepted = state["accepted"];
+		// corrupted saves 0.2.7
+		if (state.contains("accepted") && state["accepted"].is_string() && Item::names.count(state["accepted"])) {
+			tube.accepted = Save::itemIn(state["accepted"]);
 		}
 
 		auto mode = [&](std::string m) {

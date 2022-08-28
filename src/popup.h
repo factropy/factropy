@@ -46,6 +46,12 @@ struct Popup {
 	static void specIcon(Spec* spec, float pix = 0);
 	static bool specIconButton(Spec* spec, float pix = 0);
 
+	static void signalKeyIcon(Signal::Key key, float pix = 0);
+
+	static void stackStrip(int i, const Stack& stack);
+	static void stacksStrip(const minivec<Stack>& stacks);
+	static void specStrip(int i, Spec* spec, uint count);
+
 	Recipe* recipePicked = nullptr;
 	Recipe* recipePicker(bool open, std::function<bool(Recipe*)> show = nullptr);
 
@@ -233,9 +239,9 @@ struct PlanPopup : Popup {
 	void preview(Plan* plan, ImVec2 size);
 };
 
-struct ZeppelinPopup : Popup {
-	ZeppelinPopup();
-	~ZeppelinPopup();
+struct VehiclePopup : Popup {
+	VehiclePopup();
+	~VehiclePopup();
 	void draw() override;
 };
 

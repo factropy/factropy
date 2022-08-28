@@ -19,7 +19,7 @@ struct GUI {
 	bool doSignals = false;
 	bool doPlan = false;
 	bool doMap = false;
-	bool doZeppelins = false;
+	bool doVehicles = false;
 	bool doPaint = false;
 	bool doEscape = false;
 	bool doQuit = false;
@@ -33,7 +33,7 @@ struct GUI {
 	SignalsPopup* signalsPopup = nullptr;
 	PlanPopup* planPopup = nullptr;
 	MapPopup* mapPopup = nullptr;
-	ZeppelinPopup* zeppelinPopup = nullptr;
+	VehiclePopup* vehiclePopup = nullptr;
 	PaintPopup* paintPopup = nullptr;
 	MainMenu* mainMenu = nullptr;
 	DebugMenu* debugMenu = nullptr;

@@ -39,7 +39,11 @@ void HUD::draw() {
 	} hovered;
 
 	Goal* goal = Goal::current();
-	auto estate = ElectricityNetwork::aggregate();
+	ElectricityNetworkState estate;
+
+	Sim::locked([&]() {
+		estate = ElectricityNetwork::aggregate();
+	});
 
 	Begin("##hud", nullptr, flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
 		PushFont(Config::hud.font.imgui);
@@ -54,12 +58,10 @@ void HUD::draw() {
 
 			BeginGroup();
 			Print("Electricity:"); SameLine();
-			Sim::locked([&]() {
 				auto capacity = estate.capacityReady; // + estate.capacityBufferedReady;
 				PrintRight(fmtc("%s / %s", estate.demand.formatRate(), capacity.formatRate()));
 				OverflowBar(estate.demand.portion(capacity), ImColorSRGB(0x00aa00ff), ImColorSRGB(0xff0000ff));
 				OverflowBar(estate.bufferedLevel.portion(estate.bufferedLimit), ImColorSRGB(0xffff00ff), ImColorSRGB(0x9999ddff));
-			});
 			EndGroup();
 			hovered.electricity = IsItemHovered();
 
