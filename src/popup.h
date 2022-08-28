@@ -239,12 +239,6 @@ struct PlanPopup : Popup {
 	void preview(Plan* plan, ImVec2 size);
 };
 
-struct ZeppelinPopup : Popup {
-	ZeppelinPopup();
-	~ZeppelinPopup();
-	void draw() override;
-};
-
 struct VehiclePopup : Popup {
 	VehiclePopup();
 	~VehiclePopup();

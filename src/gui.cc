@@ -20,7 +20,6 @@ void GUI::init() {
 	signalsPopup = new SignalsPopup();
 	planPopup = new PlanPopup();
 	mapPopup = new MapPopup();
-	zeppelinPopup = new ZeppelinPopup();
 	vehiclePopup = new VehiclePopup();
 	paintPopup = new PaintPopup();
 	mainMenu = new MainMenu();
@@ -42,7 +41,6 @@ void GUI::reset() {
 	doSignals = false;
 	doPlan = false;
 	doMap = false;
-	doZeppelins = false;
 	doVehicles = false;
 	doPaint = false;
 	doEscape = false;
@@ -64,8 +62,6 @@ void GUI::reset() {
 	planPopup = nullptr;
 	delete mapPopup;
 	mapPopup = nullptr;
-	delete zeppelinPopup;
-	zeppelinPopup = nullptr;
 	delete vehiclePopup;
 	vehiclePopup = nullptr;
 	delete paintPopup;
@@ -101,7 +97,6 @@ void GUI::prepare() {
 	upgradePopup->prepare();
 	signalsPopup->prepare();
 	planPopup->prepare();
-	zeppelinPopup->prepare();
 	vehiclePopup->prepare();
 	paintPopup->prepare();
 	mapPopup->prepare();
@@ -1177,12 +1172,6 @@ void GUI::update() {
 		doMap = true;
 	};
 
-	actionsEnabled.insert(Config::Action::Zeppelins);
-
-	auto actionZeppelins = [&]() {
-		doZeppelins = true;
-	};
-
 	actionsEnabled.insert(Config::Action::Vehicles);
 
 	auto actionVehicles = [&]() {
@@ -1492,12 +1481,6 @@ void GUI::update() {
 					actionPaint();
 				break;
 			}
-			case Action::Zeppelins: {
-				//infof("Zeppelins");
-				if (worldFocused || popup == zeppelinPopup)
-					actionZeppelins();
-				break;
-			}
 			case Action::Vehicles: {
 				//infof("Vehicles");
 				if (worldFocused || popup == vehiclePopup)
@@ -1619,11 +1602,6 @@ void GUI::update() {
 	if (doMap) {
 		doMap = false;
 		togglePopup(mapPopup);
-	}
-
-	if (doZeppelins) {
-		doZeppelins = false;
-		togglePopup(zeppelinPopup);
 	}
 
 	if (doVehicles) {

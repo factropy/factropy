@@ -130,11 +130,9 @@ void MainMenu::draw() {
 
 					TableNextColumn();
 
-						if (Button("Zeppelins", ImVec2(-1,0))) {
-							gui.doZeppelins = true;
+						if (Button("Vehicles", ImVec2(-1,0))) {
+							gui.doVehicles = true;
 						}
-						if (IsItemHovered()) tip("[Z]");
-						SpacingV();
 
 					TableNextColumn();
 
@@ -144,13 +142,6 @@ void MainMenu::draw() {
 						if (IsItemHovered()) tip(
 							"Custom signals for use in rules and on wifi."
 						);
-						SpacingV();
-
-					TableNextColumn();
-
-						if (Button("Vehicles", ImVec2(-1,0))) {
-							gui.doVehicles = true;
-						}
 
 					TableNextColumn();
 
@@ -620,8 +611,8 @@ void MainMenu::draw() {
 				display("Log", Config::controls[Config::Action::Log],
 					"Open the log window."
 				);
-				display("Zeppelins", Config::controls[Config::Action::Zeppelins],
-					"Open the Zeppelins window."
+				display("Vehicles", Config::controls[Config::Action::Vehicles],
+					"Open the Vehicles window."
 				);
 
 				EndTabItem();
