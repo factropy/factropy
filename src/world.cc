@@ -287,6 +287,9 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 	auto tilesSave = tiles;
 	auto path = std::string(name);
 
+	Fluid* oil = Fluid::names["oil"];
+	ensure(oil);
+
 	crew2.job([=]() {
 		deflation def;
 		def.push(fmt("%u", (uint)tilesSave.size()));
@@ -296,7 +299,7 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 				tile.elevation,
 				tile.x,
 				tile.y,
-				tile.resource ? Item::get(tile.resource)->name: "_",
+				tile.resource ? (tile.elevation < 0 ? oil->name: Item::get(tile.resource)->name): "_",
 				tile.count
 			));
 		}
@@ -340,6 +343,9 @@ void World::load(const char* name) {
 	flags.tiles.clear();
 	flags.tiles.resize(size()*size()/8, 0);
 
+	Fluid* oil = Fluid::names["oil"];
+	ensure(oil);
+
 	for (uint i = 0; i < n; i++) {
 		line = *it++;
 		linetmp();
@@ -356,7 +362,7 @@ void World::load(const char* name) {
 		while (!isspace(*ptr)) ptr++;
 		char *end = ptr;
 		auto name = std::string(start, end-start);
-		uint resource = name == "_" ? 0: Item::byName(name)->id;
+		uint resource = name == "_" ? 0: (elevation < 0 ? oil->id: Item::byName(name)->id);
 		ensure(isspace(*ptr));
 		uint count = strtoul(++ptr, &ptr, 10);
 		ensure(!*ptr);
