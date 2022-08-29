@@ -652,7 +652,8 @@ int main(int argc, char* argv[]) {
 
 	auto glewErr = glewInit();
 
-	ensuref(glewErr == GLEW_OK, fmtc(
+	// Glew on Wayland tries to use GLX https://github.com/nigels-com/glew/issues/172
+	ensuref(glewErr == GLEW_OK || glewErr == GLEW_ERROR_NO_GLX_DISPLAY, fmtc(
 		"GLEW setup is failing with this error: \"%s\".\r\n"
 		"Ensure your graphics driver is up to date with support for OpenGL 4.4.\r\n",
 		(char*)glewGetErrorString(glewErr)
