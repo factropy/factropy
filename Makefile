@@ -34,7 +34,7 @@ linux2-x11: glew/glew-x11.o $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy glew/glew-x11.o $(DEPS) $(OBJECTS) $(LFLAGS)
 
 linux2-wayland: CFLAGS=-Wall -std=c++17 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
-linux2-wayland: LFLAGS=-lOpenGL $(DEPS_LFLAGS) -ldl -pthread
+linux2-wayland: LFLAGS=-lOpenGL -lEGL $(DEPS_LFLAGS) -ldl -pthread
 linux2-wayland: glew/glew-wayland.o $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy glew/glew-wayland.o $(DEPS) $(OBJECTS) $(LFLAGS)
 

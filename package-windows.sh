@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 make clean
 rm -rf factropy-windows*
 
