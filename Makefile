@@ -19,29 +19,34 @@ CC=gcc
 CPP=g++
 OBJECTS=$(shell ls -1 src/*.cc | sed 's/cc$$/o/g')
 
-DEPS=glew/glew.o imgui/imgui.o src/sdeflinfl.o src/par_shapes.o
+DEPS=imgui/imgui.o src/sdeflinfl.o src/par_shapes.o
 DEPS_CFLAGS=$(shell sdl2-config --cflags) $(shell pkg-config --cflags freetype2)
 DEPS_LFLAGS=$(shell sdl2-config --libs) $(shell pkg-config --libs freetype2)
 
-dev2: CFLAGS=-Wall -std=c++17 -Og -g1 -gz -femit-struct-debug-reduced $(DEPS_CFLAGS) -rdynamic
-dev2: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
-dev2: $(DEPS) $(OBJECTS)
-	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
+dev2-x11: CFLAGS=-Wall -std=c++17 -Og -g1 -gz -femit-struct-debug-reduced $(DEPS_CFLAGS) -rdynamic
+dev2-x11: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
+dev2-x11: glew/glew-x11.o $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy glew/glew-x11.o $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2: CFLAGS=-Wall -std=c++17 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
-linux2: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
-linux2: $(DEPS) $(OBJECTS)
-	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
+linux2-x11: CFLAGS=-Wall -std=c++17 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
+linux2-x11: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
+linux2-x11: glew/glew-x11.o $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy glew/glew-x11.o $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2PGOa: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-generate
-linux2PGOa: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
-linux2PGOa: $(DEPS) $(OBJECTS)
-	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
+linux2-wayland: CFLAGS=-Wall -std=c++17 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
+linux2-wayland: LFLAGS=-lOpenGL $(DEPS_LFLAGS) -ldl -pthread
+linux2-wayland: glew/glew-wayland.o $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy glew/glew-wayland.o $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2PGOb: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-use -fprofile-correction
-linux2PGOb: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread -lgcov
-linux2PGOb: $(DEPS) $(OBJECTS)
-	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
+linux2PGOa-x11: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-generate
+linux2PGOa-x11: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
+linux2PGOa-x11: $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy glew/glew-x11.o $(DEPS) $(OBJECTS) $(LFLAGS)
+
+linux2PGOb-x11: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-use -fprofile-correction
+linux2PGOb-x11: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread -lgcov
+linux2PGOb-x11: $(DEPS) $(OBJECTS)
+	$(CPP) $(CFLAGS) -o factropy glew/glew-x11.o $(DEPS) $(OBJECTS) $(LFLAGS)
 
 main.o: src/main.cc src/*.h
 	$(CPP) $(CFLAGS) -c $< -o $@
@@ -61,16 +66,21 @@ src/par_shapes.o: CFLAGS=-O3 -std=c11 -DNDEBUG
 src/par_shapes.o: src/par_shapes.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-glew/glew.o: CFLAGS=-O3 -std=c11 -DNDEBUG
-glew/glew.o: glew/glew.c
-	$(CC) $(CFLAGS) -c $< -o $@
+glew/glew-x11.o: CFLAGS=-O3 -std=c11 -DNDEBUG
+glew/glew-x11.o: glew/glew.c
+	$(CC) $(CFLAGS) -c $< -o glew/glew-x11.o
+
+glew/glew-wayland.o: CFLAGS=-O3 -std=c11 -DNDEBUG -DGLEW_EGL
+glew/glew-wayland.o: glew/glew.c
+	$(CC) $(CFLAGS) -c $< -o glew/glew-wayland.o
 
 clean:
 	rm -f factropy factropy-test
 	rm -rf build
 	rm -f src/*.o test/*.o
 	rm -f imgui/imgui.o
-	rm -f glew/glew.o
+	rm -f glew/glew-x11.o
+	rm -f glew/glew-wayland.o
 	rm -f src/*.gcda
 
 cleanPGOa:
