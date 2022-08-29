@@ -198,7 +198,7 @@ namespace Config {
 	void profile();
 	void imgui();
 	float scale();
-	void autoscale(SDL_Window*);
+	void autoscale();
 
 	float width(float r);
 	float height(float r);

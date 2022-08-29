@@ -22,6 +22,8 @@ OBJECTS=$(shell ls -1 src/*.cc | sed 's/cc$$/o/g')
 DEPS=glew/glew.o imgui/imgui.o src/sdeflinfl.o src/par_shapes.o
 DEPS_CFLAGS=$(shell sdl2-config --cflags) $(shell pkg-config --cflags freetype2)
 DEPS_LFLAGS=$(shell sdl2-config --libs) $(shell pkg-config --libs freetype2)
+#DEPS_CFLAGS=-I$(HOME)/src/SDL/include -D_REENTRANT $(shell pkg-config --cflags freetype2)
+#DEPS_LFLAGS=-L$(HOME)/src/SDL/build/.libs -lSDL2 $(shell pkg-config --libs freetype2)
 
 dev2: CFLAGS=-Wall -std=c++17 -Og -g1 -gz -femit-struct-debug-reduced $(DEPS_CFLAGS) -rdynamic
 dev2: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread

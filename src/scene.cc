@@ -274,8 +274,9 @@ void Scene::updateMouse() {
 	MouseState last = mouse;
 	if (SDL_GetMouseFocus() != sdlWindow()) return;
 
-	int mx, my;
-	uint32_t buttons = SDL_GetMouseState(&mx, &my);
+	auto xy = ImGui::GetIO().MousePos;
+	int mx = xy.x;
+	int my = xy.y;
 
 	mouse.x = mx;
 	mouse.y = my;
@@ -296,9 +297,9 @@ void Scene::updateMouse() {
 	mouse.right = last.right;
 	mouse.middle = last.middle;
 
-	mouse.left.down = 0 != (buttons & SDL_BUTTON_LMASK);
-	mouse.right.down = 0 != (buttons & SDL_BUTTON_RMASK);
-	mouse.middle.down = 0 != (buttons & SDL_BUTTON_MMASK);
+	mouse.left.down = ImGui::IsMouseDown(ImGuiMouseButton_Left);
+	mouse.right.down = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+	mouse.middle.down = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
 
 	mouse.left.changed = last.left.down != mouse.left.down;
 	mouse.right.changed = last.right.down != mouse.right.down;

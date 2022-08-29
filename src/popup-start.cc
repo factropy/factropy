@@ -91,7 +91,7 @@ void StartScreen::draw() {
 			if (Button(" Video ", ImVec2(-1,button))) screen = Screen::Video;
 			PopStyleColor();
 
-			if (Button(" Exit ", ImVec2(-1,button))) exit(0);
+			if (Button(" Exit ", ImVec2(-1,button))) quit = true;
 
 			EndChild();
 

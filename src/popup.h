@@ -90,6 +90,7 @@ struct Popup {
 struct StartScreen : Popup {
 	Texture banner;
 	minivec<bool> games;
+	bool quit = false;
 
 	struct {
 		char edit[50];

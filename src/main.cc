@@ -250,20 +250,10 @@ void game() {
 
 	SDL_Event event;
 	while (!readyScenario || !readyIcons || !readyChunks) {
-		// Ubuntu + Gnome3 + SDL_WINDOW_FULLSCREEN_DESKTOP + amdgpu + SDL 2.0.10
-		// has a race condition that causes the first call to SDL_GL_MakeCurrent
-		// to produce a viewport with a gap at the top the size of the Gnome top
-		// bar + a non-fullscreen window titlebar. Calling it again during
-		// loading realigns the viewport.
-		ensuref(0 == SDL_GL_MakeCurrent(window, context), fmtc(
-			"SDL_GL_MakeCurrent failed with: \"%s\"",
-			SDL_GetError()
-		));
-
 		while (SDL_PollEvent(&event))
 			ImGui_ImplSDL2_ProcessEvent(&event);
 
-		Config::autoscale(window);
+		Config::autoscale();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame(window);
@@ -397,7 +387,7 @@ void game() {
 	auto& io = ImGui::GetIO();
 
 	while (run && !quit) {
-		Config::autoscale(window);
+		Config::autoscale();
 
 		gui.focused = io.WantCaptureMouse || io.WantCaptureKeyboard;
 		scene.focused = !gui.focused;
@@ -523,18 +513,8 @@ void menu() {
 	bool run = true;
 	auto screen = new StartScreen();
 
-	while (run && !quit) {
-		// Ubuntu + Gnome3 + SDL_WINDOW_FULLSCREEN_DESKTOP + amdgpu + SDL 2.0.10
-		// has a race condition that causes the first call to SDL_GL_MakeCurrent
-		// to produce a viewport with a gap at the top the size of the Gnome top
-		// bar + a non-fullscreen window titlebar. Calling it again during
-		// loading realigns the viewport.
-		ensuref(0 == SDL_GL_MakeCurrent(window, context), fmtc(
-			"SDL_GL_MakeCurrent failed with: \"%s\"",
-			SDL_GetError()
-		));
-
-		Config::autoscale(window);
+	while (run && !quit && !screen->quit) {
+		Config::autoscale();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplSDL2_NewFrame(window);
@@ -705,6 +685,8 @@ int main(int argc, char* argv[]) {
 	scene.initGL();
 	menu();
 
+	Config::save();
+
 	ImPlot::DestroyContext();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
@@ -713,8 +695,6 @@ int main(int argc, char* argv[]) {
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-
-	Config::save();
 
 	crew.stop();
 	crew2.stop();
