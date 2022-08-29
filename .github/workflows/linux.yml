@@ -19,13 +19,21 @@ jobs:
         sudo apt install -yq build-essential gcc-9 g++-9 cmake libasound2-dev mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev libsdl2-dev libsdl2-ttf-dev libglm-dev
     - name: gcc
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
-    - name: make
-      run: ./package-linux.sh
-    - name: factropy-linux
+    - name: make x11
+      run: ./package-linux-x11.sh
+    - name: factropy-linux-x11
       uses: actions/upload-artifact@v2
       with:
-        name: factropy-linux
-        path: factropy-linux.zip
+        name: factropy-linux-x11
+        path: factropy-linux-x11.zip
+        retention-days: 1
+    - name: make wayland
+      run: ./package-linux-wayland.sh
+    - name: factropy-linux-wayland
+      uses: actions/upload-artifact@v2
+      with:
+        name: factropy-linux-wayland
+        path: factropy-linux-wayland.zip
         retention-days: 1
 
 
