@@ -249,7 +249,7 @@ void ImGui_ImplSDL2_Shutdown()
     IM_DELETE(bd);
 }
 
-static void ImGui_ImplSDL2_UpdateMousePosAndButtons()
+static void ImGui_ImplSDL2_UpdateMousePosAndButtons(ImVec2 scale)
 {
     ImGui_ImplSDL2_Data* bd = ImGui_ImplSDL2_GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
@@ -260,6 +260,17 @@ static void ImGui_ImplSDL2_UpdateMousePosAndButtons()
     // Update mouse buttons
     int mouse_x_local, mouse_y_local;
     Uint32 mouse_buttons = SDL_GetMouseState(&mouse_x_local, &mouse_y_local);
+
+    // wayland
+    if (!bd->MouseCanUseGlobalState) {
+        int wx, wy;
+        SDL_GetWindowPosition(bd->Window, &wx, &wy);
+        mouse_x_local -= wx;
+        mouse_y_local -= wy;
+        mouse_x_local = (float)mouse_x_local * scale.x;
+        mouse_y_local = (float)mouse_y_local * scale.y;
+    }
+
     io.MouseDown[0] = bd->MousePressed[0] || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;  // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
     io.MouseDown[1] = bd->MousePressed[1] || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
     io.MouseDown[2] = bd->MousePressed[2] || (mouse_buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
@@ -375,15 +386,24 @@ void ImGui_ImplSDL2_NewFrame()
     ImGuiIO& io = ImGui::GetIO();
 
     // Setup display size (every frame to accommodate for window resizing)
+//    int w, h;
+//    int display_w, display_h;
+//    SDL_GetWindowSize(bd->Window, &w, &h);
+//    if (SDL_GetWindowFlags(bd->Window) & SDL_WINDOW_MINIMIZED)
+//        w = h = 0;
+//    SDL_GL_GetDrawableSize(bd->Window, &display_w, &display_h);
+//    io.DisplaySize = ImVec2((float)w, (float)h);
+//    if (w > 0 && h > 0)
+//        io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
+
     int w, h;
-    int display_w, display_h;
-    SDL_GetWindowSize(bd->Window, &w, &h);
-    if (SDL_GetWindowFlags(bd->Window) & SDL_WINDOW_MINIMIZED)
-        w = h = 0;
-    SDL_GL_GetDrawableSize(bd->Window, &display_w, &display_h);
+    SDL_GL_GetDrawableSize(bd->Window, &w, &h);
+    if (SDL_GetWindowFlags(bd->Window) & SDL_WINDOW_MINIMIZED) w = h = 0;
     io.DisplaySize = ImVec2((float)w, (float)h);
-    if (w > 0 && h > 0)
-        io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
+
+    int ww, wh;
+    SDL_GetWindowSize(bd->Window, &ww, &wh);
+    auto scale = ImVec2((float)w/(float)ww, (float)h/(float)wh);
 
     // Setup time step (we don't use SDL_GetTicks() because it is using millisecond resolution)
     static Uint64 frequency = SDL_GetPerformanceFrequency();
@@ -391,7 +411,7 @@ void ImGui_ImplSDL2_NewFrame()
     io.DeltaTime = bd->Time > 0 ? (float)((double)(current_time - bd->Time) / frequency) : (float)(1.0f / 60.0f);
     bd->Time = current_time;
 
-    ImGui_ImplSDL2_UpdateMousePosAndButtons();
+    ImGui_ImplSDL2_UpdateMousePosAndButtons(scale);
     ImGui_ImplSDL2_UpdateMouseCursor();
 
     // Update game controllers (if enabled and available)

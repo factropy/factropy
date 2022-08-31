@@ -242,6 +242,7 @@ void PartSmoke::update() {
 }
 
 void PartSmoke::instanceSpec(GLuint group, float distance, const Mat4& trx, Spec* spec, uint slot, uint state, Point aim, Color ccolor, Recipe* recipe) {
+	if (!Config::mode.particles) return;
 	if (!specShow(spec, slot, state)) return;
 	if (distance > Config::window.levelsOfDetail[Part::HD]) return;
 

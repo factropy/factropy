@@ -220,6 +220,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = true;
 						Config::mode.treebreeze = true;
 						Config::mode.filters = true;
+						Config::mode.particles = true;
 						saveConfig();
 					}
 
@@ -238,6 +239,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = true;
 						Config::mode.treebreeze = true;
 						Config::mode.filters = true;
+						Config::mode.particles = true;
 						saveConfig();
 					}
 
@@ -256,6 +258,7 @@ void MainMenu::draw() {
 						Config::mode.waterwaves = false;
 						Config::mode.treebreeze = false;
 						Config::mode.filters = false;
+						Config::mode.particles = false;
 						saveConfig();
 					}
 
@@ -363,6 +366,11 @@ void MainMenu::draw() {
 				saveConfig(Checkbox("Procedural Textures", &Config::mode.filters));
 				if (IsItemHovered()) tip(
 					"Close-up surface effects on concrete and metal. Slightly increases GPU load."
+				);
+
+				saveConfig(Checkbox("Particle Emitters", &Config::mode.particles));
+				if (IsItemHovered()) tip(
+					"Furnace, Boiler and Oil refinery exhaust particles increase GPU load."
 				);
 
 				saveConfig(Checkbox("MSAA", &Config::window.antialias));

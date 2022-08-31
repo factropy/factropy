@@ -305,6 +305,10 @@ namespace Config {
 		if (state.contains("/mode/overlayFPS"_json_pointer)) {
 			Config::mode.overlayFPS = state["mode"]["overlayFPS"];
 		}
+
+		if (state.contains("/mode/particles"_json_pointer)) {
+			Config::mode.particles = state["mode"]["particles"];
+		}
 	}
 
 	void save() {
@@ -344,6 +348,7 @@ namespace Config {
 		state["mode"]["filters"] = Config::mode.filters;
 		state["mode"]["overlayUPS"] = Config::mode.overlayUPS;
 		state["mode"]["overlayFPS"] = Config::mode.overlayFPS;
+		state["mode"]["particles"] = Config::mode.particles;
 
 		auto out = std::ofstream(dataPath("state.json"));
 		out << state;
@@ -355,6 +360,7 @@ namespace Config {
 
 	void sdl() {
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
@@ -376,18 +382,15 @@ namespace Config {
 		engine.sceneInstancingThreads = 2;
 		engine.sceneInstancingItemsThreads = 2;
 
+		// scene threads + simulation + margin
+		engine.threads = 16;
+
 		if (engine.cores > 4) {
 			engine.sceneLoadingThreads = 4;
 			engine.sceneInstancingThreads = 4;
 			engine.sceneInstancingItemsThreads = 4;
+			engine.threads = 32;
 		}
-
-		engine.threads = 0
-			+ engine.sceneLoadingThreads
-			+ engine.sceneInstancingThreads
-			+ engine.sceneInstancingItemsThreads;
-
-		engine.threads *= 2;
 	}
 
 	float scale() {
@@ -447,16 +450,16 @@ namespace Config {
 
 	// ImGUI has font scaling, but it works on the initial glyph bitmaps and can look a bit crap
 	// Regenerate the font atlas on window resize instead
-	void autoscale(SDL_Window* win) {
+	void autoscale() {
 		int w = 0, h = 0;
-		SDL_GetWindowSize(win, &w, &h);
+		SDL_GL_GetDrawableSize(sdlWindow(), &w, &h);
 		bool rescale = w != window.width;
 
 		int hr = BASELINE_WINDOW_HEIGHT * ((float)w/BASELINE_WINDOW_WIDTH);
 		if (!window.resizable && !window.fullscreen && h != hr) {
 			h = hr;
 			rescale = true;
-			SDL_SetWindowSize(win, w, h);
+			SDL_SetWindowSize(sdlWindow(), w, h);
 		}
 
 		if (rescale) {

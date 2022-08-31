@@ -176,6 +176,7 @@ namespace Config {
 		bool overlayFPS = true;
 		bool overlayDebug = false;
 		bool skyBlocks = false;
+		bool particles = true;
 
 		int world = 0;
 	};
@@ -198,7 +199,7 @@ namespace Config {
 	void profile();
 	void imgui();
 	float scale();
-	void autoscale(SDL_Window*);
+	void autoscale();
 
 	float width(float r);
 	float height(float r);
