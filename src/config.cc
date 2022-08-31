@@ -305,6 +305,10 @@ namespace Config {
 		if (state.contains("/mode/overlayFPS"_json_pointer)) {
 			Config::mode.overlayFPS = state["mode"]["overlayFPS"];
 		}
+
+		if (state.contains("/mode/particles"_json_pointer)) {
+			Config::mode.particles = state["mode"]["particles"];
+		}
 	}
 
 	void save() {
@@ -344,6 +348,7 @@ namespace Config {
 		state["mode"]["filters"] = Config::mode.filters;
 		state["mode"]["overlayUPS"] = Config::mode.overlayUPS;
 		state["mode"]["overlayFPS"] = Config::mode.overlayFPS;
+		state["mode"]["particles"] = Config::mode.particles;
 
 		auto out = std::ofstream(dataPath("state.json"));
 		out << state;

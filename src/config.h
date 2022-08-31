@@ -176,6 +176,7 @@ namespace Config {
 		bool overlayFPS = true;
 		bool overlayDebug = false;
 		bool skyBlocks = false;
+		bool particles = true;
 
 		int world = 0;
 	};
