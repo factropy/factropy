@@ -382,18 +382,15 @@ namespace Config {
 		engine.sceneInstancingThreads = 2;
 		engine.sceneInstancingItemsThreads = 2;
 
+		// scene threads + simulation + margin
+		engine.threads = 16;
+
 		if (engine.cores > 4) {
 			engine.sceneLoadingThreads = 4;
 			engine.sceneInstancingThreads = 4;
 			engine.sceneInstancingItemsThreads = 4;
+			engine.threads = 32;
 		}
-
-		engine.threads = 0
-			+ engine.sceneLoadingThreads
-			+ engine.sceneInstancingThreads
-			+ engine.sceneInstancingItemsThreads;
-
-		engine.threads *= 2;
 	}
 
 	float scale() {
