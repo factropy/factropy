@@ -89,11 +89,7 @@ struct GuiEntity {
 	monorailState* monorail = nullptr;
 
 	struct powerpoleState {
-		struct Wire {
-			Point target = Point::Zero;
-			bool render = false;
-		};
-		minivec<Wire> wires;
+		minivec<Point> wires;
 		Point point;
 	};
 

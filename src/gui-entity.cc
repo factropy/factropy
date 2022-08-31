@@ -446,17 +446,52 @@ void GuiEntity::loadPowerPole() {
 			}
 		}
 
-		for (auto& sid: pole.links) {
-			auto& sibling = PowerPole::get(sid);
-			auto end = sibling.point();
-			powerpole->wires.push_back({end, powerpole->point < end});
+		struct Link {
+			PowerPole* pole = nullptr;
+			Point point = Point::Zero;
+
+			bool operator!=(const Link& other) const {
+				return pole != other.pole || point != other.point;
+			}
+		};
+
+		minimap<Link,&Link::pole> siblings;
+		for (auto sid: pole.links) {
+			auto sib = &PowerPole::get(sid);
+			siblings[sib].point = sib->point();
+		}
+
+		auto pPoint = powerpole->point;
+
+		for (auto& sLink: siblings) {
+			auto sibling = sLink.pole;
+			auto sPoint = sLink.point;
+			float sDist = pPoint.distanceSquared(sPoint);
+
+			bool wire = true;
+			for (auto& cLink: siblings) {
+				auto cousin = cLink.pole;
+				auto cPoint = cLink.point;
+				if (cousin == sibling) continue; // eww!
+				if (!cousin->links.has(sibling->id)) continue;
+				float cDist = pPoint.distanceSquared(cPoint);
+				float scDist = sPoint.distanceSquared(cPoint);
+				if (sDist > cDist && scDist < sDist) {
+					wire = false;
+					break;
+				}
+			}
+
+			if (wire && sPoint < pPoint) {
+				powerpole->wires.push_back(sPoint);
+			}
 		}
 
 		if (ghost) {
 			for (auto sid: pole.siblings()) {
 				auto& sibling = PowerPole::get(sid);
 				auto end = sibling.point();
-				powerpole->wires.push_back({end, powerpole->point < end});
+				powerpole->wires.push_back(end);
 			}
 		}
 	}
@@ -915,11 +950,8 @@ void GuiEntity::instanceCables() {
 
 	if (spec->powerpole && powerpole) {
 		for (auto& wire: powerpole->wires) {
-			// The electricity grid is a doubly-linked loom, so render each wire only once
-			// Ghosts that are fake entities being placed have no real wires, so force those
-			if (!ghost && !wire.render) continue;
 			Point posA = powerpole->point;
-			Point posB = wire.target;
+			Point posB = wire;
 			Point dirAB = (posB-posA).normalize();
 			float distance = posA.distance(posB);
 			Point middle = posA + (dirAB*(distance/2)) + Point::Down;
@@ -1784,7 +1816,7 @@ GuiFakeEntity* GuiFakeEntity::update() {
 				auto& sibling = PowerPole::get(se->id);
 				if (!sibling.range().contains(powerpole->point)) continue;
 				if (!range.contains(sibling.point())) continue;
-				powerpole->wires.push_back({sibling.point(), powerpole->point < sibling.point()});
+				powerpole->wires.push_back(sibling.point());
 			}
 		});
 	}
