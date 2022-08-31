@@ -18,9 +18,10 @@ struct Toolbar {
 	;
 
 	std::set<Spec*> specs;
+	std::vector<Spec*> buttons;
 	ImVec2 size = {1,1};
 
-	Toolbar() = default;
+	Toolbar();
 	void draw();
 	void add(Spec* spec);
 	void drop(Spec* spec);

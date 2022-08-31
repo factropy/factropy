@@ -47,5 +47,5 @@ struct Launcher {
 	bool ready();
 	minimap<Amount,&Amount::fid> fuelRequired();
 	minimap<Amount,&Amount::fid> fuelAccessable();
-	minivec<uint> pipes();
+	localvec<uint> pipes();
 };

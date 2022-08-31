@@ -12,6 +12,14 @@
 #include "gui.h"
 #include "toolbar.h"
 
+Toolbar::Toolbar() {
+	std::vector<Spec*> buttons = {specs.begin(), specs.end()};
+
+	std::sort(buttons.begin(), buttons.end(), [](auto a, auto b) {
+		return a->toolbar < b->toolbar;
+	});
+}
+
 void Toolbar::add(Spec* spec) {
 	specs.insert(spec);
 }
@@ -33,12 +41,6 @@ void Toolbar::draw() {
 	SetNextWindowBgAlpha(GetStyle().Colors[ImGuiCol_PopupBg].w * 0.75f);
 	Begin("##toolbar", nullptr, flags);
 		PushFont(Config::toolbar.font.imgui);
-
-		std::vector<Spec*> buttons = {specs.begin(), specs.end()};
-
-		std::sort(buttons.begin(), buttons.end(), [](auto a, auto b) {
-			return a->toolbar < b->toolbar;
-		});
 
 		int iconSize = Config::toolbar.icon.size;
 		float iconPix = Config::toolbar.icon.sizes[iconSize];

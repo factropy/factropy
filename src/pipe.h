@@ -27,8 +27,8 @@ struct Pipe {
 	static Pipe& create(uint id);
 	static Pipe& get(uint id);
 
-	static std::vector<uint> servicing(Box box);
-	static std::vector<uint> servicing(Box box, std::vector<Entity*> candidates);
+	static localvec<uint> servicing(Box box);
+	static localvec<uint> servicing(Box box, const localvec<Entity*>& candidates);
 	static inline hashset<uint> changed;
 
 	PipeNetwork* network;
@@ -59,17 +59,17 @@ struct Pipe {
 	void setup(PipeSettings*);
 	void manage();
 	void unmanage();
-	std::vector<Point> pipeConnections();
+	localvec<Point> pipeConnections();
 	Amount contents();
-	bool connect(uint pid, minivec<uint>& affected);
-	bool disconnect(uint pid, minivec<uint>& affected);
-	void findPartner(minivec<uint>& affected);
+	bool connect(uint pid, localvec<uint>& affected);
+	bool disconnect(uint pid, localvec<uint>& affected);
+	void findPartner(localvec<uint>& affected);
 	Box undergroundRange();
 	Box underwaterRange();
 	void flush();
 	void valveLinks();
 	void valveTick();
-	std::vector<uint> siblings();
+	localvec<uint> siblings();
 };
 
 struct PipeNetwork {

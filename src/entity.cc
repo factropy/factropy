@@ -123,7 +123,7 @@ void Entity::preTick() {
 	removing.clear();
 
 	// check drone repair flights valid
-	minivec<uint> purge;
+	localvec<uint> purge;
 	for (auto [eid,did]: repairActions) {
 		if (!exists(eid) || !exists(did)) {
 			purge.push_back(eid);
@@ -935,23 +935,23 @@ bool Entity::fits(Spec *spec, Point pos, Point dir) {
 	return true;
 }
 
-std::vector<Entity*> Entity::intersecting(const Cuboid& cuboid) {
+localvec<Entity*> Entity::intersecting(const Cuboid& cuboid) {
 	return intersecting(cuboid, grid);
 }
 
-std::vector<Entity*> Entity::intersecting(const Box& box) {
+localvec<Entity*> Entity::intersecting(const Box& box) {
 	return intersecting(box, grid);
 }
 
-std::vector<Entity*> Entity::intersecting(const Sphere& sphere) {
+localvec<Entity*> Entity::intersecting(const Sphere& sphere) {
 	return intersecting(sphere, grid);
 }
 
-std::vector<Entity*> Entity::intersecting(const Cylinder& cylinder) {
+localvec<Entity*> Entity::intersecting(const Cylinder& cylinder) {
 	return intersecting(cylinder, grid);
 }
 
-std::vector<Entity*> Entity::intersecting(Point pos, float radius) {
+localvec<Entity*> Entity::intersecting(Point pos, float radius) {
 	return intersecting(Sphere(pos, radius));
 }
 
@@ -971,7 +971,7 @@ bool Entity::isLand(Point p) {
 bool Entity::isLand(Box b) {
 	if (world.isLand(b)) return true;
 
-	std::vector<Entity*> piles;
+	localvec<Entity*> piles;
 	for (auto en: intersecting(b)) {
 		if (en->spec->pile && !en->isGhost()) {
 			piles.push_back(en);
@@ -1006,9 +1006,9 @@ void Entity::upgradeCascade(uint from) {
 	}
 }
 
-std::vector<Entity*> Entity::enemiesInRange(Point pos, float radius) {
+localvec<Entity*> Entity::enemiesInRange(Point pos, float radius) {
 	float radiusSquared = radius*radius;
-	std::vector<Entity*>hits;
+	localvec<Entity*>hits;
 	for (auto& missile: Missile::all) {
 		Entity& me = Entity::get(missile.id);
 		float de = me.pos().distanceSquared(pos);
@@ -1825,8 +1825,8 @@ Store& Entity::store() const {
 	return Store::get(id);
 }
 
-std::vector<Store*> Entity::stores() const {
-	std::vector<Store*> stores;
+localvec<Store*> Entity::stores() const {
+	localvec<Store*> stores;
 	if (isGhost()) {
 		stores.push_back(&ghost().store);
 	}

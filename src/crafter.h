@@ -58,16 +58,16 @@ struct Crafter {
 
 	Point output();
 	float inputsProgress();
-	std::vector<Point> pipeConnections();
-	std::vector<Point> pipeInputConnections();
-	std::vector<Point> pipeOutputConnections();
+	localvec<Point> pipeConnections();
+	localvec<Point> pipeInputConnections();
+	localvec<Point> pipeOutputConnections();
 
 	bool exporting();
-	std::vector<Stack> exportItems;
-	std::vector<Amount> exportFluids;
+	minivec<Stack> exportItems;
+	minivec<Amount> exportFluids;
 
-	std::vector<uint> inputPipes;
-	std::vector<uint> outputPipes;
+	minivec<uint> inputPipes;
+	minivec<uint> outputPipes;
 	void updatePipes();
 
 	minimap<Stack,&Stack::iid> inputItemsState();

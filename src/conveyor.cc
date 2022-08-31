@@ -1130,8 +1130,8 @@ void Conveyor::hold() {
 	if (right.slots && right.items[0].iid) right.items[0].offset = std::max(right.items[0].offset, (uint16_t)(right.steps/2));
 }
 
-std::vector<uint> Conveyor::items() {
-	std::vector<uint> items;
+localvec<uint> Conveyor::items() {
+	localvec<uint> items;
 	for (uint i = 0; i < 3; i++) {
 		if (Sim::tick%2) {
 			if (i < left.slots && left.items[i].iid) items.push_back(left.items[i].iid);

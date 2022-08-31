@@ -200,7 +200,7 @@ void Cart::travel() {
 	auto nearEntities = Entity::intersecting(en->box().grow(2.0f));
 
 	// remove previous colliders out of range
-	minivec<uint> drop;
+	localvec<uint> drop;
 	for (auto cid: colliders) {
 		bool near = false;
 		for (auto ec: nearEntities)

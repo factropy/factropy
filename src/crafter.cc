@@ -77,15 +77,15 @@ float Crafter::inputsProgress() {
 	return std::max(0.0f, std::min(1.0f, avg));
 }
 
-std::vector<Point> Crafter::pipeConnections() {
+localvec<Point> Crafter::pipeConnections() {
 	return en->spec->relativePoints(en->spec->pipeConnections, en->dir().rotation(), en->pos());
 }
 
-std::vector<Point> Crafter::pipeInputConnections() {
+localvec<Point> Crafter::pipeInputConnections() {
 	return en->spec->relativePoints(en->spec->pipeInputConnections, en->dir().rotation(), en->pos());
 }
 
-std::vector<Point> Crafter::pipeOutputConnections() {
+localvec<Point> Crafter::pipeOutputConnections() {
 	return en->spec->relativePoints(en->spec->pipeOutputConnections, en->dir().rotation(), en->pos());
 }
 

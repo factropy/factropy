@@ -164,11 +164,11 @@ struct Entity {
 	static bool fits(Spec *spec, Point pos, Point dir);
 
 	// Spatial queries to find entities
-	static std::vector<Entity*> intersecting(const Cuboid& cuboid);
+	static localvec<Entity*> intersecting(const Cuboid& cuboid);
 
 	template <class G>
-	static std::vector<Entity*> intersecting(const Cuboid& cuboid, const G& gm) {
-		std::vector<Entity*> hits;
+	static localvec<Entity*> intersecting(const Cuboid& cuboid, const G& gm) {
+		localvec<Entity*> hits;
 		for (Entity* en: gm.search(cuboid.box.sphere())) {
 			if (en->cuboid().intersects(cuboid)) {
 				hits.push_back(en);
@@ -177,11 +177,11 @@ struct Entity {
 		return hits;
 	}
 
-	static std::vector<Entity*> intersecting(const Box& box);
+	static localvec<Entity*> intersecting(const Box& box);
 
 	template <class G>
-	static std::vector<Entity*> intersecting(const Box& box, const G& gm) {
-		std::vector<Entity*> hits;
+	static localvec<Entity*> intersecting(const Box& box, const G& gm) {
+		localvec<Entity*> hits;
 		for (Entity* en: gm.search(box)) {
 			if (en->box().intersects(box)) {
 				hits.push_back(en);
@@ -190,11 +190,11 @@ struct Entity {
 		return hits;
 	}
 
-	static std::vector<Entity*> intersecting(const Sphere& sphere);
+	static localvec<Entity*> intersecting(const Sphere& sphere);
 
 	template <class G>
-	static std::vector<Entity*> intersecting(const Sphere& sphere, const G& gm) {
-		std::vector<Entity*> hits;
+	static localvec<Entity*> intersecting(const Sphere& sphere, const G& gm) {
+		localvec<Entity*> hits;
 		for (Entity* en: gm.search(sphere)) {
 			if (en->sphere().intersects(sphere)) {
 				hits.push_back(en);
@@ -203,11 +203,11 @@ struct Entity {
 		return hits;
 	}
 
-	static std::vector<Entity*> intersecting(const Cylinder& cylinder);
+	static localvec<Entity*> intersecting(const Cylinder& cylinder);
 
 	template <class G>
-	static std::vector<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
-		std::vector<Entity*> hits;
+	static localvec<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
+		localvec<Entity*> hits;
 		for (Entity* en: gm.search(cylinder.box())) {
 			if (en->box().intersects(cylinder)) {
 				hits.push_back(en);
@@ -216,8 +216,8 @@ struct Entity {
 		return hits;
 	}
 
-	static std::vector<Entity*> intersecting(Point pos, float radius);
-	static std::vector<Entity*> enemiesInRange(Point pos, float radius);
+	static localvec<Entity*> intersecting(Point pos, float radius);
+	static localvec<Entity*> enemiesInRange(Point pos, float radius);
 	static Entity* at(Point p); // intersecting[0]
 	static Entity* at(Point p, gridmap<GRID,Entity*>& gm); // intersecting[0]
 
@@ -356,7 +356,7 @@ struct Entity {
 	// Access entity components
 	Ghost& ghost() const;
 	Store& store() const;
-	std::vector<Store*> stores() const;
+	localvec<Store*> stores() const;
 	Crafter& crafter() const;
 	Venter& venter() const;
 	Effector& effector() const;

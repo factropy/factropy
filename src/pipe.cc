@@ -80,7 +80,7 @@ void Pipe::manage() {
 
 	managed = true;
 
-	minivec<uint> affected;
+	localvec<uint> affected;
 
 	for (auto a: pipeConnections()) {
 		Box ab = a.box().grow(0.1f);
@@ -126,7 +126,7 @@ void Pipe::unmanage() {
 
 	managed = false;
 
-	minivec<uint> affected;
+	localvec<uint> affected;
 
 	changed.insert(id);
 	for (auto pid: connections) {
@@ -153,7 +153,7 @@ void Pipe::unmanage() {
 	transmitters.erase(id);
 }
 
-void Pipe::findPartner(minivec<uint>& affected) {
+void Pipe::findPartner(localvec<uint>& affected) {
 	if (underground) {
 		for (auto ep: Entity::intersecting(undergroundRange(), Entity::gridPipes)) {
 			connect(ep->id, affected);
@@ -166,7 +166,7 @@ void Pipe::findPartner(minivec<uint>& affected) {
 	}
 }
 
-bool Pipe::connect(uint pid, minivec<uint>& affected) {
+bool Pipe::connect(uint pid, localvec<uint>& affected) {
 	if (pid == id) return false;
 
 	auto& other = get(pid);
@@ -239,7 +239,7 @@ bool Pipe::connect(uint pid, minivec<uint>& affected) {
 	return false;
 }
 
-bool Pipe::disconnect(uint pid, minivec<uint>& affected) {
+bool Pipe::disconnect(uint pid, localvec<uint>& affected) {
 	auto& other = get(pid);
 	bool ok = false;
 
@@ -305,13 +305,13 @@ void Pipe::valveLinks() {
 	}
 }
 
-std::vector<Point> Pipe::pipeConnections() {
+localvec<Point> Pipe::pipeConnections() {
 	Entity& en = Entity::get(id);
 	return en.spec->relativePoints(en.spec->pipeConnections, en.dir().rotation(), en.pos());
 }
 
-std::vector<uint> Pipe::servicing(Box box, std::vector<Entity*> candidates) {
-	std::vector<uint> hits;
+localvec<uint> Pipe::servicing(Box box, const localvec<Entity*>& candidates) {
+	localvec<uint> hits;
 	for (auto en: candidates) {
 		if (!en->spec->pipe) continue;
 		Pipe& pipe = en->pipe();
@@ -328,11 +328,11 @@ std::vector<uint> Pipe::servicing(Box box, std::vector<Entity*> candidates) {
 	return hits;
 }
 
-std::vector<uint> Pipe::servicing(Box box) {
+localvec<uint> Pipe::servicing(Box box) {
 	return servicing(box, Entity::intersecting(box.grow(0.5f), Entity::gridPipes));
 }
 
-std::vector<uint> Pipe::siblings() {
+localvec<uint> Pipe::siblings() {
 	ensure(managed);
 
 	if (valve) return {id};
@@ -388,7 +388,7 @@ void PipeNetwork::tick() {
 			ensure(!pipe.network);
 		}
 
-		std::vector<PipeNetwork*> networks;
+		localvec<PipeNetwork*> networks;
 
 		for (auto pid: affected) {
 			auto& pipe = Pipe::get(pid);
@@ -434,7 +434,7 @@ void PipeNetwork::tick() {
 		}
 
 		// When the last pipe in a network becomes unmanaged, clean up.
-		std::vector<PipeNetwork*> drop;
+		localvec<PipeNetwork*> drop;
 		for (auto network: all) {
 			if (!network->pipes.size())
 				drop.push_back(network);

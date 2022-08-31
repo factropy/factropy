@@ -326,6 +326,7 @@ void game() {
 		uint64_t autoSaveLast = Sim::tick;
 
 		while (run && !quit) {
+			lsanity();
 			if (Config::mode.pause) {
 				std::this_thread::sleep_for(16ms);
 				continue;
@@ -356,6 +357,7 @@ void game() {
 		}
 
 		done = true;
+		linfo();
 	});
 
 	auto stamp = now();
@@ -387,6 +389,8 @@ void game() {
 	auto& io = ImGui::GetIO();
 
 	while (run && !quit) {
+		lsanity();
+
 		Config::autoscale();
 
 		gui.focused = io.WantCaptureMouse || io.WantCaptureKeyboard;
@@ -462,6 +466,7 @@ void game() {
 		if (gui.doQuit) run = false;
 	}
 
+	linfo();
 	Plan::saveAll();
 
 	scene.advanceDone.wait();
@@ -514,6 +519,7 @@ void menu() {
 	auto screen = new StartScreen();
 
 	while (run && !quit && !screen->quit) {
+		lsanity();
 		Config::autoscale();
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -556,6 +562,7 @@ void menu() {
 
 	delete screen;
 	SDL_GL_SetSwapInterval(Config::window.vsync ? 1:0);
+	linfo();
 }
 
 int main(int argc, char* argv[]) {

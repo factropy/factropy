@@ -35,7 +35,7 @@ struct PowerPole {
 	Cylinder range();
 	Box coverage();
 
-	minivec<uint> siblings();
+	localvec<uint> siblings();
 	Point point();
 
 	void connect();

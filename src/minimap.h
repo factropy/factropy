@@ -24,27 +24,27 @@ auto& beta = &things[2];
 
 */
 
-template <class V, auto ID>
-class minimap : public minivec<V> {
+template <class V, auto ID, class A = minialloc_def>
+class minimap : public minivec<V,A> {
 	static_assert(std::is_trivially_copyable<V>::value, "minimap<is_trivially_copyable>");
 
 	typedef typename std::remove_reference<decltype(std::declval<V>().*ID)>::type K;
 
 public:
-	minimap<V,ID>() : minivec<V>() {
+	minimap<V,ID,A>() : minivec<V,A>() {
 	}
 
 	typedef K key_type;
-	typedef typename minivec<V>::value_type value_type;
-	typedef typename minivec<V>::size_type size_type;
-	typedef typename minivec<V>::iterator iterator;
+	typedef typename minivec<V,A>::value_type value_type;
+	typedef typename minivec<V,A>::size_type size_type;
+	typedef typename minivec<V,A>::iterator iterator;
 
 	iterator begin() const {
-		return minivec<V>::begin();
+		return minivec<V,A>::begin();
 	}
 
 	iterator end() const {
-		return minivec<V>::end();
+		return minivec<V,A>::end();
 	}
 
 	iterator find(const key_type& k) const {
@@ -61,13 +61,13 @@ public:
 
 	void insert(const value_type& v) {
 		if (!has(v.*ID)) {
-			minivec<V>::push_back(v);
+			minivec<V,A>::push_back(v);
 			std::sort(begin(), end(), [](auto a, auto b) { return a.*ID < b.*ID; });
 		}
 	}
 
 	void erase(const key_type& k) {
-		minivec<V>::erase(find(k));
+		minivec<V,A>::erase(find(k));
 		std::sort(begin(), end(), [](auto a, auto b) { return a.*ID < b.*ID; });
 	}
 
@@ -97,3 +97,8 @@ public:
 		return out;
 	}
 };
+
+template <class V, auto ID>
+class localmap : public minimap<V,ID,minialloc_local> {
+};
+

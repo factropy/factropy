@@ -6,10 +6,41 @@
 #include <typeinfo>
 #include <initializer_list>
 #include "common.h"
+#include "lalloc.h"
 
 // A single-pointer std::vector alternative for trivial types.
 
-template <class V>
+struct minialloc {
+	virtual void* malloc(size_t bytes) = 0;
+	virtual void* realloc(void* ptr, size_t bytes) = 0;
+	virtual void free(void* ptr) = 0;
+};
+
+struct minialloc_def : minialloc {
+	void* malloc(size_t bytes) {
+		return std::malloc(bytes);
+	}
+	void* realloc(void* ptr, size_t bytes) {
+		return std::realloc(ptr, bytes);
+	}
+	void free(void* ptr) {
+		return std::free(ptr);
+	}
+};
+
+struct minialloc_local : minialloc {
+	void* malloc(size_t bytes) {
+		return lmalloc(bytes);
+	}
+	void* realloc(void* ptr, size_t bytes) {
+		return lrealloc(ptr, bytes);
+	}
+	void free(void* ptr) {
+		return lfree(ptr);
+	}
+};
+
+template <class V, class A = minialloc_def>
 class minivec {
 	static_assert(std::is_trivially_copyable<V>::value, "minivec<is_trivially_copyable>");
 
@@ -30,7 +61,7 @@ public:
 		return head ? head->cap: 0;
 	}
 
-private:
+protected:
 	void setSize(int n) {
 		if (!head && !n) return;
 		assert(head);
@@ -51,42 +82,42 @@ public:
 	typedef uint size_type;
 	typedef V value_type;
 
-	minivec<V>() {
+	minivec<V,A>() {
 	}
 
-	minivec<V>(const minivec<V>& other) : minivec<V>() {
+	minivec<V,A>(const minivec<V,A>& other) : minivec<V,A>() {
 		operator=(other);
 	}
 
-	minivec<V>(std::initializer_list<V> l) : minivec<V>() {
+	minivec<V,A>(std::initializer_list<V> l) : minivec<V,A>() {
 		clear();
 		for (auto v: l) {
 			push_back(v);
 		}
 	}
 
-	minivec<V>(size_type n) : minivec<V>() {
+	minivec<V,A>(size_type n) : minivec<V,A>() {
 		clear();
 		resize(n);
 	}
 
 	template <typename IT>
-	minivec<V>(IT a, IT b) {
+	minivec<V,A>(IT a, IT b) {
 		clear();
 		while (a != b) {
 			push_back(*a++);
 		}
 	}
 
-	minivec<V>& operator=(const minivec<V>& other) {
+	minivec<V,A>& operator=(const minivec<V,A>& other) {
 		clear();
 		append(other);
 		return *this;
 	}
 
-	~minivec<V>() {
+	virtual ~minivec<V,A>() {
 		clear();
-		std::free(head);
+		A().free(head);
 		head = nullptr;
 	}
 
@@ -106,7 +137,7 @@ public:
 	void reserve(uint n) {
 		if (!head && n > 0) {
 			n = std::max(4U, n);
-			head = (header*)std::malloc(sizeof(header) + (n * sizeof(V)));
+			head = (header*)A().malloc(sizeof(header) + (n * sizeof(V)));
 			setSize(0);
 			setCapacity(n);
 		}
@@ -114,13 +145,13 @@ public:
 		if (head && n > capacity()) {
 			setCapacity(std::max(4U, capacity()));
 			while (n > capacity()) setCapacity(capacity()*2);
-			head = (header*)std::realloc((void*)head, sizeof(header) + (capacity() * sizeof(V)));
+			head = (header*)A().realloc((void*)head, sizeof(header) + (capacity() * sizeof(V)));
 		}
 	}
 
 	void shrink_to_fit() {
 		if (!size()) {
-			std::free(head);
+			A().free(head);
 			head = nullptr;
 		}
 	}
@@ -212,13 +243,13 @@ public:
 		return std::find(begin(), end(), v) != end();
 	}
 
-	bool operator==(const minivec<V>& other) {
+	bool operator==(const minivec<V,A>& other) {
 		if (size() != other.size()) return false;
 		for (uint i = 0; i < size(); i++) if (at(i) != other[i]) return false;
 		return true;
 	}
 
-	bool operator!=(const minivec<V>& other) {
+	bool operator!=(const minivec<V,A>& other) {
 		return !operator==(other);
 	}
 
@@ -385,13 +416,54 @@ public:
 		return insert(it, 1, v);
 	}
 
-	void append(const minivec<V>& other) {
-		uint a = other.size();
+	void append(const V* from, size_t items) {
+		uint a = items;
 		if (!a) return;
 		uint s = size();
 		uint b = a*sizeof(V);
 		reserve(s+a);
-		std::memmove((void*)cell(s), (void*)other.data(), b);
+		std::memmove((void*)cell(s), (void*)from, b);
 		setSize(s+a);
+	}
+
+	void append(const minivec<V,A>& other) {
+		append(other.data(), other.size());
+	}
+};
+
+template <class V>
+class localvec : public minivec<V,minialloc_local> {
+public:
+	localvec<V>() {
+	}
+
+	localvec<V>(const localvec<V>& other) : localvec<V>() {
+		operator=(other);
+	}
+
+	localvec<V>(std::initializer_list<V> l) : localvec<V>() {
+		minivec<V,minialloc_local>::clear();
+		for (auto v: l) {
+			minivec<V,minialloc_local>::push_back(v);
+		}
+	}
+
+	localvec<V>(uint n) : localvec<V>() {
+		minivec<V,minialloc_local>::clear();
+		minivec<V,minialloc_local>::resize(n);
+	}
+
+	template <typename IT>
+	localvec<V>(IT a, IT b) {
+		minivec<V,minialloc_local>::clear();
+		while (a != b) {
+			minivec<V,minialloc_local>::push_back(*a++);
+		}
+	}
+
+	localvec<V>& operator=(const localvec<V>& other) {
+		minivec<V,minialloc_local>::clear();
+		minivec<V,minialloc_local>::append(other);
+		return *this;
 	}
 };

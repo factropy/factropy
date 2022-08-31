@@ -469,8 +469,8 @@ struct Spec {
 
 	Health damage(uint ammoId = 0) const;
 
-	static std::vector<Point> relativePoints(const std::vector<Point> points, const Mat4 rotation, const Point position);
-	std::vector<Stack> constructionMaterials(float height = 0);
+	static localvec<Point> relativePoints(const std::vector<Point>& points, const Mat4 rotation, const Point position);
+	localvec<Stack> constructionMaterials(float height = 0);
 
 	Rail railTo(Point posA, Point dirA, Spec* specB, Point posB, Point dirB);
 	bool railOk(Rail& rail);

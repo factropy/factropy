@@ -135,7 +135,7 @@ struct Conveyor {
 	bool empty();
 	bool full();
 	void hold();
-	std::vector<uint> items();
+	localvec<uint> items();
 
 	Point input();
 	Point output();

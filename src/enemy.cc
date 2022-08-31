@@ -9,7 +9,7 @@ void Enemy::tick() {
 
 	if (enable && (trigger || Sim::tick%(60*60*1) == 0)) {
 
-		std::vector<uint> targets = {Entity::enemyTargets.begin(), Entity::enemyTargets.end()};
+		localvec<uint> targets = {Entity::enemyTargets.begin(), Entity::enemyTargets.end()};
 		discard_if(targets, [&](auto id) { return Entity::get(id).isGhost(); });
 		std::shuffle(targets.begin(), targets.end(), *Sim::urng());
 
@@ -30,7 +30,7 @@ void Enemy::tick() {
 	trigger = false;
 }
 
-void Enemy::spawn(std::vector<uint>& targets, Point dir) {
+void Enemy::spawn(localvec<uint>& targets, Point dir) {
 	for (auto [_,spec]: Spec::all) {
 		if (!spec->enemy || !spec->missile) continue;
 		if (!targets.size()) break;

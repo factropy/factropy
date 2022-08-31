@@ -166,8 +166,8 @@ struct World {
 	bool canDrill(const Box& b, uint fid);
 	uint countDrill(const Box& b, uint fid);
 
-	std::vector<Stack> minables(Box b);
-	std::vector<Amount> drillables(Box b);
+	localvec<Stack> minables(Box b);
+	localvec<Amount> drillables(Box b);
 
 	struct Region {
 		std::vector<Tile> tiles;

@@ -69,7 +69,7 @@ void Depot::update() {
 		return;
 	}
 
-	minivec<uint> drop;
+	localvec<uint> drop;
 	for (auto did: drones) {
 		if (!Entity::exists(did)) drop.push_back(did);
 	}

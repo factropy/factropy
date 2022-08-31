@@ -70,8 +70,8 @@ Box PowerPole::coverage() {
 	return en->pos().box().grow(en->spec->powerpoleCoverage);
 }
 
-minivec<uint> PowerPole::siblings() {
-	minivec<uint> out;
+localvec<uint> PowerPole::siblings() {
+	localvec<uint> out;
 	for (auto se: Entity::intersecting(range())) {
 		if (se->id == id) continue;
 		if (!se->spec->powerpole) continue;

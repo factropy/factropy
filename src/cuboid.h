@@ -7,6 +7,7 @@ struct Cuboid;
 #include "common.h"
 #include "mat4.h"
 #include "glm-ex.h"
+#include "minivec.h"
 #include <array>
 
 struct Cuboid {
@@ -17,7 +18,7 @@ struct Cuboid {
 	Cuboid(const Box& box, const Point& dir);
 
 	Cuboid grow(real n) const;
-	std::vector<Point> vertices() const;
+	localvec<Point> vertices() const;
 
 	bool contains(const Point& point) const;
 	bool intersects(const Cuboid& other) const;

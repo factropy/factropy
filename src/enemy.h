@@ -10,5 +10,5 @@ struct Enemy {
 	static inline bool enable = true;
 	static inline bool trigger = false;
 	static void tick();
-	static void spawn(std::vector<uint>& targets, Point dir);
+	static void spawn(localvec<uint>& targets, Point dir);
 };

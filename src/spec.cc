@@ -421,16 +421,16 @@ Box Spec::placeOnHillBox(Point pos) const {
 	return {pos.x, pos.y, pos.z, ww, collision.h, dd};
 }
 
-std::vector<Point> Spec::relativePoints(const std::vector<Point> points, const Mat4 rotation, const Point position) {
-	std::vector<Point> rpoints;
+localvec<Point> Spec::relativePoints(const std::vector<Point>& points, const Mat4 rotation, const Point position) {
+	localvec<Point> rpoints;
 	for (Point point: points) {
 		rpoints.push_back(point.transform(rotation) + position);
 	}
 	return rpoints;
 }
 
-std::vector<Stack> Spec::constructionMaterials(float height) {
-	std::vector<Stack> m;
+localvec<Stack> Spec::constructionMaterials(float height) {
+	localvec<Stack> m;
 	for (Stack stack: materials) {
 		uint size = stack.size;
 		if (materialsMultiplyHill > 0 && height > 0) {

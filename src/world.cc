@@ -745,7 +745,7 @@ Stack World::mine(const Box& b, uint iid) {
 
 uint World::countMine(const Box& b, uint iid) {
 	uint sum = 0;
-	miniset<int> seen;
+	localset<int> seen;
 	for (auto at: walk(b)) {
 		auto tile = get(at);
 		if (tile && tile->hill()) {
@@ -795,7 +795,7 @@ Amount World::drill(const Box& b, uint fid) {
 
 uint World::countDrill(const Box& b, uint fid) {
 	uint sum = 0;
-	miniset<int> seen;
+	localset<int> seen;
 	for (auto at: walk(b)) {
 		auto tile = get(at);
 		if (tile && tile->lake()) {
@@ -815,9 +815,9 @@ bool World::canDrill(const Box& b, uint fid) {
 	return countDrill(b, fid) > 0;
 }
 
-std::vector<Stack> World::minables(Box b) {
-	minimap<Stack,&Stack::iid> stacks;
-	miniset<int> seen;
+localvec<Stack> World::minables(Box b) {
+	localmap<Stack,&Stack::iid> stacks;
+	localset<int> seen;
 
 	for (auto at: walk(b)) {
 		auto tile = get(at);
@@ -839,9 +839,9 @@ std::vector<Stack> World::minables(Box b) {
 	return {stacks.begin(), stacks.end()};
 }
 
-std::vector<Amount> World::drillables(Box b) {
-	minimap<Amount,&Amount::fid> amounts;
-	miniset<int> seen;
+localvec<Amount> World::drillables(Box b) {
+	localmap<Amount,&Amount::fid> amounts;
+	localset<int> seen;
 
 	for (auto at: walk(b)) {
 		auto tile = get(at);

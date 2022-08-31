@@ -4,6 +4,7 @@
 #include <mutex>
 #include <functional>
 #include "channel.h"
+#include "lalloc.h"
 
 class workers {
 private:
@@ -20,6 +21,7 @@ private:
 		m.unlock();
 
 		for (auto job: work) {
+			lsanity();
 			job();
 
 			m.lock();
@@ -27,6 +29,8 @@ private:
 			waiting.notify_all();
 			m.unlock();
 		}
+
+		linfo();
 	}
 
 public:

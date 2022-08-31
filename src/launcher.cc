@@ -35,8 +35,8 @@ void Launcher::destroy() {
 	all.erase(id);
 }
 
-minivec<uint> Launcher::pipes() {
-	minivec<uint> pipes;
+localvec<uint> Launcher::pipes() {
+	localvec<uint> pipes;
 	if (en->spec->pipe) pipes.push_back(id);
 
 	auto candidates = Entity::intersecting(en->box().grow(1.0f), Entity::gridPipes);

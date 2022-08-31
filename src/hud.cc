@@ -442,7 +442,7 @@ void HUD::draw() {
 			Print(fmtc("%s CAM", std::string(scene.camera)));
 			Print(fmtc("Crafters hot %u cold %u", Crafter::hot.size(), Crafter::cold.size()));
 			Print(fmtc("Drone Ports hot %u cold %u", Depot::hot.size(), Depot::cold.size()));
-			std::vector<Spec*> specs;
+			localvec<Spec*> specs;
 			for (auto& [_,spec]: Spec::all) specs.push_back(spec);
 			std::sort(specs.begin(), specs.end(), [&](auto a, auto b) { return a->count.render > b->count.render; });
 			for (int i = 0, l = std::min(10, (int)specs.size()); i < l; i++) {

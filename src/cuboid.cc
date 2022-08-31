@@ -36,8 +36,8 @@ namespace {
 	}
 }
 
-std::vector<Point> Cuboid::vertices() const {
-	std::vector<Point> vertices(8);
+localvec<Point> Cuboid::vertices() const {
+	localvec<Point> vertices(8);
 	computeVertices(vertices.data(), box.centroid(), box.dimensions(), dir.rotationAltAz());
 	return vertices;
 }

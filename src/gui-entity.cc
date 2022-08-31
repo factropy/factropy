@@ -449,16 +449,12 @@ void GuiEntity::loadPowerPole() {
 		struct Link {
 			PowerPole* pole = nullptr;
 			Point point = Point::Zero;
-
-			bool operator!=(const Link& other) const {
-				return pole != other.pole || point != other.point;
-			}
 		};
 
-		minimap<Link,&Link::pole> siblings;
+		localvec<Link> siblings;
 		for (auto sid: pole.links) {
 			auto sib = &PowerPole::get(sid);
-			siblings[sib].point = sib->point();
+			siblings.push_back({sib,sib->point()});
 		}
 
 		auto pPoint = powerpole->point;
