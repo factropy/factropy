@@ -9,6 +9,7 @@ typedef int Health;
 #include "glm-ex.h"
 #include <string>
 #include <vector>
+#include <span>
 #include <map>
 #include <set>
 #include "point.h"
@@ -469,7 +470,7 @@ struct Spec {
 
 	Health damage(uint ammoId = 0) const;
 
-	static localvec<Point> relativePoints(const std::vector<Point>& points, const Mat4 rotation, const Point position);
+	static localvec<Point> relativePoints(std::span<const Point> points, const Mat4 rotation, const Point position);
 	localvec<Stack> constructionMaterials(float height = 0);
 
 	Rail railTo(Point posA, Point dirA, Spec* specB, Point posB, Point dirB);

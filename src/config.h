@@ -211,11 +211,40 @@ namespace Config {
 		std::set<KeyboardKey> keysReleased;
 		std::set<KeyboardKey> keysDown;
 		std::set<KeyboardKey> mods;
-		KeyMouseCombo() = default;
 		bool triggered() const;
 		bool operator==(const KeyMouseCombo& o) const;
 		bool operator!=(const KeyMouseCombo& o) const;
 		bool operator<(const KeyMouseCombo& o) const;
+		KeyMouseCombo() = default;
+
+		static KeyMouseCombo keyUp(std::set<KeyboardKey> keys, std::set<KeyboardKey> mods = {}) {
+			KeyMouseCombo combo;
+			combo.keysReleased = keys;
+			combo.mods = mods;
+			return combo;
+		}
+
+		static KeyMouseCombo buttonUp(std::set<MouseButton> buttons, std::set<KeyboardKey> mods = {}) {
+			KeyMouseCombo combo;
+			combo.buttonsReleased = buttons;
+			combo.mods = mods;
+			return combo;
+		}
+
+		static KeyMouseCombo buttonDown(std::set<MouseButton> buttons, std::set<KeyboardKey> mods = {}) {
+			KeyMouseCombo combo;
+			combo.buttonsDown = buttons;
+			combo.mods = mods;
+			return combo;
+		}
+
+		static KeyMouseCombo buttonDrag(std::set<MouseButton> buttons, std::set<KeyboardKey> mods = {}) {
+			KeyMouseCombo combo;
+			combo.buttonsDown = buttons;
+			combo.buttonsDragged = buttons;
+			combo.mods = mods;
+			return combo;
+		}
 	};
 
 	enum class Action {

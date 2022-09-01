@@ -21,106 +21,7 @@ namespace Config {
 	Popup popup;
 	Mode mode;
 
-	std::map<Action,KeyMouseCombo> controls = {
-		{Action::Copy,
-			{ .keysReleased = {SDLK_c}, .mods = {SDLK_LCTRL}}},
-		{Action::Cut,
-			{ .keysReleased = {SDLK_x}, .mods = {SDLK_LCTRL}}},
-		{Action::Paste,
-			{ .keysReleased = {SDLK_v}, .mods = {SDLK_LCTRL}}},
-		{Action::CopyConfig,
-			{ .keysReleased = {SDLK_c}, .mods = {SDLK_LALT}}},
-		{Action::PasteConfig,
-			{ .keysReleased = {SDLK_v}, .mods = {SDLK_LALT}}},
-		{Action::Pipette,
-			{ .keysReleased = {SDLK_q}}},
-		{Action::Upgrade,
-			{ .keysReleased = {SDLK_u}}},
-		{Action::UpgradeCascade,
-			{ .keysReleased = {SDLK_u}, .mods = {SDLK_LSHIFT}}},
-		{Action::Rotate,
-			{ .keysReleased = {SDLK_r}}},
-		{Action::Cycle,
-			{ .keysReleased = {SDLK_c}}},
-		{Action::Open,
-			{ .buttonsReleased = {SDL_BUTTON_LEFT}}},
-		{Action::Direct,
-			{ .buttonsReleased = {SDL_BUTTON_LEFT}, .mods = {SDLK_LCTRL}}},
-		{Action::Move,
-			{ .buttonsReleased = {SDL_BUTTON_RIGHT}, .mods = {SDLK_LCTRL}}},
-		{Action::Link,
-			{ .keysReleased = {SDLK_l}}},
-		{Action::Connect,
-			{ .buttonsReleased = {SDL_BUTTON_LEFT}}},
-		{Action::Disconnect,
-			{ .buttonsReleased = {SDL_BUTTON_RIGHT}}},
-		{Action::Link,
-			{ .keysReleased = {SDLK_l}}},
-		{Action::RouteRed,
-			{ .keysReleased = {SDLK_1}}},
-		{Action::RouteBlue,
-			{ .keysReleased = {SDLK_2}}},
-		{Action::RouteGreen,
-			{ .keysReleased = {SDLK_3}}},
-		{Action::RouteSetNext,
-			{ .buttonsReleased = {SDL_BUTTON_LEFT}}},
-		{Action::RouteClrNext,
-			{ .buttonsReleased = {SDL_BUTTON_RIGHT}}},
-		{Action::Flush,
-			{ .keysReleased = {SDLK_f}, .mods = {SDLK_LSHIFT}}},
-		{Action::Construct,
-			{ .buttonsDown = {SDL_BUTTON_LEFT}, .buttonsDragged = {SDL_BUTTON_LEFT}}},
-		{Action::ConstructForce,
-			{ .buttonsDown = {SDL_BUTTON_LEFT}, .mods = {SDLK_LSHIFT}}},
-		{Action::Deconstruct,
-			{ .keysReleased = {SDLK_DELETE}}},
-		{Action::DeconstructForce,
-			{ .keysReleased = {SDLK_DELETE}, .mods = {SDLK_LSHIFT}}},
-		{Action::ToggleConstruct,
-			{ .buttonsReleased = {SDL_BUTTON_RIGHT}}},
-		{Action::ToggleGrid,
-			{ .keysReleased = {SDLK_g}}},
-		{Action::ToggleAlignment,
-			{ .keysReleased = {SDLK_h}}},
-		{Action::ToggleEnable,
-			{ .keysReleased = {SDLK_o}}},
-		{Action::ToggleCardinalSnap,
-			{ .keysReleased = {SDLK_TAB}}},
-		{Action::SpecUp,
-			{ .keysReleased = {SDLK_PAGEUP}}},
-		{Action::SpecDown,
-			{ .keysReleased = {SDLK_PAGEDOWN}}},
-		{Action::SelectJunk,
-			{ .keysReleased = {SDLK_j}}},
-		{Action::SelectUnder,
-			{ .keysReleased = {SDLK_k}}},
-		{Action::Plan,
-			{ .keysReleased = {SDLK_b}}},
-		{Action::Vehicles,
-			{ .keysReleased = {SDLK_v}}},
-		{Action::Paint,
-			{ .keysReleased = {SDLK_p}}},
-		{Action::Escape,
-			{ .keysReleased = {SDLK_ESCAPE}}},
-		{Action::Save,
-			{ .keysReleased = {SDLK_F5}}},
-		{Action::Build,
-			{ .keysReleased = {SDLK_e}}},
-		{Action::Stats,
-			{ .keysReleased = {SDLK_F1}}},
-		{Action::Log,
-			{ .keysReleased = {SDLK_BACKQUOTE}}},
-		{Action::Map,
-			{ .keysReleased = {SDLK_m}}},
-		{Action::Attack,
-			{ .keysReleased = {SDLK_F12}}},
-		{Action::Pause,
-			{ .keysReleased = {SDLK_PAUSE}}},
-		{Action::Debug,
-			{ .keysReleased = {SDLK_F9}}},
-		{Action::Debug2,
-			{ .keysReleased = {SDLK_F10}}},
-	};
+	std::map<Action,KeyMouseCombo> controls;
 
 	std::string dataPath(const std::string& name) {
 		return fmt("%s%s", mode.dataPath, name);
@@ -176,6 +77,105 @@ namespace Config {
 	}
 
 	void load() {
+		controls[Action::Copy]
+			= KeyMouseCombo::keyUp({SDLK_c}, {SDLK_LCTRL});
+		controls[Action::Cut]
+			= KeyMouseCombo::keyUp({SDLK_x}, {SDLK_LCTRL});
+		controls[Action::Paste]
+			= KeyMouseCombo::keyUp({SDLK_v}, {SDLK_LCTRL});
+		controls[Action::CopyConfig]
+			= KeyMouseCombo::keyUp({SDLK_c}, {SDLK_LALT});
+		controls[Action::PasteConfig]
+			= KeyMouseCombo::keyUp({SDLK_v}, {SDLK_LALT});
+		controls[Action::Pipette]
+			= KeyMouseCombo::keyUp({SDLK_q});
+		controls[Action::Upgrade]
+			= KeyMouseCombo::keyUp({SDLK_u});
+		controls[Action::UpgradeCascade]
+			= KeyMouseCombo::keyUp({SDLK_u}, {SDLK_LSHIFT});
+		controls[Action::Rotate]
+			= KeyMouseCombo::keyUp({SDLK_r});
+		controls[Action::Cycle]
+			= KeyMouseCombo::keyUp({SDLK_c});
+		controls[Action::Open]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_LEFT});
+		controls[Action::Direct]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_LEFT}, {SDLK_LCTRL});
+		controls[Action::Move]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_RIGHT}, {SDLK_LCTRL});
+		controls[Action::Link]
+			= KeyMouseCombo::keyUp({SDLK_l});
+		controls[Action::Connect]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_LEFT});
+		controls[Action::Disconnect]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_RIGHT});
+		controls[Action::Link]
+			= KeyMouseCombo::keyUp({SDLK_l});
+		controls[Action::RouteRed]
+			= KeyMouseCombo::keyUp({SDLK_1});
+		controls[Action::RouteBlue]
+			= KeyMouseCombo::keyUp({SDLK_2});
+		controls[Action::RouteGreen]
+			= KeyMouseCombo::keyUp({SDLK_3});
+		controls[Action::RouteSetNext]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_LEFT});
+		controls[Action::RouteClrNext]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_RIGHT});
+		controls[Action::Flush]
+			= KeyMouseCombo::keyUp({SDLK_f}, {SDLK_LSHIFT});
+		controls[Action::Construct]
+			= KeyMouseCombo::buttonDrag({SDL_BUTTON_LEFT});
+		controls[Action::ConstructForce]
+			= KeyMouseCombo::buttonDown({SDL_BUTTON_LEFT}, {SDLK_LSHIFT});
+		controls[Action::Deconstruct]
+			= KeyMouseCombo::keyUp({SDLK_DELETE});
+		controls[Action::DeconstructForce]
+			= KeyMouseCombo::keyUp({SDLK_DELETE}, {SDLK_LSHIFT});
+		controls[Action::ToggleConstruct]
+			= KeyMouseCombo::buttonUp({SDL_BUTTON_RIGHT});
+		controls[Action::ToggleGrid]
+			= KeyMouseCombo::keyUp({SDLK_g});
+		controls[Action::ToggleAlignment]
+			= KeyMouseCombo::keyUp({SDLK_h});
+		controls[Action::ToggleEnable]
+			= KeyMouseCombo::keyUp({SDLK_o});
+		controls[Action::ToggleCardinalSnap]
+			= KeyMouseCombo::keyUp({SDLK_TAB});
+		controls[Action::SpecUp]
+			= KeyMouseCombo::keyUp({SDLK_PAGEUP});
+		controls[Action::SpecDown]
+			= KeyMouseCombo::keyUp({SDLK_PAGEDOWN});
+		controls[Action::SelectJunk]
+			= KeyMouseCombo::keyUp({SDLK_j});
+		controls[Action::SelectUnder]
+			= KeyMouseCombo::keyUp({SDLK_k});
+		controls[Action::Plan]
+			= KeyMouseCombo::keyUp({SDLK_b});
+		controls[Action::Vehicles]
+			= KeyMouseCombo::keyUp({SDLK_v});
+		controls[Action::Paint]
+			= KeyMouseCombo::keyUp({SDLK_p});
+		controls[Action::Escape]
+			= KeyMouseCombo::keyUp({SDLK_ESCAPE});
+		controls[Action::Save]
+			= KeyMouseCombo::keyUp({SDLK_F5});
+		controls[Action::Build]
+			= KeyMouseCombo::keyUp({SDLK_e});
+		controls[Action::Stats]
+			= KeyMouseCombo::keyUp({SDLK_F1});
+		controls[Action::Log]
+			= KeyMouseCombo::keyUp({SDLK_BACKQUOTE});
+		controls[Action::Map]
+			= KeyMouseCombo::keyUp({SDLK_m});
+		controls[Action::Attack]
+			= KeyMouseCombo::keyUp({SDLK_F12});
+		controls[Action::Pause]
+			= KeyMouseCombo::keyUp({SDLK_PAUSE});
+		controls[Action::Debug]
+			= KeyMouseCombo::keyUp({SDLK_F9});
+		controls[Action::Debug2]
+			= KeyMouseCombo::keyUp({SDLK_F10});
+
 		std::string folder = (version.minor > 1)
 			? fmt("factropy.%d.%d", version.major, version.minor)
 			: "factropy";

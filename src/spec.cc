@@ -421,7 +421,7 @@ Box Spec::placeOnHillBox(Point pos) const {
 	return {pos.x, pos.y, pos.z, ww, collision.h, dd};
 }
 
-localvec<Point> Spec::relativePoints(const std::vector<Point>& points, const Mat4 rotation, const Point position) {
+localvec<Point> Spec::relativePoints(std::span<const Point> points, const Mat4 rotation, const Point position) {
 	localvec<Point> rpoints;
 	for (Point point: points) {
 		rpoints.push_back(point.transform(rotation) + position);

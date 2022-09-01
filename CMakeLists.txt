@@ -52,7 +52,7 @@ target_include_directories(glew PRIVATE)
 
 # factropy
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 add_executable(factropy ${SRC})
 target_include_directories(factropy PRIVATE ${SDL2_INCLUDE_DIRS})
 target_link_libraries(factropy m pthread dl imgui sdeflinfl par_shapes ${SDL2_LIBRARIES} GL glew ${FREETYPE_LIBRARIES})

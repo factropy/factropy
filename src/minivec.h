@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <typeinfo>
 #include <initializer_list>
+#include <span>
 #include "common.h"
 #include "lalloc.h"
 
@@ -113,6 +114,10 @@ public:
 		clear();
 		append(other);
 		return *this;
+	}
+
+	operator std::span<V>() const {
+		return {begin(), end()};
 	}
 
 	virtual ~minivec<V,A>() {

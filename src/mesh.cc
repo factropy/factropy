@@ -58,7 +58,7 @@ void Mesh::instance(GLuint group, const glm::mat4& trx, const glm::vec4& color, 
 	if (shadow) g.shadowInstances.push_back(trx);
 }
 
-void Mesh::instances(GLuint group, const std::vector<glm::mat4>& batch, const glm::vec4& color, GLfloat shine, bool shadow, uint filter) {
+void Mesh::instances(GLuint group, std::span<const glm::mat4> batch, const glm::vec4& color, GLfloat shine, bool shadow, uint filter) {
 	if (batching) {
 		auto& g = lgroups[this][group];
 		g.colors.resize(g.colors.size() + batch.size(), color);
@@ -191,7 +191,7 @@ void Mesh::renderAll(GLuint group, GLuint shadowMap) {
 	}
 }
 
-void Mesh::renderMany(GLuint shadowMap, std::vector<glm::mat4>& instances, std::vector<glm::vec4>& colors, std::vector<GLfloat>& shines, std::vector<GLfloat>& filters) {
+void Mesh::renderMany(GLuint shadowMap, std::span<const glm::mat4> instances, std::span<const glm::vec4> colors, std::span<const GLfloat> shines, std::span<const GLfloat> filters) {
 	if (!instances.size()) return;
 
 	load();
@@ -280,7 +280,7 @@ void Mesh::shadowAll(GLuint group) {
 	}
 }
 
-void Mesh::shadowMany(std::vector<glm::mat4>& instances) {
+void Mesh::shadowMany(std::span<const glm::mat4> instances) {
 	if (!instances.size()) return;
 
 	load();
@@ -461,7 +461,7 @@ void Mesh::smooth() {
 	}
 }
 
-MeshMulti::MeshMulti(Mesh* original, const std::vector<glm::vec3>& bumps) : Mesh() {
+MeshMulti::MeshMulti(Mesh* original, std::span<const glm::vec3> bumps) : Mesh() {
 	for (auto& bump: bumps) {
 		for (auto& i: original->indices) indices.push_back(i + vertices.size());
 		for (auto& v: original->vertices) vertices.push_back(v + bump);

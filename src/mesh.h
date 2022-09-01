@@ -6,6 +6,7 @@
 #include "common.h"
 #include "miniset.h"
 #include <string>
+#include <span>
 #include <map>
 #include <set>
 #include <mutex>
@@ -58,11 +59,11 @@ public:
 	void unload();
 	uint64_t memory();
 
-	void renderMany(GLuint shadowMap, std::vector<glm::mat4>& instances, std::vector<glm::vec4>& colors, std::vector<GLfloat>& shines, std::vector<GLfloat>& filters);
-	void shadowMany(std::vector<glm::mat4>& instances);
+	void renderMany(GLuint shadowMap, std::span<const glm::mat4> instances, std::span<const glm::vec4> colors, std::span<const GLfloat> shines, std::span<const GLfloat> filters);
+	void shadowMany(std::span<const glm::mat4> instances);
 
 	void instance(GLuint group, const glm::mat4& trx, const glm::vec4& color, GLfloat shine = 0.0f, bool shadow = false, uint filter = 0);
-	void instances(GLuint group, const std::vector<glm::mat4>& trx, const glm::vec4& color, GLfloat shine = 0.0f, bool shadow = false, uint filter = 0);
+	void instances(GLuint group, std::span<const glm::mat4> trx, const glm::vec4& color, GLfloat shine = 0.0f, bool shadow = false, uint filter = 0);
 	void smooth();
 
 	static void resetAll();
@@ -73,7 +74,7 @@ public:
 
 class MeshMulti : public Mesh {
 public:
-	MeshMulti(Mesh* original, const std::vector<glm::vec3>& bumps);
+	MeshMulti(Mesh* original, std::span<const glm::vec3> bumps);
 };
 
 class MeshPlane : public Mesh {

@@ -9,6 +9,7 @@ struct Entity;
 #include <set>
 #include <unordered_set>
 #include <map>
+#include <span>
 #include <vector>
 #include "slabmap.h"
 #include "gridmap.h"
