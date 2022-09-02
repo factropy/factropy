@@ -60,6 +60,9 @@ struct Cart {
 	World::Region region;
 	uint64_t regionNext = 0;
 
+	miniset<Entity*> nearEntities;
+	uint64_t nearNext = 0;
+
 	void start();
 	void travel();
 	void stop();

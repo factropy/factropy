@@ -674,7 +674,7 @@ void GuiEntity::instance() {
 	}
 
 	if (spec->monorail && monorail) {
-		miniset<Rail> seen;
+		localset<Rail> seen;
 		for (auto& rl: monorail->railsOut) {
 			if (seen.has(rl.rail) && distance > Config::window.levelsOfDetail[Part::MD]) continue;
 			bool routeOnly = seen.has(rl.rail);
@@ -1149,8 +1149,8 @@ void GuiEntity::overlayHovering(bool full) {
 
 			std::map<uint,std::set<uint>> web;
 
-			miniset<uint> done;
-			miniset<uint> nest = {en.id};
+			localset<uint> done;
+			localset<uint> nest = {en.id};
 
 			while (nest.size()) {
 				auto nid = nest.shift();

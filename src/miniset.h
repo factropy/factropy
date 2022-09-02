@@ -24,7 +24,32 @@ public:
 	miniset<V,A>(const miniset<V>& other) : minivec<V,A>(other) {
 	}
 
-	miniset<V,A>(std::initializer_list<V> l) : minivec<V,A>(l) {
+	miniset<V,A>(std::span<const V> other) {
+		operator=(other);
+	}
+
+	miniset<V,A>(miniset<V>&& other) : minivec<V,A>(other) {
+	}
+
+	miniset<V,A>(std::initializer_list<V> l) {
+		minivec<V,A>::clear();
+		for (auto& v: l) insert(v);
+	}
+
+	miniset<V,A>& operator=(const miniset<V,A>& other) {
+		minivec<V,A>::operator=(other);
+		return *this;
+	}
+
+	miniset<V,A>& operator=(miniset<V,A>&& other) {
+		minivec<V,A>::operator=(other);
+		return *this;
+	}
+
+	miniset<V,A>& operator=(std::span<const V> other) {
+		minivec<V,A>::clear();
+		for (auto& v: other) insert(v);
+		return *this;
 	}
 
 	iterator begin() const {
@@ -84,5 +109,27 @@ public:
 
 template <class V>
 class localset : public miniset<V,minialloc_local> {
+public:
+	localset<V>() : miniset<V,minialloc_local>() {
+	}
+
+	localset<V>(const localset<V>& other) : miniset<V,minialloc_local>(other) {
+	}
+
+	localset<V>(localset<V>&& other) : miniset<V,minialloc_local>(other) {
+	}
+
+	localset<V>(std::initializer_list<V> l) : miniset<V,minialloc_local>(l) {
+	}
+
+	localset<V>& operator=(const localset<V>& other) {
+		miniset<V,minialloc_local>::operator=(other);
+		return *this;
+	}
+
+	localset<V>& operator=(localset<V>&& other) {
+		miniset<V,minialloc_local>::operator=(other);
+		return *this;
+	}
 };
 

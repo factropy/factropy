@@ -62,6 +62,10 @@ public:
 		return head ? head->cap: 0;
 	}
 
+	uint max_size() const {
+		return std::numeric_limits<uint>::max();
+	}
+
 protected:
 	void setSize(int n) {
 		if (!head && !n) return;
@@ -87,6 +91,10 @@ public:
 	}
 
 	minivec<V,A>(const minivec<V,A>& other) : minivec<V,A>() {
+		operator=(other);
+	}
+
+	minivec<V,A>(minivec<V,A>&& other) : minivec<V,A>() {
 		operator=(other);
 	}
 
@@ -116,8 +124,16 @@ public:
 		return *this;
 	}
 
-	operator std::span<V>() const {
-		return {begin(), end()};
+	minivec<V,A>& operator=(minivec<V,A>&& other) {
+		clear();
+		A().free(head);
+		head = other.head;
+		other.head = nullptr;
+		return *this;
+	}
+
+	operator std::span<const V>() const {
+		return std::span<V>(data(), size());
 	}
 
 	virtual ~minivec<V,A>() {
@@ -170,7 +186,7 @@ public:
 	}
 
 	V& at(uint i) const {
-		ensure(capacity() > i);
+		assert(capacity() > i);
 		return *cell(i);
 	}
 
@@ -194,10 +210,6 @@ public:
 		return size() == 0;
 	}
 
-	uint max_size() const {
-		return std::numeric_limits<uint>::max();
-	}
-
 	void push_back(V s = V()) {
 		uint n = size();
 		reserve(n+1);
@@ -206,7 +218,7 @@ public:
 	}
 
 	void pop_back() {
-		ensure(size());
+		assert(size());
 		setSize(size()-1);
 		std::destroy_at(cell(size()));
 	}
@@ -220,7 +232,7 @@ public:
 	}
 
 	void pop_front() {
-		ensure(size());
+		assert(size());
 		erase(begin());
 	}
 
@@ -434,6 +446,10 @@ public:
 	void append(const minivec<V,A>& other) {
 		append(other.data(), other.size());
 	}
+
+	void append(std::span<const V> items) {
+		append(items.data(), items.size());
+	}
 };
 
 template <class V>
@@ -443,6 +459,10 @@ public:
 	}
 
 	localvec<V>(const localvec<V>& other) : localvec<V>() {
+		operator=(other);
+	}
+
+	localvec<V>(localvec<V>&& other) : localvec<V>() {
 		operator=(other);
 	}
 
@@ -467,8 +487,16 @@ public:
 	}
 
 	localvec<V>& operator=(const localvec<V>& other) {
-		minivec<V,minialloc_local>::clear();
-		minivec<V,minialloc_local>::append(other);
+		minivec<V,minialloc_local>::operator=(other);
 		return *this;
+	}
+
+	localvec<V>& operator=(localvec<V>&& other) {
+		minivec<V,minialloc_local>::operator=(other);
+		return *this;
+	}
+
+	operator std::span<const V>() const {
+		return std::span<V>(minivec<V,minialloc_local>::data(), minivec<V,minialloc_local>::size());
 	}
 };

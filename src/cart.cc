@@ -32,6 +32,8 @@ Cart& Cart::create(uint id) {
 	cart.slab = false;
 	cart.blocked = false;
 	cart.signal.value = 1;
+	cart.regionNext = 0;
+	cart.nearNext = 0;
 	return cart;
 }
 
@@ -197,7 +199,10 @@ void Cart::travel() {
 		return;
 	}
 
-	auto nearEntities = Entity::intersecting(en->box().grow(2.0f));
+	if (nearNext <= Sim::tick) {
+		nearEntities = Entity::intersecting(en->box().grow(2.0f));
+		nearNext = Sim::tick+10;
+	}
 
 	// remove previous colliders out of range
 	localvec<uint> drop;

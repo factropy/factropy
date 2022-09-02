@@ -17,7 +17,7 @@ struct thing {
 };
 
 minimap<thing,&thing::key> things;
-things[1] = 2.0f;
+things[1].val = 2.0f;
 things.insert((object){ .key = 2, .val = 2.0f });
 auto& alpha = &things[1];
 auto& beta = &things[2];
@@ -32,6 +32,27 @@ class minimap : public minivec<V,A> {
 
 public:
 	minimap<V,ID,A>() : minivec<V,A>() {
+	}
+
+	minimap<V,ID,A>(const minimap<V,ID,A>& other) : minivec<V,A>(other) {
+	}
+
+	minimap<V,ID,A>(minimap<V,ID,A>&& other) : minivec<V,A>(other) {
+	}
+
+	minimap<V,ID,A>(std::initializer_list<V> l) : minivec<V,A>(l) {
+		minivec<V,A>::clear();
+		for (auto& v: l) insert(v);
+	}
+
+	minimap<V,ID,A>& operator=(const minimap<V,ID,A>& other) {
+		minivec<V,A>::operator=(other);
+		return *this;
+	}
+
+	minimap<V,ID,A>& operator=(minimap<V,ID,A>&& other) {
+		minivec<V,A>::operator=(other);
+		return *this;
 	}
 
 	typedef K key_type;
@@ -100,5 +121,27 @@ public:
 
 template <class V, auto ID>
 class localmap : public minimap<V,ID,minialloc_local> {
+public:
+	localmap<V,ID>() : minimap<V,ID,minialloc_local>() {
+	}
+
+	localmap<V,ID>(const localmap<V,ID>& other) : minimap<V,ID,minialloc_local>(other) {
+	}
+
+	localmap<V,ID>(localmap<V,ID>&& other) : minimap<V,ID,minialloc_local>(other) {
+	}
+
+	localmap<V,ID>(std::initializer_list<V> l) : minimap<V,ID,minialloc_local>(l) {
+	}
+
+	localmap<V,ID>& operator=(const localmap<V,ID>& other) {
+		minimap<V,ID,minialloc_local>::operator=(other);
+		return *this;
+	}
+
+	localmap<V,ID>& operator=(localmap<V,ID>&& other) {
+		minimap<V,ID,minialloc_local>::operator=(other);
+		return *this;
+	}
 };
 

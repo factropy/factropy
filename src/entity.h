@@ -169,12 +169,10 @@ struct Entity {
 
 	template <class G>
 	static localvec<Entity*> intersecting(const Cuboid& cuboid, const G& gm) {
-		localvec<Entity*> hits;
-		for (Entity* en: gm.search(cuboid.box.sphere())) {
-			if (en->cuboid().intersects(cuboid)) {
-				hits.push_back(en);
-			}
-		}
+		auto hits = gm.search(cuboid.box.sphere());
+		discard_if(hits, [&](const auto en) {
+			return !en->cuboid().intersects(cuboid);
+		});
 		return hits;
 	}
 
@@ -182,12 +180,10 @@ struct Entity {
 
 	template <class G>
 	static localvec<Entity*> intersecting(const Box& box, const G& gm) {
-		localvec<Entity*> hits;
-		for (Entity* en: gm.search(box)) {
-			if (en->box().intersects(box)) {
-				hits.push_back(en);
-			}
-		}
+		auto hits = gm.search(box);
+		discard_if(hits, [&](const auto en) {
+			return !en->box().intersects(box);
+		});
 		return hits;
 	}
 
@@ -195,12 +191,10 @@ struct Entity {
 
 	template <class G>
 	static localvec<Entity*> intersecting(const Sphere& sphere, const G& gm) {
-		localvec<Entity*> hits;
-		for (Entity* en: gm.search(sphere)) {
-			if (en->sphere().intersects(sphere)) {
-				hits.push_back(en);
-			}
-		}
+		auto hits = gm.search(sphere);
+		discard_if(hits, [&](const auto en) {
+			return !en->sphere().intersects(sphere);
+		});
 		return hits;
 	}
 
@@ -208,12 +202,10 @@ struct Entity {
 
 	template <class G>
 	static localvec<Entity*> intersecting(const Cylinder& cylinder, const G& gm) {
-		localvec<Entity*> hits;
-		for (Entity* en: gm.search(cylinder.box())) {
-			if (en->box().intersects(cylinder)) {
-				hits.push_back(en);
-			}
-		}
+		auto hits = gm.search(cylinder.box());
+		discard_if(hits, [&](const auto en) {
+			return !en->box().intersects(cylinder);
+		});
 		return hits;
 	}
 
