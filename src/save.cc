@@ -3113,6 +3113,10 @@ void PowerPole::loadAll(const char* name) {
 		}
 	}
 
+	for (auto& pole: PowerPole::all) {
+		if (!pole.managed && !pole.en->isGhost()) pole.manage();
+	}
+
 	in.close();
 }
 

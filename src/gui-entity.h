@@ -102,7 +102,7 @@ struct GuiEntity {
 		bool ghost;
 	};
 
-	shipyardState* shipyard;
+	shipyardState* shipyard = nullptr;
 
 	static void prepareCaches();
 

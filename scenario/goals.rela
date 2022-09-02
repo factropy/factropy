@@ -136,6 +136,9 @@ add_goal({
 		"pipe",
 		"steel-frame",
 		"circuit-board",
+		"drum",
+		"fill-water",
+		"empty-water",
 	],
 	hints = [
 		"Containers make their contents available to zeppelin drones.",
@@ -161,6 +164,8 @@ add_goal({
 	],
 	recipes = [
 		"hydrazine",
+		"fill-hydrazine",
+		"empty-hydrazine",
 	],
 	hints = [
 		"Pipe configuration can be cycled [C] through straight / corner / tee / cross."
@@ -226,6 +231,8 @@ add_goal({
 		"slurry-stone-crushed",
 		"slurry-clarification",
 		"incinerate-log",
+		"fill-slurry",
+		"empty-slurry",
 	],
 	hints = [
 		"Enemy scout detected in-system! They know you are here."
@@ -254,6 +261,14 @@ add_goal({
 		"sulfur",
 		"sulfuric-acid",
 		"mother-board",
+		"fill-oil",
+		"empty-oil",
+		"fill-fuel-oil",
+		"empty-fuel-oil",
+		"fill-naphtha",
+		"empty-naphtha",
+		"fill-sulfuric-acid",
+		"empty-sulfuric-acid",
 	],
 	supplies = {
 		"ammo1" = 500,
@@ -316,6 +331,10 @@ add_goal({
 		"hydrazine-alt",
 		"processor",
 		"ship-fighter",
+		"fill-hydrofluoric-acid",
+		"empty-hydrofluoric-acid",
+		"fill-ammonia",
+		"empty-ammonia",
 	],
 	supplies = {
 		"ammo1" = 5000,

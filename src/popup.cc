@@ -120,7 +120,10 @@ void Popup::itemIcon(Item* item, float pix) {
 
 bool Popup::itemIconButton(Item* item, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
-	return ImageButton(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PushID(item->name.c_str());
+	auto press = ImageButton(itemIconChoose(item, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PopID();
+	return press;
 }
 
 ImTextureID Popup::fluidIconChoose(Fluid* fluid, float pix) {
@@ -135,7 +138,10 @@ void Popup::fluidIcon(Fluid* fluid, float pix) {
 
 bool Popup::fluidIconButton(Fluid* fluid, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
-	return ImageButton(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PushID(fluid->name.c_str());
+	auto press = ImageButton(fluidIconChoose(fluid, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PopID();
+	return press;
 }
 
 ImTextureID Popup::recipeIconChoose(Recipe* recipe, float pix) {
@@ -202,7 +208,9 @@ void Popup::recipeIcon(Recipe* recipe, float pix) {
 bool Popup::recipeIconButton(Recipe* recipe, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 
+	PushID(recipe->name.c_str());
 	auto state = ImageButton(recipeIconChoose(recipe, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PopID();
 
 	if (!state && tipBegin()) {
 		Print(recipe->title.c_str());
@@ -288,12 +296,14 @@ ImTextureID Popup::specIconChoose(Spec* spec, float pix) {
 void Popup::specIcon(Spec* spec, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
 	Image(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
-	if (IsItemHovered()) tip(spec->title.c_str());
 }
 
 bool Popup::specIconButton(Spec* spec, float pix) {
 	pix = (pix < 4.0f) ? GetFontSize(): pix;
-	return ImageButton(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PushID(spec->name.c_str());
+	auto press = ImageButton(specIconChoose(spec, pix), ImVec2(pix, pix), ImVec2(0, 1), ImVec2(1, 0));
+	PopID();
+	return press;
 }
 
 void Popup::signalKeyIcon(Signal::Key key, float pix) {

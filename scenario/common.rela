@@ -99,6 +99,7 @@ tags = {
 	crushing_with_fluid = ["crushing-with-fluid"],
 	chemistry = ["chemistry"],
 	shipyard1 = ["shipyard1"],
+	filling = ["filling"],
 }
 
 mining = {
@@ -167,6 +168,64 @@ smelting = {
 	},
 }
 
+fluids = {
+	"water" = {
+		title = "Water",
+		color = 0x0000ffff,
+		order = "a",
+	},
+	"steam" = {
+		title = "Steam",
+		color = 0xccccccff,
+		order = "b",
+	},
+	"oil" = {
+		title = "Oil",
+		color = 0x111111ff,
+		order = "c",
+	},
+	"slurry" = {
+		title = "Slurry",
+		color = 0xb5651dff,
+		order = "d",
+	},
+	"lubricant" = {
+		title = "Lubricant",
+		color = 0x006400ff,
+		order = "e",
+	},
+	"naphtha" = {
+		title = "Naphtha",
+		color = 0x7B68EEff,
+		order = "f",
+	},
+	"fuel-oil" = {
+		title = "Fuel Oil",
+		color = 0xFFD700ff,
+		order = "g",
+	},
+	"sulfuric-acid" = {
+		title = "Sulfuric Acid",
+		color = 0xFFff00ff,
+		order = "h",
+	},
+	"hydrofluoric-acid" = {
+		title = "Hydrofluoric Acid",
+		color = 0x00ffffff,
+		order = "i",
+	},
+	"ammonia" = {
+		title = "Ammonia",
+		color = 0xccccffff,
+		order = "j",
+	},
+	"hydrazine" = {
+		title = "Hydrazine",
+		color = 0xee82eeff,
+		order = "k",
+	},
+}
+
 order = {
 	iron = "a",
 	copper = "b",
@@ -180,3 +239,5 @@ order = {
 	sulfur = "j",
 	silica = "k",
 }
+
+

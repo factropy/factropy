@@ -1,0 +1,38 @@
+
+function drum(name, title, color, order, mass)
+	add_item({
+		name = name,
+		title = title,
+		category = "processed",
+		group = "drum",
+		order = order,
+		mass = mass,
+		parts = [
+			{
+				color = 0xccccccff,
+				gloss = gloss.metallic,
+				lods = [
+					["models/drum-hd.stl", high, shadow],
+					["models/drum-ld.stl", medium, noshadow],
+				]
+			},
+			{
+				color = color,
+				gloss = gloss.metallic,
+				lods = [
+					["models/drum-lid-hd.stl", high, noshadow],
+					["models/drum-lid-ld.stl", medium, noshadow],
+				]
+			}
+		],
+		armV = 0,
+	})
+end
+
+drum("drum", "Drum (Empty)", 0xccccccff, "a", kg(5))
+
+for name,data in fluids
+	if name != "steam" then
+		drum("drum-$(name)", "Drum ($(data.title))", data.color, "b-$(data.order)", kg(50))
+	end
+end

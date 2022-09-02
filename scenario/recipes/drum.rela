@@ -1,0 +1,33 @@
+
+add_recipe({
+	name = "drum",
+	title = "Drum Rolling",
+	input = { "steel-ingot" = 1 },
+	output = { "drum" = 2 },
+	energy = kJ(50),
+	tags = tags.crafting,
+})
+
+for name,data in fluids
+	if name != "steam" then
+
+		add_recipe({
+			name = "fill-$(name)",
+			title = "Fill: $(data.title)",
+			input = { drum = 1, "$(name)" = 100 },
+			output = { "drum-$(name)" = 1 },
+			energy = kJ(50),
+			tags = tags.chemistry,
+		})
+
+		add_recipe({
+			name = "empty-$(name)",
+			title = "Empty: $(data.title)",
+			input = { "drum-$(name)" = 1 },
+			output = { "$(name)" = 100, drum = 1 },
+			energy = kJ(50),
+			tags = tags.chemistry,
+		})
+	end
+end
+

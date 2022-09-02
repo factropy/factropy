@@ -3,6 +3,55 @@
 // Monorail components are towers connected by Curves and coloured routes,
 // navigated by Monorail cars
 
+namespace {
+	struct PathForward : Route<Monorail*> {
+		std::vector<Monorail*> getNeighbours(Monorail* tower) {
+			localset<Monorail*> sibs;
+			for (uint i = 0; i < 3; i++) {
+				if (tower->out[i]) sibs.insert(&Monorail::get(tower->out[i]));
+			}
+			return {sibs.begin(), sibs.end()};
+		}
+
+		double calcCost(Monorail* towerA, Monorail* towerB) {
+			return towerA->en->pos().distance(towerB->en->pos());
+		}
+
+		double calcHeuristic(Monorail* tower) {
+			return tower->en->pos().distance(target->en->pos());
+		}
+
+		bool rayCast(Monorail* towerA, Monorail* towerB) {
+			return false;
+		}
+	};
+
+	struct PathEither : Route<Monorail*> {
+		std::vector<Monorail*> getNeighbours(Monorail* tower) {
+			localset<Monorail*> sibs;
+			for (uint i = 0; i < 3; i++) {
+				if (tower->out[i]) sibs.insert(&Monorail::get(tower->out[i]));
+			}
+			for (auto id: tower->in) {
+				if (id) sibs.insert(&Monorail::get(id));
+			}
+			return {sibs.begin(), sibs.end()};
+		}
+
+		double calcCost(Monorail* towerA, Monorail* towerB) {
+			return towerA->en->pos().distance(towerB->en->pos());
+		}
+
+		double calcHeuristic(Monorail* tower) {
+			return tower->en->pos().distance(target->en->pos());
+		}
+
+		bool rayCast(Monorail* towerA, Monorail* towerB) {
+			return false;
+		}
+	};
+}
+
 void Monorail::reset() {
 	all.clear();
 }

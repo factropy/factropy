@@ -4322,7 +4322,7 @@ void ScenarioBase::cartTier(int tier) {
 	spec->forceDelete = true;
 	spec->energyConsume = Energy::kW(50*tier);
 	spec->consumeCharge = true;
-	spec->consumeChargeBuffer = Energy::MJ(10*tier);
+	spec->consumeChargeBuffer = Energy::MJ(50*tier);
 	spec->consumeChargeRate = Energy::kW(100*tier);
 	spec->store = true;
 	spec->tipStorage = true;
@@ -4661,7 +4661,7 @@ void ScenarioBase::droneDepotTier(int tier, uint color, uint color2) {
 
 	spec->consumeCharge = true;
 	spec->consumeChargeEffect = true;
-	spec->consumeChargeBuffer = Energy::MJ(50) * (float)tier;
+	spec->consumeChargeBuffer = Energy::MJ(100) * (float)tier;
 	spec->consumeChargeRate = Energy::kW(500) * (float)tier;
 
 	spec->materials = {
