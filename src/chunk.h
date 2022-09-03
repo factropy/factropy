@@ -96,7 +96,6 @@ struct Chunk {
 
 	static uint prepare();
 
-	static void tickPurge();
-	static void tickChange();
+	static void tick();
 	static void terrainSmooth(Mesh* mesh, float scale, int size, int edge, const std::vector<float>& elevation, const std::vector<glm::vec3>& noise, float darkness);
 };

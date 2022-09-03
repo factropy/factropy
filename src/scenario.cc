@@ -1,5 +1,4 @@
 #include "scenario.h"
-#include "crew.h"
 #include "gui.h"
 #include <fstream>
 #include <filesystem>
@@ -2148,7 +2147,7 @@ void ScenarioBase::generate() {
 	channel<result> results;
 
 	jobs++;
-	crew.job([&]() {
+	async.job([&]() {
 		for (auto res: results) {
 			auto spec = res.spec;
 			auto x = res.at.x;
@@ -2197,7 +2196,7 @@ void ScenarioBase::generate() {
 	uint size = world.size()/8;
 	for (auto chunk: gridwalk(size, world.box())) {
 		jobs++;
-		crew.job([&,chunk]() {
+		async.job([&,chunk]() {
 			auto box = Point(
 				(float)chunk.x * size + size/2,
 				0,

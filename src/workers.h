@@ -4,11 +4,9 @@
 #include <mutex>
 #include <functional>
 #include "channel.h"
-#include "lalloc.h"
 
 class workers {
 private:
-	uint pool = 0;
 	std::vector<std::thread> threads;
 	channel<std::function<void(void)>,-1> work;
 	std::mutex mutex;
@@ -37,36 +35,36 @@ public:
 	workers() {
 	}
 
+	workers(int p) {
+		start(p);
+	}
+
 	~workers() {
 		stop();
 	}
 
 	uint size() {
-		return pool;
+		std::unique_lock<std::mutex> m(mutex);
+		return threads.size();
 	}
 
-	void start(uint p) {
+	void start(uint p = 1) {
 		std::unique_lock<std::mutex> m(mutex);
-		while (pool < p) {
+		work.open();
+		while (threads.size() < p) {
 			threads.push_back(std::thread(&workers::runner, this));
-			pool++;
 		}
 	}
 
 	void stop() {
 		std::unique_lock<std::mutex> m(mutex);
-		if (pool) {
-			m.unlock();
-			work.close();
-			for (uint i = 0; i < pool; i++) {
-				threads[i].join();
-			}
-			m.lock();
-			threads.clear();
-			submitted = 0;
-			completed = 0;
-			pool = 0;
-		}
+		work.close();
+		m.unlock();
+		for (auto& thread: threads) thread.join();
+		m.lock();
+		threads.clear();
+		submitted = 0;
+		completed = 0;
 	}
 
 	bool job(std::function<void(void)> fn) {
@@ -84,3 +82,5 @@ public:
 		while (count > completed) waiting.wait(m);
 	}
 };
+
+extern workers async;

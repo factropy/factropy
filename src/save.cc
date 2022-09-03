@@ -3,7 +3,6 @@
 #include "world.h"
 #include "entity.h"
 #include "goal.h"
-#include "crew.h"
 #include "gui.h"
 #include "enemy.h"
 #include "glm-ex.h"
@@ -697,7 +696,7 @@ void Entity::saveAll(const char* name, channel<bool,3>* tickets) {
 		}
 	}
 
-	crew2.job([=]() {
+	async.job([=]() {
 		deflation def;
 		def.push(fmt("%u %u %u %u", seq, estates->size(), enames->size(), ecolors->size()));
 

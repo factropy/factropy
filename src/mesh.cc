@@ -2,7 +2,6 @@
 #include "shader.h"
 #include "common.h"
 #include "point.h"
-#include "crew.h"
 #include <set>
 #include <string>
 #include <fstream>
@@ -14,10 +13,23 @@ namespace {
 	// rendering thread caches to reduce mutex contention
 	thread_local bool batching = false;
 	thread_local std::map<Mesh*,std::map<GLuint,Mesh::renderGroup>> lgroups;
+
+	Mesh::renderGroup& localGroup(Mesh* mesh, GLuint group) {
+		auto& g = lgroups[mesh][group];
+		if (!g.instances.capacity()) {
+			uint n = mesh->stats.instances;
+			g.colors.reserve(n);
+			g.shines.reserve(n);
+			g.filters.reserve(n);
+			g.instances.reserve(n);
+			g.shadowInstances.reserve(n);
+		}
+		return g;
+	}
 }
 
 void Mesh::reset() {
-	std::vector<Mesh*> copy = {all.begin(), all.end()};
+	miniset<Mesh*> copy = all;
 	for (auto mesh: copy) delete mesh;
 }
 
@@ -41,7 +53,7 @@ void Mesh::prepareAll() {
 
 void Mesh::instance(GLuint group, const glm::mat4& trx, const glm::vec4& color, GLfloat shine, bool shadow, uint filter) {
 	if (batching) {
-		auto& g = lgroups[this][group];
+		auto& g = localGroup(this, group);
 		g.colors.push_back(color);
 		g.shines.push_back(shine);
 		g.filters.push_back(filter);
@@ -60,7 +72,7 @@ void Mesh::instance(GLuint group, const glm::mat4& trx, const glm::vec4& color, 
 
 void Mesh::instances(GLuint group, std::span<const glm::mat4> batch, const glm::vec4& color, GLfloat shine, bool shadow, uint filter) {
 	if (batching) {
-		auto& g = lgroups[this][group];
+		auto& g = localGroup(this, group);
 		g.colors.resize(g.colors.size() + batch.size(), color);
 		g.shines.resize(g.shines.size() + batch.size(), shine);
 		g.filters.resize(g.filters.size() + batch.size(), filter);
@@ -188,6 +200,7 @@ void Mesh::renderAll(GLuint group, GLuint shadowMap) {
 	for (auto mesh: all) {
 		auto& g = mesh->groups[current][group];
 		mesh->renderMany(shadowMap, g.instances, g.colors, g.shines, g.filters);
+		mesh->stats.instances = g.instances.size();
 	}
 }
 

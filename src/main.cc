@@ -4,7 +4,6 @@
 #include "../imgui/setup.h"
 
 #include "common.h"
-#include "crew.h"
 #include "glm-ex.h"
 #include "shader.h"
 #include "mesh.h"
@@ -39,13 +38,11 @@ SDL_Window* window = nullptr;
 SDL_GLContext context;
 std::atomic<bool> quit = false;
 const char* binary = nullptr;
+workers async;
 
 SDL_Window* sdlWindow() {
 	return window;
 }
-
-workers crew;
-workers crew2;
 
 struct {
 	const char* argv[5];
@@ -132,13 +129,13 @@ void game() {
 
 	scenario = new ScenarioBase();
 
-	crew.job([&]() {
-		trigger chunkNoise;
+	async.job([&]() {
+		trigger noise;
 
-		crew2.job([&]() {
+		async.job([&]() {
 			//Chunk::Terrain::noiseGen();
 			Chunk::Terrain::noiseLoad();
-			chunkNoise.now();
+			noise.now();
 		});
 
 		scenario->items();
@@ -237,7 +234,7 @@ void game() {
 			scenario->create();
 		}
 
-		chunkNoise.wait();
+		noise.wait();
 		readyScenario = true;
 	});
 
@@ -300,8 +297,7 @@ void game() {
 	done = false;
 
 	// Sim tries to run at 60 UPS regardless of FPS
-	crew.job([&]() {
-
+	std::thread ticker([&]() {
 		int update = 0;
 		std::array<double,10> updates;
 		for (auto& slot: updates) slot = 0;
@@ -358,6 +354,10 @@ void game() {
 
 		done = true;
 		linfo();
+	});
+
+	std::thread chunker([&]() {
+		while (pulse.wait()) Chunk::tick();
 	});
 
 	auto stamp = now();
@@ -424,8 +424,6 @@ void game() {
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		Chunk::tickPurge();
-		crew2.job(Chunk::tickChange);
 		pulse.now();
 
 		SDL_GL_SwapWindow(window);
@@ -484,6 +482,8 @@ void game() {
 	}
 
 	pulse.stop();
+	ticker.join();
+	chunker.join();
 
 	delete scenario;
 	scenario = nullptr;
@@ -686,13 +686,14 @@ int main(int argc, char* argv[]) {
 
 	Config::imgui();
 
-	crew.start(Config::engine.threads);
-	crew2.start(Config::engine.cores);
+	async.start(std::max(4, Config::engine.cores));
 
 	scene.initGL();
 	menu();
 
 	Config::save();
+
+	async.stop();
 
 	ImPlot::DestroyContext();
 	ImGui_ImplOpenGL3_Shutdown();
@@ -702,9 +703,6 @@ int main(int argc, char* argv[]) {
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-
-	crew.stop();
-	crew2.stop();
 
 	#if defined(_WIN32)
 		timeEndPeriod(1);

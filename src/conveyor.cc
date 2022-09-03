@@ -2,7 +2,6 @@
 #include "sim.h"
 #include "conveyor.h"
 #include "loader.h"
-#include "crew.h"
 
 // Conveyor components move items around, automatically linking together to form belts.
 
@@ -382,10 +381,10 @@ void Conveyor::tick() {
 	uint b = s/4;
 
 	if (s > 100) {
-		crew.job([&]() { advance(  0,   b); });
-		crew.job([&]() { advance(  b, b*2); });
-		crew.job([&]() { advance(b*2, b*3); });
-		crew.job([&]() { advance(b*3,   s); });
+		async.job([&]() { advance(  0,   b); });
+		async.job([&]() { advance(  b, b*2); });
+		async.job([&]() { advance(b*2, b*3); });
+		async.job([&]() { advance(b*3,   s); });
 	} else {
 		advance(0, s);
 	}

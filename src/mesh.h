@@ -18,7 +18,6 @@ public:
 	static inline miniset<Mesh*> all;
 	static void reset();
 
-	uint32_t id = 0;
 	GLuint vao = 0;
 
 	struct {
@@ -41,6 +40,10 @@ public:
 		minivec<GLfloat> shines;
 		minivec<GLfloat> filters;
 	};
+
+	struct {
+		std::atomic<uint> instances = {0};
+	} stats;
 
 	static inline uint8_t current = 0;
 	static inline uint8_t future = 1;

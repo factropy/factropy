@@ -4,7 +4,6 @@
 #include "mesh.h"
 #include "part.h"
 #include "sim.h"
-#include "crew.h"
 #include "flate.h"
 #include <fstream>
 #include <filesystem>
@@ -57,7 +56,7 @@ uint Chunk::prepare() {
 			generating.push_back(generation);
 			generation.chunk->version = Sim::tick;
 
-			crew2.job([generation]() {
+			async.job([generation]() {
 				auto chunk = generation.chunk;
 				auto at = generation.at;
 
@@ -89,12 +88,12 @@ uint Chunk::prepare() {
 	return jobs;
 }
 
-void Chunk::tickPurge() {
+void Chunk::tick() {
 	Sim::locked([&]() {
 		const std::lock_guard<std::mutex> lock(looking);
 
 		// last frame
-		std::set<Chunk*> dropChunks;
+		miniset<Chunk*> dropChunks;
 		for (auto [chunk,tick]: deleted) {
 			if (tick <= Sim::tick) {
 				dropChunks.insert(chunk);
@@ -104,12 +103,6 @@ void Chunk::tickPurge() {
 			deleted.erase(chunk);
 			delete chunk;
 		}
-	});
-}
-
-void Chunk::tickChange() {
-	Sim::locked([&]() {
-		const std::lock_guard<std::mutex> lock(looking);
 
 		minivec<XY> jobs;
 
@@ -148,7 +141,7 @@ void Chunk::tickChange() {
 			generating.push_back(generation);
 			generation.chunk->version = Sim::tick;
 
-			crew2.job([generation]() {
+			async.job([generation]() {
 				auto chunk = generation.chunk;
 				auto at = generation.at;
 
@@ -369,7 +362,7 @@ void Chunk::Terrain::noiseGen() {
 	trigger done;
 
 	for (int ty = 0; ty <= edge; ty++) {
-		crew2.job([&,ty]() {
+		async.job([&,ty]() {
 			for (int tx = 0; tx <= edge; tx++) {
 				float bx = (float)Sim::noise2D(tx+1000, ty+1000, layers, persistenceA, frequencyA) + 0.5
 					+ (float)Sim::noise2D(tx+1000, ty+1000, layers, persistenceB, frequencyB) + 0.5;

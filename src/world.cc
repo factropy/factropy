@@ -1,8 +1,9 @@
 #include "world.h"
 #include "flate.h"
 #include "log.h"
-#include "crew.h"
 #include "save.h"
+#include "workers.h"
+#include "config.h"
 
 World world;
 
@@ -54,7 +55,7 @@ void World::init() {
 	channel<TileResult,-1> results;
 
 	jobs++;
-	crew2.job([&]() {
+	async.job([&]() {
 		for (auto res: results) {
 			Tile* tile = &tiles.emplace_back();
 			tile->x = res.at.x;
@@ -73,7 +74,7 @@ void World::init() {
 	// without fear of deadlock or slowing down rendering
 	for (int x = -size()/2; x < size()/2; x++) {
 		jobs++;
-		crew2.job([&,x]() {
+		async.job([&,x]() {
 			for (int y = -size()/2; y < size()/2; y++) {
 				float elevation = (float)Sim::noise2D(x, y, 8, 0.5, 0.002) - 0.5f;
 
@@ -290,7 +291,7 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 	Fluid* oil = Fluid::names["oil"];
 	ensure(oil);
 
-	crew2.job([=]() {
+	async.job([=]() {
 		deflation def;
 		def.push(fmt("%u", (uint)tilesSave.size()));
 

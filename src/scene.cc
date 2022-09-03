@@ -2,7 +2,6 @@
 #include "scene.h"
 #include "config.h"
 #include "gui.h"
-#include "crew.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -81,9 +80,25 @@ void Scene::init() {
 	fovy = glm::degrees(std::atan(std::tan(fovx/2.0)/aspect)*2.0);
 
 	perspective = glm::perspective(glm::radians(fovy), aspect, near, far);
+
+	threads.advancer.start();
+	threads.hoverer.start();
+	threads.ghoster.start();
+	threads.cabler.start();
+	threads.loaders.start(Config::engine.sceneLoadingThreads);
+	threads.instancers.start(Config::engine.sceneInstancingThreads);
+	threads.itemInstancers.start(Config::engine.sceneInstancingItemsThreads);
 }
 
 void Scene::reset() {
+	threads.advancer.stop();
+	threads.hoverer.stop();
+	threads.ghoster.stop();
+	threads.cabler.stop();
+	threads.loaders.stop();
+	threads.instancers.stop();
+	threads.itemInstancers.stop();
+
 	glDeleteFramebuffers(1, &shadowMapFrameBuffer);
 	glDeleteTextures(1, &shadowMapDepthTexture);
 
@@ -155,8 +170,8 @@ void Scene::reset() {
 
 	risers.clear();
 
-	for (auto b: poolEBatch.recv_all()) delete b;
-	for (auto b: poolGBatch.recv_all()) delete b;
+	ebatchPool.clear();
+	gbatchPools.clear();
 }
 
 void Scene::prepare() {
@@ -618,11 +633,20 @@ void Scene::updateVisibleCells() {
 
 // GuiEntity loaders, Sim::locked via main thread, fed by main thread
 void Scene::updateEntitiesLoader(int i) {
+
+	auto gbatch = [&]() {
+		auto& pool = gbatchPools[i];
+		pool.batches.resize(pool.used+1);
+		auto batch = &pool.batches[pool.used++];
+		batch->clear();
+		batch->reserve(1000);
+		return batch;
+	};
+
 	loadTimers[i].start();
 	double horizonSquared = Config::window.horizon*Config::window.horizon;
 
 	GBatch* out = gbatch();
-	out->reserve(1000);
 
 	auto flush = [&](uint size) {
 		if (out->size() > size) {
@@ -630,9 +654,7 @@ void Scene::updateEntitiesLoader(int i) {
 			forInstancing.send(out);
 			forInstancingItems.send(out);
 			forInstancingCables.send(out);
-			oldGBatch.send(out);
 			out = gbatch();
-			out->reserve(1000);
 		}
 	};
 
@@ -645,7 +667,6 @@ void Scene::updateEntitiesLoader(int i) {
 		}
 	}
 	flush(0);
-	oldGBatch.send(out);
 
 	loadTimers[i].stop();
 	doneLoading.now();
@@ -705,7 +726,7 @@ void Scene::updateEntitiesHover() {
 // GuiEntity instanced rendering, not Sim::locked, fed by loaders
 void Scene::updateEntitiesInstancer(int i) {
 	instancingTimers[i].start();
-	GBatch* ghost = gbatch();
+	GBatch* ghost = new GBatch;
 
 	Mesh::batchInstances();
 
@@ -720,8 +741,7 @@ void Scene::updateEntitiesInstancer(int i) {
 		}
 	}
 
-	if (ghost->size()) forGhosting.send(ghost);
-	oldGBatch.send(ghost);
+	forGhosting.send(ghost);
 
 	Mesh::flushInstances();
 
@@ -766,7 +786,10 @@ void Scene::updateEntitiesGhoster() {
 	GBatch ghost;
 	Mesh::batchInstances();
 
-	for (auto in: forGhosting) ghost.append(*in);
+	for (auto in: forGhosting) {
+		ghost.append(*in);
+		delete in;
+	}
 
 	std::sort(ghost.begin(), ghost.end(), [&](GuiEntity* a, GuiEntity* b) {
 		return a->pos().distanceSquared(position) < b->pos().distanceSquared(position);
@@ -785,8 +808,8 @@ void Scene::updateEntitiesFeeder() {
 	StopWatch watch;
 	watch.start();
 
-	EBatch marked;
-	GBatch* geBatch = gbatch();
+	std::deque<Entity*> marked;
+	feederBatch.clear();
 
 	// when selection box goes off screen, ensure the out of sight entities are included
 	if (selecting) {
@@ -794,14 +817,14 @@ void Scene::updateEntitiesFeeder() {
 			if (en->isMarked1()) continue;
 			en->setMarked1(true);
 			marked.push_back(en);
-			geBatch->push_back(&entityPools[future][0].emplace(en));
+			feederBatch.push_back(&entityPools[future][0].emplace(en));
 			if (en->spec->select && en->spec->plan) {
 				if (selectingTypes == SelectAll)
-					selectedFuture.push_back(geBatch->back());
+					selectedFuture.push_back(feederBatch.back());
 				if (selectingTypes == SelectJunk && en->spec->junk)
-					selectedFuture.push_back(geBatch->back());
+					selectedFuture.push_back(feederBatch.back());
 				if (selectingTypes == SelectUnder && (en->spec->pile || en->spec->slab))
-					selectedFuture.push_back(geBatch->back());
+					selectedFuture.push_back(feederBatch.back());
 			}
 		}
 		if (selectingTypes == SelectAll) {
@@ -821,7 +844,7 @@ void Scene::updateEntitiesFeeder() {
 		if (ed && !ed->isMarked1()) {
 			ed->setMarked1(true);
 			marked.push_back(ed);
-			geBatch->push_back(&entityPools[future][0].emplace(ed));
+			feederBatch.push_back(&entityPools[future][0].emplace(ed));
 		}
 	}
 
@@ -833,7 +856,7 @@ void Scene::updateEntitiesFeeder() {
 		et->setMarked1(true);
 		marked.push_back(et);
 		if (frustum.intersects(et->sphere().grow(100))) {
-			geBatch->push_back(&entityPools[future][0].emplace(et));
+			feederBatch.push_back(&entityPools[future][0].emplace(et));
 		}
 	}
 
@@ -845,7 +868,7 @@ void Scene::updateEntitiesFeeder() {
 		et->setMarked1(true);
 		marked.push_back(et);
 		if (frustum.intersects(et->sphere().grow(100))) {
-			geBatch->push_back(&entityPools[future][0].emplace(et));
+			feederBatch.push_back(&entityPools[future][0].emplace(et));
 		}
 	}
 
@@ -858,7 +881,7 @@ void Scene::updateEntitiesFeeder() {
 		et->setMarked1(true);
 		marked.push_back(et);
 		if (frustum.intersects(et->sphere().grow(100))) {
-			geBatch->push_back(&entityPools[future][0].emplace(et));
+			feederBatch.push_back(&entityPools[future][0].emplace(et));
 		}
 	}
 
@@ -867,15 +890,24 @@ void Scene::updateEntitiesFeeder() {
 		if (et->isMarked1()) continue;
 		et->setMarked1(true);
 		marked.push_back(et);
-		geBatch->push_back(&entityPools[future][0].emplace(et));
+		feederBatch.push_back(&entityPools[future][0].emplace(et));
 	}
 
-	forHovering.send(geBatch);
-	forInstancing.send(geBatch);
-	forInstancingItems.send(geBatch);
-	forInstancingCables.send(geBatch);
+	forHovering.send(&feederBatch);
+	forInstancing.send(&feederBatch);
+	forInstancingItems.send(&feederBatch);
+	forInstancingCables.send(&feederBatch);
 
-	EBatch* enBatch = ebatch();
+	uint ebatches = 0;
+	auto ebatch = [&]() {
+		ebatchPool.resize(ebatches+1);
+		auto batch = &ebatchPool[ebatches++];
+		batch->clear();
+		batch->reserve(1000);
+		return batch;
+	};
+
+	EBatch* batch = ebatch();
 
 	// This loop is the main rendering bottleneck. It needs to stay fast and tight to
 	// minimize blocking the Sim update _and_ prevent the GuiEntity loaders stalling
@@ -893,23 +925,20 @@ void Scene::updateEntitiesFeeder() {
 			for (auto en: it->second) {
 				if (en->isMarked1()) continue;
 				en->setMarked1(true);
-				enBatch->push_back(en);
+				batch->push_back(en);
 			}
 		}
 
-		if (enBatch->size() >= 1000) {
-			marked.append(*enBatch);
-			forLoading.send(enBatch);
-			oldEBatch.send(enBatch);
-			enBatch = ebatch();
+		if (batch->size() >= 1000) {
+			marked.insert(marked.end(), batch->begin(), batch->end());
+			forLoading.send(batch);
+			batch = ebatch();
 		}
 	}
 
-	marked.append(*enBatch);
-	forLoading.send(enBatch);
+	marked.insert(marked.end(), batch->begin(), batch->end());
+	forLoading.send(batch);
 	forLoading.close();
-
-	oldEBatch.send(enBatch);
 
 	for (auto en: marked) en->clearMarks();
 
@@ -933,30 +962,33 @@ void Scene::updateEntities() {
 	instancingTimers.resize(Config::engine.sceneInstancingThreads);
 	instancingItemsTimers.resize(Config::engine.sceneInstancingItemsThreads);
 
+	gbatchPools.resize(entityPools[future].size());
+	for (auto& pool: gbatchPools) pool.used = 0;
+
 	// GuiEntity loaders, Sim::locked via main thread, fed by main thread
 	for (int i = 0, l = entityPools[future].size(); i < l; i++) {
-		crew.job([i]() { scene.updateEntitiesLoader(i); });
+		threads.loaders.job([i]() { scene.updateEntitiesLoader(i); });
 	}
-
-	// mouse ray intersections, not Sim::locked, fed by loaders
-	crew.job([]() { scene.updateEntitiesHover(); });
 
 	// GuiEntity instanced rendering, not Sim::locked, fed by loaders
 	for (int i = 0, l = Config::engine.sceneInstancingThreads; i < l; i++) {
-		crew.job([i]() { scene.updateEntitiesInstancer(i); });
+		threads.instancers.job([i]() { scene.updateEntitiesInstancer(i); });
 	}
 
 	// Item instanced rendering, not Sim::locked, fed by loaders
 	for (int i = 0, l = Config::engine.sceneInstancingItemsThreads; i < l; i++) {
-		crew.job([i]() { scene.updateEntitiesItemInstancer(i); });
+		threads.itemInstancers.job([i]() { scene.updateEntitiesItemInstancer(i); });
 	}
 
 	// GuiEntity cable rendering, not Sim::locked, fed by instances
-	crew.job([]() { scene.updateEntitiesCabler(); });
+	threads.cabler.job([]() { scene.updateEntitiesCabler(); });
+
+	// mouse ray intersections, not Sim::locked, fed by loaders
+	threads.hoverer.job([]() { scene.updateEntitiesHover(); });
 
 	// GuiEntity ghost rendering, not Sim::locked, fed by instancers
 	// Runs last so that translucent ghosts can be sorted and rendered after extant entities
-	crew.job([]() { scene.updateEntitiesGhoster(); });
+	threads.ghoster.job([]() { scene.updateEntitiesGhoster(); });
 
 	// main thread, Sim::locked, fed by Entity::grid indexes
 	updateEntitiesFeeder();
@@ -980,9 +1012,6 @@ void Scene::updateEntities() {
 	stats.updateEntitiesInstances.track(frame, instancingTimers);
 	stats.updateEntitiesItems.track(frame, instancingItemsTimers);
 
-	poolEBatch.transfer_all(oldEBatch);
-	poolGBatch.transfer_all(oldGBatch);
-
 	doneLoading.reset();
 	doneHovering.reset();
 	doneInstancing.reset();
@@ -996,18 +1025,6 @@ void Scene::updateEntities() {
 	forInstancingItems.reset();
 	forInstancingCables.reset();
 	forGhosting.reset();
-}
-
-Scene::EBatch* Scene::ebatch() {
-	auto pair = poolEBatch.poll_pair();
-	if (pair.ok) pair.v->clear();
-	return (pair.ok) ? pair.v: new EBatch;
-}
-
-Scene::GBatch* Scene::gbatch() {
-	auto pair = poolGBatch.poll_pair();
-	if (pair.ok) pair.v->clear();
-	return (pair.ok) ? pair.v: new GBatch;
 }
 
 void Scene::updateCurrent() {
@@ -2005,7 +2022,7 @@ void Scene::advancer() {
 }
 
 void Scene::advance() {
-	crew.job([]() { scene.advancer(); });
+	threads.advancer.job([]() { scene.advancer(); });
 }
 
 void Scene::render() {

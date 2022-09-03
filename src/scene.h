@@ -11,6 +11,7 @@ struct Scene;
 #include "plan.h"
 #include "sky.h"
 #include "popup.h"
+#include "workers.h"
 
 struct Scene {
 	uint current = 0;
@@ -236,13 +237,25 @@ struct Scene {
 	channel<GBatch*,-1> forInstancingCables;
 	channel<GBatch*,-1> forGhosting;
 
-	channel<EBatch*,-1> oldEBatch;
-	channel<GBatch*,-1> oldGBatch;
-	channel<EBatch*,-1> poolEBatch;
-	channel<GBatch*,-1> poolGBatch;
+	std::deque<EBatch> ebatchPool;
 
-	EBatch* ebatch();
-	GBatch* gbatch();
+	struct GPool {
+		std::deque<GBatch> batches;
+		uint used = 0;
+	};
+
+	GBatch feederBatch;
+	std::vector<GPool> gbatchPools;
+
+	struct {
+		workers advancer;
+		workers hoverer;
+		workers ghoster;
+		workers cabler;
+		workers loaders;
+		workers instancers;
+		workers itemInstancers;
+	} threads;
 
 	std::vector<StopWatch> loadTimers;
 	std::vector<StopWatch> instancingTimers;

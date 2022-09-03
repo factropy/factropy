@@ -47,8 +47,8 @@ class minivec {
 	static_assert(std::is_trivially_copyable<V>::value, "minivec<is_trivially_copyable>");
 
 	struct header {
-		uint top;
-		uint cap;
+		uint32_t top;
+		uint32_t cap;
 		V array[];
 	};
 
@@ -159,7 +159,8 @@ public:
 	void reserve(uint n) {
 		if (n > capacity()) {
 			uint s = size();
-			uint c = 4; while (n > c) c *= 2;
+			uint c = std::max(4u, capacity());
+			while (n > c) c *= 2;
 			head = (header*)minialloc_def().realloc((void*)head, sizeof(header) + (c * sizeof(V)));
 			setSize(s);
 			setCapacity(c);
@@ -453,8 +454,8 @@ class localvec {
 	static_assert(std::is_trivially_copyable<V>::value, "localvec<is_trivially_copyable>");
 
 	struct header {
-		uint top;
-		uint cap;
+		uint32_t top;
+		uint32_t cap;
 		V array[];
 	};
 
@@ -565,7 +566,8 @@ public:
 	void reserve(uint n) {
 		if (n > capacity()) {
 			uint s = size();
-			uint c = 4; while (n > c) c *= 2;
+			uint c = std::max(4u, capacity());
+			while (n > c) c *= 2;
 			head = (header*)minialloc_def().realloc((void*)head, sizeof(header) + (c * sizeof(V)));
 			setSize(s);
 			setCapacity(c);

@@ -5,6 +5,7 @@
 #include "time-series.h"
 #include "point.h"
 #include "message.h"
+#include "workers.h"
 #include <mutex>
 #include <functional>
 #include <random>

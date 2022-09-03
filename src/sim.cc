@@ -5,7 +5,6 @@
 #include "sim.h"
 #include "enemy.h"
 #include "time-series.h"
-#include "crew.h"
 #include "goal.h"
 #include "recipe.h"
 #include <cstdlib>
@@ -257,13 +256,13 @@ namespace Sim {
 		// GroupA: components that can run concurrently with the pathfinder and each other
 		trigger groupA;
 
-		crew.job([&]() {
+		async.job([&]() {
 			statsStore.track(tick, Store::tick);
 			statsPipe.track(tick, Pipe::tick);
 			groupA.now();
 		});
 
-		crew.job([&]() {
+		async.job([&]() {
 			statsConveyor.track(tick, Conveyor::tick);
 			groupA.now();
 		});
