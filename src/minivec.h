@@ -10,6 +10,7 @@
 #include "lalloc.h"
 
 // A single-pointer std::vector alternative for trivial types.
+// Allows std::realloc growth.
 
 struct minialloc {
 	virtual void* malloc(size_t bytes) = 0;
@@ -156,17 +157,12 @@ public:
 	}
 
 	void reserve(uint n) {
-		if (!head && n > 0) {
-			n = std::max(4U, n);
-			head = (header*)minialloc_def().malloc(sizeof(header) + (n * sizeof(V)));
-			setSize(0);
-			setCapacity(n);
-		}
-		else
-		if (head && n > capacity()) {
-			setCapacity(std::max(4U, capacity()));
-			while (n > capacity()) setCapacity(capacity()*2);
-			head = (header*)minialloc_def().realloc((void*)head, sizeof(header) + (capacity() * sizeof(V)));
+		if (n > capacity()) {
+			uint s = size();
+			uint c = 4; while (n > c) c *= 2;
+			head = (header*)minialloc_def().realloc((void*)head, sizeof(header) + (c * sizeof(V)));
+			setSize(s);
+			setCapacity(c);
 		}
 	}
 
@@ -177,10 +173,10 @@ public:
 		}
 	}
 
-	void resize(uint n) {
+	void resize(uint n, V d = V()) {
 		reserve(n);
 		while (size() < n) {
-			*cell(size()) = V();
+			*cell(size()) = d;
 			setSize(size()+1);
 		}
 	}
@@ -210,7 +206,7 @@ public:
 		return size() == 0;
 	}
 
-	void push_back(V s = V()) {
+	void push_back(const V& s) {
 		uint n = size();
 		reserve(n+1);
 		*cell(n) = s;
@@ -223,7 +219,7 @@ public:
 		std::destroy_at(cell(size()));
 	}
 
-	void push_front(V s = V()) {
+	void push_front(const V& s) {
 		uint n = size();
 		reserve(n+1);
 		std::memmove((void*)cell(1), (void*)cell(0), n * sizeof(V));
@@ -236,7 +232,7 @@ public:
 		erase(begin());
 	}
 
-	void push(V v = V()) {
+	void push(const V& v) {
 		push_back(v);
 	}
 
@@ -246,7 +242,7 @@ public:
 		return v;
 	}
 
-	void shove(V v = V()) {
+	void shove(const V& v) {
 		push_front(v);
 	}
 
@@ -256,7 +252,7 @@ public:
 		return v;
 	}
 
-	bool has(V v) {
+	bool has(const V& v) {
 		return std::find(begin(), end(), v) != end();
 	}
 
@@ -567,17 +563,12 @@ public:
 	}
 
 	void reserve(uint n) {
-		if (!head && n > 0) {
-			n = std::max(4U, n);
-			head = (header*)minialloc_local().malloc(sizeof(header) + (n * sizeof(V)));
-			setSize(0);
-			setCapacity(n);
-		}
-		else
-		if (head && n > capacity()) {
-			setCapacity(std::max(4U, capacity()));
-			while (n > capacity()) setCapacity(capacity()*2);
-			head = (header*)minialloc_local().realloc((void*)head, sizeof(header) + (capacity() * sizeof(V)));
+		if (n > capacity()) {
+			uint s = size();
+			uint c = 4; while (n > c) c *= 2;
+			head = (header*)minialloc_def().realloc((void*)head, sizeof(header) + (c * sizeof(V)));
+			setSize(s);
+			setCapacity(c);
 		}
 	}
 
@@ -588,10 +579,10 @@ public:
 		}
 	}
 
-	void resize(uint n) {
+	void resize(uint n, V d = V()) {
 		reserve(n);
 		while (size() < n) {
-			*cell(size()) = V();
+			*cell(size()) = d;
 			setSize(size()+1);
 		}
 	}
@@ -621,7 +612,7 @@ public:
 		return size() == 0;
 	}
 
-	void push_back(V s = V()) {
+	void push_back(const V& s) {
 		uint n = size();
 		reserve(n+1);
 		*cell(n) = s;
@@ -634,7 +625,7 @@ public:
 		std::destroy_at(cell(size()));
 	}
 
-	void push_front(V s = V()) {
+	void push_front(const V& s) {
 		uint n = size();
 		reserve(n+1);
 		std::memmove((void*)cell(1), (void*)cell(0), n * sizeof(V));
@@ -647,7 +638,7 @@ public:
 		erase(begin());
 	}
 
-	void push(V v = V()) {
+	void push(const V& v) {
 		push_back(v);
 	}
 
@@ -657,7 +648,7 @@ public:
 		return v;
 	}
 
-	void shove(V v = V()) {
+	void shove(const V& v) {
 		push_front(v);
 	}
 
@@ -667,7 +658,7 @@ public:
 		return v;
 	}
 
-	bool has(V v) {
+	bool has(const V& v) {
 		return std::find(begin(), end(), v) != end();
 	}
 

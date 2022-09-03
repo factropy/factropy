@@ -112,13 +112,26 @@ public:
 
 	~slabpool<V,slabSize>() {
 		clear();
+		shrink_to_fit();
 	}
 
 	void clear() {
-		for (auto& slab: slabs) delete(slab);
-		slabs.clear();
-		queue.clear();
 		entries = 0;
+		queue.clear();
+		for (uint s = 0; s < slabs.size(); s++) {
+			slabs[s]->clear();
+			for (int i = slabSize-1; i >= 0; i--) {
+				queue.push_back(slabslot(s, (uint)i));
+			}
+		}
+	}
+
+	void shrink_to_fit() {
+		if (!size()) {
+			for (auto slab: slabs) delete(slab);
+			slabs.clear();
+			queue.clear();
+		}
 	}
 
 	bool empty() const {

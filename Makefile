@@ -11,7 +11,7 @@ prof: linux
 	LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libprofiler.so.0 CPUPROFILE=/tmp/factropy.prof build/factropy --new
 	google-pprof --web build/factropy /tmp/factropy.prof
 
-leak: linux
+leak: dev
 	rm -f ~/tmp/fac*; make -j24 -C build/ && LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4.5.3" HEAPPROFILE=~/tmp/factropy.hprof build/factropy
 #	google-pprof build/factropy --web --base=$(HOME)/tmp/factropy.hprof.0068.heap $(HOME)/tmp/factropy.hprof.0279.heap
 

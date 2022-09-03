@@ -144,7 +144,6 @@ void Scene::reset() {
 	stats.update.clear();
 	stats.updateTerrain.clear();
 	stats.updateEntities.clear();
-	stats.updateEntitiesParts.clear();
 	stats.updateEntitiesFind.clear();
 	stats.updateEntitiesLoad.clear();
 	stats.updateEntitiesHover.clear();
@@ -1983,20 +1982,30 @@ void Scene::updateLoading(uint w, uint h) {
 	height = h;
 }
 
+void Scene::advancer() {
+	StopWatch terrain;
+	StopWatch entities;
+
+	terrain.start();
+		updateTerrain();
+	terrain.stop();
+
+	entities.start();
+		Part::resetAll();
+		for (auto [_,spec]: Spec::all)
+			 for (auto part: spec->parts)
+			 	part->update();
+		updateEntities();
+	entities.stop();
+
+	stats.updateTerrain.track(frame, terrain);
+	stats.updateEntities.track(frame, entities);
+
+	advanceDone.now();
+}
+
 void Scene::advance() {
-	crew.job([&]() {
-		stats.updateTerrain.track(frame, [&]() {
-			updateTerrain();
-		});
-		stats.updateEntities.track(frame, [&]() {
-			stats.updateEntitiesParts.track(frame, [&]() {
-				Part::resetAll();
-				for (auto [_,spec]: Spec::all) for (auto part: spec->parts) part->update();
-			});
-			updateEntities();
-		});
-		advanceDone.now();
-	});
+	crew.job([]() { scene.advancer(); });
 }
 
 void Scene::render() {

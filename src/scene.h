@@ -197,7 +197,6 @@ struct Scene {
 		TimeSeries update;
 		TimeSeries updateTerrain;
 		TimeSeries updateEntities;
-		TimeSeries updateEntitiesParts;
 		TimeSeries updateEntitiesFind;
 		TimeSeries updateEntitiesLoad;
 		TimeSeries updateEntitiesHover;
@@ -296,6 +295,7 @@ struct Scene {
 	void tipDebug(GuiEntity* ge);
 	void update(uint w, uint h, float fps);
 	void updateLoading(uint w, uint h);
+	void advancer();
 	void advance();
 	void render();
 	void renderLoading();

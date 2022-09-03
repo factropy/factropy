@@ -241,7 +241,6 @@ void StatsPopup2::draw() {
 				{.title = "update", .ts = &scene.stats.update},
 				{.title = "updateTerrain", .ts = &scene.stats.updateTerrain},
 				{.title = "updateEntities", .ts = &scene.stats.updateEntities},
-				{.title = "updateEntitiesParts", .ts = &scene.stats.updateEntitiesParts},
 				{.title = "updateEntitiesFind", .ts = &scene.stats.updateEntitiesFind},
 				{.title = "updateEntitiesLoad", .ts = &scene.stats.updateEntitiesLoad},
 				{.title = "updateEntitiesHover", .ts = &scene.stats.updateEntitiesHover},

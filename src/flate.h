@@ -1,12 +1,12 @@
 #pragma once
 
 #include "catenate.h"
+#include "minivec.h"
 #include <string>
-#include <vector>
 
 struct deflation {
 	int quality = 3;
-	std::vector<char> data;
+	minivec<char> data;
 	deflation();
 	deflation(int quality);
 	void save(const std::string& path);
@@ -14,7 +14,7 @@ struct deflation {
 };
 
 struct inflation {
-	std::vector<char> data;
+	minivec<char> data;
 
 	inflation();
 	inflation& load(std::string path);

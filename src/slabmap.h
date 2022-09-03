@@ -50,6 +50,7 @@ public:
 
 	~slabmap<V,ID,slabSize>() {
 		clear();
+		shrink_to_fit();
 	}
 
 	std::size_t memory() {
@@ -59,6 +60,11 @@ public:
 	void clear() {
 		pool.clear();
 		index.clear();
+	}
+
+	void shrink_to_fit() {
+		pool.shrink_to_fit();
+		index.shrink_to_fit();
 	}
 
 	bool has(const K& k) const {

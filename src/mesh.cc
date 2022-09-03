@@ -64,8 +64,8 @@ void Mesh::instances(GLuint group, std::span<const glm::mat4> batch, const glm::
 		g.colors.resize(g.colors.size() + batch.size(), color);
 		g.shines.resize(g.shines.size() + batch.size(), shine);
 		g.filters.resize(g.filters.size() + batch.size(), filter);
-		g.instances.insert(g.instances.end(), batch.begin(), batch.end());
-		if (shadow) g.shadowInstances.insert(g.shadowInstances.end(), batch.begin(), batch.end());
+		g.instances.append(batch);
+		if (shadow) g.shadowInstances.append(batch);
 		return;
 	}
 	const std::lock_guard<std::mutex> lock(mutex[current]);
@@ -73,8 +73,8 @@ void Mesh::instances(GLuint group, std::span<const glm::mat4> batch, const glm::
 	g.colors.resize(g.colors.size() + batch.size(), color);
 	g.shines.resize(g.shines.size() + batch.size(), shine);
 	g.filters.resize(g.filters.size() + batch.size(), filter);
-	g.instances.insert(g.instances.end(), batch.begin(), batch.end());
-	if (shadow) g.shadowInstances.insert(g.shadowInstances.end(), batch.begin(), batch.end());
+	g.instances.append(batch);
+	if (shadow) g.shadowInstances.append(batch);
 }
 
 void Mesh::batchInstances() {
@@ -87,11 +87,11 @@ void Mesh::flushInstances() {
 		const std::lock_guard<std::mutex> lock(mesh->mutex[future]);
 		for (auto& [group,lgroup]: mgroup) {
 			auto& g = mesh->groups[future][group];
-			g.instances.insert(g.instances.end(), lgroup.instances.begin(), lgroup.instances.end());
-			g.shadowInstances.insert(g.shadowInstances.end(), lgroup.shadowInstances.begin(), lgroup.shadowInstances.end());
-			g.colors.insert(g.colors.end(), lgroup.colors.begin(), lgroup.colors.end());
-			g.shines.insert(g.shines.end(), lgroup.shines.begin(), lgroup.shines.end());
-			g.filters.insert(g.filters.end(), lgroup.filters.begin(), lgroup.filters.end());
+			g.instances.append(lgroup.instances);
+			g.shadowInstances.append(lgroup.shadowInstances);
+			g.colors.append(lgroup.colors);
+			g.shines.append(lgroup.shines);
+			g.filters.append(lgroup.filters);
 		}
 	}
 	lgroups.clear();

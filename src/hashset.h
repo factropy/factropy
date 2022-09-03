@@ -94,6 +94,10 @@ public:
 		width = 0;
 	}
 
+	void shrink_to_fit() {
+		if (!size()) index.shrink_to_fit();
+	}
+
 	std::size_t size() const {
 		return entries;
 	}

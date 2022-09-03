@@ -38,7 +38,7 @@ namespace {
 
 		bool our(void* ptr) {
 			auto block = (Block*)ptr;
-			return block >= &blocks[0] && block <= &blocks[POOL-1];
+			return ptr && block >= &blocks[0] && block <= &blocks[POOL-1];
 		}
 
 		void* malloc(size_t bytes) {
@@ -76,6 +76,10 @@ namespace {
 		}
 
 		void* realloc(void* ptr, size_t bytes) {
+			if (!ptr && bytes <= sizeof(Block)) {
+				return malloc(bytes);
+			}
+
 			counters.realloc++;
 
 			if (our(ptr)) {

@@ -15,7 +15,7 @@ deflation::deflation(int q) {
 void deflation::save(const std::string& path) {
 	std::size_t bounds = sdefl_bound(data.size());
 
-	std::vector<char> cdata;
+	minivec<char> cdata;
 	cdata.insert(cdata.begin(), bounds, 0);
 
 	struct sdefl sdefl = { 0 };
@@ -29,7 +29,7 @@ void deflation::save(const std::string& path) {
 
 void deflation::push(const std::string& part) {
 	if (data.size()) data.push_back('\n');
-	data.insert(data.end(), part.begin(), part.end());
+	data.append(part);
 }
 
 inflation::inflation() {
@@ -53,7 +53,7 @@ inflation& inflation::load(std::string path) {
 	in.seekg(line.length()+1);
 	clen -= line.length()+1;
 
-	std::vector<char> cdata;
+	minivec<char> cdata;
 	cdata.insert(cdata.begin(), clen, 0);
 
 	in.read(cdata.data(), clen);

@@ -27,19 +27,19 @@ public:
 		GLuint index = 0;
 	} vbo;
 
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> normals;
-	std::vector<GLuint> indices;
+	minivec<glm::vec3> vertices;
+	minivec<glm::vec3> normals;
+	minivec<GLuint> indices;
 
 	void loadSTL(std::string stl);
 	void init(glm::mat4 srt);
 
 	struct renderGroup {
-		std::vector<glm::mat4> instances;
-		std::vector<glm::mat4> shadowInstances;
-		std::vector<glm::vec4> colors;
-		std::vector<GLfloat> shines;
-		std::vector<GLfloat> filters;
+		minivec<glm::mat4> instances;
+		minivec<glm::mat4> shadowInstances;
+		minivec<glm::vec4> colors;
+		minivec<GLfloat> shines;
+		minivec<GLfloat> filters;
 	};
 
 	static inline uint8_t current = 0;
