@@ -10,6 +10,11 @@ class trigger {
 	uint signals = 0;
 
 public:
+	void reset() {
+		std::unique_lock<std::mutex> m(mutex);
+		signals = 0;
+	}
+
 	void now() {
 		std::unique_lock<std::mutex> m(mutex);
 		signals++;

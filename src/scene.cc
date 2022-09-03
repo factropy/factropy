@@ -155,6 +155,9 @@ void Scene::reset() {
 	stats.render.clear();
 
 	risers.clear();
+
+	for (auto b: poolEBatch.recv_all()) delete b;
+	for (auto b: poolGBatch.recv_all()) delete b;
 }
 
 void Scene::prepare() {
@@ -614,6 +617,309 @@ void Scene::updateVisibleCells() {
 	}
 }
 
+// GuiEntity loaders, Sim::locked via main thread, fed by main thread
+void Scene::updateEntitiesLoader(int i) {
+	loadTimers[i].start();
+	double horizonSquared = Config::window.horizon*Config::window.horizon;
+
+	GBatch* out = gbatch();
+	out->reserve(1000);
+
+	auto flush = [&](uint size) {
+		if (out->size() > size) {
+			forHovering.send(out);
+			forInstancing.send(out);
+			forInstancingItems.send(out);
+			forInstancingCables.send(out);
+			oldGBatch.send(out);
+			out = gbatch();
+			out->reserve(1000);
+		}
+	};
+
+	for (auto in: forLoading) {
+		for (auto en: *in) {
+			if (en->pos().distanceSquared(target) > horizonSquared) continue;
+			if (!frustum.intersects(en->sphere())) continue;
+			out->push_back(&entityPools[future][i].emplace(en));
+			flush(999);
+		}
+	}
+	flush(0);
+	oldGBatch.send(out);
+
+	loadTimers[i].stop();
+	doneLoading.now();
+}
+
+// mouse ray intersections, not Sim::locked, fed by loaders
+void Scene::updateEntitiesHover() {
+	StopWatch watch;
+	watch.start();
+
+	GBatch hovered;
+	float hoverDistanceSquared = Config::window.zoomUpperLimit * Config::window.zoomUpperLimit;
+
+	for (auto in: forHovering) {
+		for (auto ge: *in) {
+			if (ge->spec->select
+				&& ge->pos().distanceSquared(target) < hoverDistanceSquared
+				&& ge->sphere().intersects(mouse.ray)
+				&& ge->selectionCuboid().intersects(mouse.ray)
+			){
+				hovered.push_back(ge);
+			}
+			ge->spec->count.render++;
+		}
+	}
+
+	Point pos = position;
+	auto end = mouseGroundTarget();
+	Point step = (end-position).normalize()*0.25;
+
+	for (int i = 0, l = position.distance(end)*10; !hoveringFuture && i < l; i++) {
+		for (auto ge: hovered) {
+			bool allow = true;
+			if (ge->spec->slab) {
+				allow = false;
+				for (auto& se: selectedFuture) {
+					if (se->id == ge->id) {
+						allow = true;
+						break;
+					}
+				}
+			}
+			if (allow && ge->sphere().contains(pos) && ge->cuboid().intersects(pos.box().grow(0.5))) {
+				hoveringFuture = ge->id;
+				break;
+			}
+		}
+		pos += step;
+	}
+
+	doneHovering.now();
+	watch.stop();
+
+	stats.updateEntitiesHover.track(frame, watch);
+}
+
+// GuiEntity instanced rendering, not Sim::locked, fed by loaders
+void Scene::updateEntitiesInstancer(int i) {
+	instancingTimers[i].start();
+	GBatch* ghost = gbatch();
+
+	Mesh::batchInstances();
+
+	for (auto in: forInstancing) {
+		for (auto ge: *in) {
+			if (ge->ghost) {
+				ghost->push_back(ge);
+				continue;
+			}
+			ge->instance();
+			ge->icon();
+		}
+	}
+
+	if (ghost->size()) forGhosting.send(ghost);
+	oldGBatch.send(ghost);
+
+	Mesh::flushInstances();
+
+	instancingTimers[i].stop();
+	doneInstancing.now();
+}
+
+// Item instanced rendering, not Sim::locked, fed by loaders
+void Scene::updateEntitiesItemInstancer(int i) {
+	instancingItemsTimers[i].start();
+
+	Mesh::batchInstances();
+
+	for (auto in: forInstancingItems) {
+		for (auto ge: *in) {
+			if (ge->ghost) continue;
+			ge->instanceItems();
+		}
+	}
+
+	Mesh::flushInstances();
+
+	instancingItemsTimers[i].stop();
+	doneInstancingItems.now();
+}
+
+// GuiEntity cable rendering, not Sim::locked, fed by instances
+void Scene::updateEntitiesCabler() {
+	Mesh::batchInstances();
+
+	for (auto in: forInstancingCables) {
+		for (auto ge: *in) ge->instanceCables();
+	}
+
+	Mesh::flushInstances();
+	doneInstancingCables.now();
+}
+
+// GuiEntity ghost rendering, not Sim::locked, fed by instancers
+// Runs last so that translucent ghosts can be sorted and rendered after extant entities
+void Scene::updateEntitiesGhoster() {
+	GBatch ghost;
+	Mesh::batchInstances();
+
+	for (auto in: forGhosting) ghost.append(*in);
+
+	std::sort(ghost.begin(), ghost.end(), [&](GuiEntity* a, GuiEntity* b) {
+		return a->pos().distanceSquared(position) < b->pos().distanceSquared(position);
+	});
+
+	for (auto ge: ghost) ge->instance();
+
+	Mesh::flushInstances();
+	doneGhosting.now();
+}
+
+// main thread, Sim::locked, fed by Entity::grid indexes
+void Scene::updateEntitiesFeeder() {
+	const std::lock_guard<std::mutex> lock(Sim::mutex);
+
+	StopWatch watch;
+	watch.start();
+
+	EBatch marked;
+	GBatch* geBatch = gbatch();
+
+	// when selection box goes off screen, ensure the out of sight entities are included
+	if (selecting) {
+		for (auto en: Entity::intersecting(selectionBoxFuture)) {
+			if (en->isMarked1()) continue;
+			en->setMarked1(true);
+			marked.push_back(en);
+			geBatch->push_back(&entityPools[future][0].emplace(en));
+			if (en->spec->select && en->spec->plan) {
+				if (selectingTypes == SelectAll)
+					selectedFuture.push_back(geBatch->back());
+				if (selectingTypes == SelectJunk && en->spec->junk)
+					selectedFuture.push_back(geBatch->back());
+				if (selectingTypes == SelectUnder && (en->spec->pile || en->spec->slab))
+					selectedFuture.push_back(geBatch->back());
+			}
+		}
+		if (selectingTypes == SelectAll) {
+			uint secondaries = 0;
+			for (auto ge: selectedFuture) {
+				secondaries += (ge->spec->pile || ge->spec->slab) ? 1:0;
+			}
+			if (secondaries < selectedFuture.size()) {
+				discard_if(selectedFuture, [](auto a) { return (a->spec->pile || a->spec->slab); });
+			}
+		}
+	}
+
+	// the directed vehicle may need to show its path from off-screen
+	if (directing) {
+		auto ed = Entity::find(directing->id);
+		if (ed && !ed->isMarked1()) {
+			ed->setMarked1(true);
+			marked.push_back(ed);
+			geBatch->push_back(&entityPools[future][0].emplace(ed));
+		}
+	}
+
+	// tube paths may be in view when their towers are out of sight
+	// this should check the longest range from specs
+	// this should be a bit more selective based on the frustum
+	for (auto et: Entity::gridRenderTubes.dump(region)) {
+		if (et->isMarked1()) continue;
+		et->setMarked1(true);
+		marked.push_back(et);
+		if (frustum.intersects(et->sphere().grow(100))) {
+			geBatch->push_back(&entityPools[future][0].emplace(et));
+		}
+	}
+
+	// monorail paths may be in view when their towers are out of sight
+	// this should check the longest range from specs
+	// this should be a bit more selective based on the frustum
+	for (auto et: Entity::gridRenderMonorails.dump(region)) {
+		if (et->isMarked1()) continue;
+		et->setMarked1(true);
+		marked.push_back(et);
+		if (frustum.intersects(et->sphere().grow(100))) {
+			geBatch->push_back(&entityPools[future][0].emplace(et));
+		}
+	}
+
+	// power cables may be in view when their poles are out of sight
+	// this should check the longest range from specs
+	// this should be a bit more selective based on the frustum
+	for (auto pole: PowerPole::gridCoverage.dump(region)) {
+		auto et = pole->en;
+		if (et->isMarked1()) continue;
+		et->setMarked1(true);
+		marked.push_back(et);
+		if (frustum.intersects(et->sphere().grow(100))) {
+			geBatch->push_back(&entityPools[future][0].emplace(et));
+		}
+	}
+
+	// waypoint lines may be in view when their waypoints are out of sight
+	for (auto et: Entity::intersecting(region, Entity::gridCartWaypoints)) {
+		if (et->isMarked1()) continue;
+		et->setMarked1(true);
+		marked.push_back(et);
+		geBatch->push_back(&entityPools[future][0].emplace(et));
+	}
+
+	forHovering.send(geBatch);
+	forInstancing.send(geBatch);
+	forInstancingItems.send(geBatch);
+	forInstancingCables.send(geBatch);
+
+	EBatch* enBatch = ebatch();
+
+	// This loop is the main rendering bottleneck. It needs to stay fast and tight to
+	// minimize blocking the Sim update _and_ prevent the GuiEntity loaders stalling
+	for (auto& box: visibleCells) {
+
+		// Entity::intersecting() wraps grid.search and does extra work to reduce the coarse grid
+		// results to an accurate subset that definitely intersect the box, but we have to do a
+		// frustum intersection anyway so just extract the coarse hits and rely on marking to
+		// avoid feeding duplicates to the GuiEntity loaders
+
+		auto end = Entity::gridRender.cells.end();
+		for (auto cell: gridwalk(Entity::RENDER, box)) {
+			auto it = Entity::gridRender.cells.find(cell);
+			if (it == end) continue;
+			for (auto en: it->second) {
+				if (en->isMarked1()) continue;
+				en->setMarked1(true);
+				enBatch->push_back(en);
+			}
+		}
+
+		if (enBatch->size() >= 1000) {
+			marked.append(*enBatch);
+			forLoading.send(enBatch);
+			oldEBatch.send(enBatch);
+			enBatch = ebatch();
+		}
+	}
+
+	marked.append(*enBatch);
+	forLoading.send(enBatch);
+	forLoading.close();
+
+	oldEBatch.send(enBatch);
+
+	for (auto en: marked) en->clearMarks();
+
+	watch.stop();
+	stats.updateEntitiesFind.track(frame, watch);
+
+	doneLoading.wait(entityPools[future].size());
+}
+
 void Scene::updateEntities() {
 	entityPools[future].resize(Config::engine.sceneLoadingThreads);
 	for (auto& pool: entityPools[future]) pool.clear();
@@ -624,328 +930,37 @@ void Scene::updateEntities() {
 	selectedFuture.clear();
 	hoveringFuture = 0;
 
-	trigger doneLoading;
-	trigger doneHovering;
-	trigger doneInstancing;
-	trigger doneInstancingItems;
-	trigger doneInstancingCables;
-	trigger doneGhosting;
-
-	typedef minivec<Entity*> EBatch;
-	typedef minivec<GuiEntity*> GBatch;
-
-	channel<EBatch*,-1> forLoading;
-	channel<GBatch*,-1> forHovering;
-	channel<GBatch*,-1> forInstancing;
-	channel<GBatch*,-1> forInstancingItems;
-	channel<GBatch*,-1> forInstancingCables;
-	channel<GBatch*,-1> forGhosting;
-
-	channel<EBatch*,-1> oldEBatch;
-	channel<GBatch*,-1> oldGBatch;
-
-	std::vector<StopWatch> loadTimers(entityPools[future].size());
-	std::vector<StopWatch> instancingTimers(Config::engine.sceneInstancingThreads);
-	std::vector<StopWatch> instancingItemsTimers(Config::engine.sceneInstancingItemsThreads);
+	loadTimers.resize(entityPools[future].size());
+	instancingTimers.resize(Config::engine.sceneInstancingThreads);
+	instancingItemsTimers.resize(Config::engine.sceneInstancingItemsThreads);
 
 	// GuiEntity loaders, Sim::locked via main thread, fed by main thread
 	for (int i = 0, l = entityPools[future].size(); i < l; i++) {
-		crew.job([&,i]() {
-			loadTimers[i].start();
-			double horizonSquared = Config::window.horizon*Config::window.horizon;
-
-			GBatch* out = new GBatch;
-			out->reserve(1000);
-
-			auto flush = [&](uint size) {
-				if (out->size() > size) {
-					forHovering.send(out);
-					forInstancing.send(out);
-					forInstancingItems.send(out);
-					forInstancingCables.send(out);
-					oldGBatch.send(out);
-					out = new GBatch;
-					out->reserve(1000);
-				}
-			};
-
-			for (auto in: forLoading) {
-				for (auto en: *in) {
-					if (en->pos().distanceSquared(target) > horizonSquared) continue;
-					if (!frustum.intersects(en->sphere())) continue;
-					out->push_back(&entityPools[future][i].emplace(en));
-					flush(999);
-				}
-			}
-			flush(0);
-			oldGBatch.send(out);
-
-			loadTimers[i].stop();
-			doneLoading.now();
-		});
+		crew.job([i]() { scene.updateEntitiesLoader(i); });
 	}
 
 	// mouse ray intersections, not Sim::locked, fed by loaders
-	crew.job([&]() {
-		stats.updateEntitiesHover.track(frame, [&]() {
-			GBatch hovered;
-			float hoverDistanceSquared = Config::window.zoomUpperLimit * Config::window.zoomUpperLimit;
-
-			for (auto in: forHovering) {
-				for (auto ge: *in) {
-					if (ge->spec->select
-						&& ge->pos().distanceSquared(target) < hoverDistanceSquared
-						&& ge->sphere().intersects(mouse.ray)
-						&& ge->selectionCuboid().intersects(mouse.ray)
-					){
-						hovered.push_back(ge);
-					}
-					ge->spec->count.render++;
-				}
-			}
-
-			Point pos = position;
-			auto end = mouseGroundTarget();
-			Point step = (end-position).normalize()*0.25;
-
-			for (int i = 0, l = position.distance(end)*10; !hoveringFuture && i < l; i++) {
-				for (auto ge: hovered) {
-					bool allow = true;
-					if (ge->spec->slab) {
-						allow = false;
-						for (auto& se: selectedFuture) {
-							if (se->id == ge->id) {
-								allow = true;
-								break;
-							}
-						}
-					}
-					if (allow && ge->sphere().contains(pos) && ge->cuboid().intersects(pos.box().grow(0.5))) {
-						hoveringFuture = ge->id;
-						break;
-					}
-				}
-				pos += step;
-			}
-
-			doneHovering.now();
-		});
-	});
+	crew.job([]() { scene.updateEntitiesHover(); });
 
 	// GuiEntity instanced rendering, not Sim::locked, fed by loaders
 	for (int i = 0, l = Config::engine.sceneInstancingThreads; i < l; i++) {
-		crew.job([&,i]() {
-			instancingTimers[i].start();
-			GBatch* ghost = new GBatch;
-
-			Mesh::batchInstances();
-
-			for (auto in: forInstancing) {
-				for (auto ge: *in) {
-					if (ge->ghost) {
-						ghost->push_back(ge);
-						continue;
-					}
-					ge->instance();
-					ge->icon();
-				}
-			}
-
-			if (ghost->size()) forGhosting.send(ghost);
-			oldGBatch.send(ghost);
-
-			Mesh::flushInstances();
-
-			instancingTimers[i].stop();
-			doneInstancing.now();
-		});
+		crew.job([i]() { scene.updateEntitiesInstancer(i); });
 	}
 
 	// Item instanced rendering, not Sim::locked, fed by loaders
 	for (int i = 0, l = Config::engine.sceneInstancingItemsThreads; i < l; i++) {
-		crew.job([&,i]() {
-			instancingItemsTimers[i].start();
-
-			Mesh::batchInstances();
-
-			for (auto in: forInstancingItems) {
-				for (auto ge: *in) {
-					if (ge->ghost) continue;
-					ge->instanceItems();
-				}
-			}
-
-			Mesh::flushInstances();
-
-			instancingItemsTimers[i].stop();
-			doneInstancingItems.now();
-		});
+		crew.job([i]() { scene.updateEntitiesItemInstancer(i); });
 	}
 
 	// GuiEntity cable rendering, not Sim::locked, fed by instances
-	crew.job([&]() {
-		Mesh::batchInstances();
-
-		for (auto in: forInstancingCables) {
-			for (auto ge: *in) ge->instanceCables();
-		}
-
-		Mesh::flushInstances();
-		doneInstancingCables.now();
-	});
+	crew.job([]() { scene.updateEntitiesCabler(); });
 
 	// GuiEntity ghost rendering, not Sim::locked, fed by instancers
 	// Runs last so that translucent ghosts can be sorted and rendered after extant entities
-	crew.job([&]() {
-		GBatch ghost;
-		Mesh::batchInstances();
-
-		for (auto in: forGhosting) ghost.append(*in);
-
-		std::sort(ghost.begin(), ghost.end(), [&](GuiEntity* a, GuiEntity* b) {
-			return a->pos().distanceSquared(position) < b->pos().distanceSquared(position);
-		});
-
-		for (auto ge: ghost) ge->instance();
-
-		Mesh::flushInstances();
-		doneGhosting.now();
-	});
+	crew.job([]() { scene.updateEntitiesGhoster(); });
 
 	// main thread, Sim::locked, fed by Entity::grid indexes
-	Sim::locked([&]() {
-		stats.updateEntitiesFind.track(frame, [&]() {
-			EBatch marked;
-			GBatch* geBatch = new GBatch;
-
-			// when selection box goes off screen, ensure the out of sight entities are included
-			if (selecting) {
-				for (auto en: Entity::intersecting(selectionBoxFuture)) {
-					if (en->isMarked1()) continue;
-					en->setMarked1(true);
-					marked.push_back(en);
-					geBatch->push_back(&entityPools[future][0].emplace(en));
-					if (en->spec->select && en->spec->plan) {
-						if (selectingTypes == SelectAll)
-							selectedFuture.push_back(geBatch->back());
-						if (selectingTypes == SelectJunk && en->spec->junk)
-							selectedFuture.push_back(geBatch->back());
-						if (selectingTypes == SelectUnder && (en->spec->pile || en->spec->slab))
-							selectedFuture.push_back(geBatch->back());
-					}
-				}
-				if (selectingTypes == SelectAll) {
-					uint secondaries = 0;
-					for (auto ge: selectedFuture) {
-						secondaries += (ge->spec->pile || ge->spec->slab) ? 1:0;
-					}
-					if (secondaries < selectedFuture.size()) {
-						discard_if(selectedFuture, [](auto a) { return (a->spec->pile || a->spec->slab); });
-					}
-				}
-			}
-
-			// the directed vehicle may need to show its path from off-screen
-			if (directing) {
-				auto ed = Entity::find(directing->id);
-				if (ed && !ed->isMarked1()) {
-					ed->setMarked1(true);
-					marked.push_back(ed);
-					geBatch->push_back(&entityPools[future][0].emplace(ed));
-				}
-			}
-
-			// tube paths may be in view when their towers are out of sight
-			// this should check the longest range from specs
-			// this should be a bit more selective based on the frustum
-			for (auto et: Entity::gridRenderTubes.dump(region)) {
-				if (et->isMarked1()) continue;
-				et->setMarked1(true);
-				marked.push_back(et);
-				if (frustum.intersects(et->sphere().grow(100))) {
-					geBatch->push_back(&entityPools[future][0].emplace(et));
-				}
-			}
-
-			// monorail paths may be in view when their towers are out of sight
-			// this should check the longest range from specs
-			// this should be a bit more selective based on the frustum
-			for (auto et: Entity::gridRenderMonorails.dump(region)) {
-				if (et->isMarked1()) continue;
-				et->setMarked1(true);
-				marked.push_back(et);
-				if (frustum.intersects(et->sphere().grow(100))) {
-					geBatch->push_back(&entityPools[future][0].emplace(et));
-				}
-			}
-
-			// power cables may be in view when their poles are out of sight
-			// this should check the longest range from specs
-			// this should be a bit more selective based on the frustum
-			for (auto pole: PowerPole::gridCoverage.dump(region)) {
-				auto et = pole->en;
-				if (et->isMarked1()) continue;
-				et->setMarked1(true);
-				marked.push_back(et);
-				if (frustum.intersects(et->sphere().grow(100))) {
-					geBatch->push_back(&entityPools[future][0].emplace(et));
-				}
-			}
-
-			// waypoint lines may be in view when their waypoints are out of sight
-			for (auto et: Entity::intersecting(region, Entity::gridCartWaypoints)) {
-				if (et->isMarked1()) continue;
-				et->setMarked1(true);
-				marked.push_back(et);
-				geBatch->push_back(&entityPools[future][0].emplace(et));
-			}
-
-			forHovering.send(geBatch);
-			forInstancing.send(geBatch);
-			forInstancingItems.send(geBatch);
-			forInstancingCables.send(geBatch);
-
-			EBatch* enBatch = new EBatch;
-
-			// This loop is the main rendering bottleneck. It needs to stay fast and tight to
-			// minimize blocking the Sim update _and_ prevent the GuiEntity loaders stalling
-			for (auto& box: visibleCells) {
-
-				// Entity::intersecting() wraps grid.search and does extra work to reduce the coarse grid
-				// results to an accurate subset that definitely intersect the box, but we have to do a
-				// frustum intersection anyway so just extract the coarse hits and rely on marking to
-				// avoid feeding duplicates to the GuiEntity loaders
-
-				auto end = Entity::gridRender.cells.end();
-				for (auto cell: gridwalk(Entity::RENDER, box)) {
-					auto it = Entity::gridRender.cells.find(cell);
-					if (it == end) continue;
-					for (auto en: it->second) {
-						if (en->isMarked1()) continue;
-						en->setMarked1(true);
-						enBatch->push_back(en);
-					}
-				}
-
-				if (enBatch->size() >= 1000) {
-					marked.append(*enBatch);
-					forLoading.send(enBatch);
-					oldEBatch.send(enBatch);
-					enBatch = new EBatch;
-				}
-			}
-
-			marked.append(*enBatch);
-			forLoading.send(enBatch);
-			forLoading.close();
-
-			oldEBatch.send(enBatch);
-
-			for (auto en: marked) en->clearMarks();
-		});
-
-		doneLoading.wait(entityPools[future].size());
-	});
+	updateEntitiesFeeder();
 
 	updateVisibleCells();
 
@@ -966,11 +981,34 @@ void Scene::updateEntities() {
 	stats.updateEntitiesInstances.track(frame, instancingTimers);
 	stats.updateEntitiesItems.track(frame, instancingItemsTimers);
 
-	oldEBatch.close();
-	oldGBatch.close();
+	poolEBatch.transfer_all(oldEBatch);
+	poolGBatch.transfer_all(oldGBatch);
 
-	for (auto eb: oldEBatch.recv_all()) delete eb;
-	for (auto gb: oldGBatch.recv_all()) delete gb;
+	doneLoading.reset();
+	doneHovering.reset();
+	doneInstancing.reset();
+	doneInstancingItems.reset();
+	doneInstancingCables.reset();
+	doneGhosting.reset();
+
+	forLoading.reset();
+	forHovering.reset();
+	forInstancing.reset();
+	forInstancingItems.reset();
+	forInstancingCables.reset();
+	forGhosting.reset();
+}
+
+Scene::EBatch* Scene::ebatch() {
+	auto pair = poolEBatch.poll_pair();
+	if (pair.ok) pair.v->clear();
+	return (pair.ok) ? pair.v: new EBatch;
+}
+
+Scene::GBatch* Scene::gbatch() {
+	auto pair = poolGBatch.poll_pair();
+	if (pair.ok) pair.v->clear();
+	return (pair.ok) ? pair.v: new GBatch;
 }
 
 void Scene::updateCurrent() {

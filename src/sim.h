@@ -58,6 +58,7 @@ namespace Sim {
 	extern uint64_t tick;
 	extern int64_t seed;
 
+	extern std::mutex mutex;
 	extern channel<bool,3> saveTickets;
 
 	struct Alerts {

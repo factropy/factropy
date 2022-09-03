@@ -220,6 +220,35 @@ struct Scene {
 	void tick(Point pos);
 	void exclaim(Point pos);
 
+	typedef minivec<Entity*> EBatch;
+	typedef minivec<GuiEntity*> GBatch;
+
+	trigger doneLoading;
+	trigger doneHovering;
+	trigger doneInstancing;
+	trigger doneInstancingItems;
+	trigger doneInstancingCables;
+	trigger doneGhosting;
+
+	channel<EBatch*,-1> forLoading;
+	channel<GBatch*,-1> forHovering;
+	channel<GBatch*,-1> forInstancing;
+	channel<GBatch*,-1> forInstancingItems;
+	channel<GBatch*,-1> forInstancingCables;
+	channel<GBatch*,-1> forGhosting;
+
+	channel<EBatch*,-1> oldEBatch;
+	channel<GBatch*,-1> oldGBatch;
+	channel<EBatch*,-1> poolEBatch;
+	channel<GBatch*,-1> poolGBatch;
+
+	EBatch* ebatch();
+	GBatch* gbatch();
+
+	std::vector<StopWatch> loadTimers;
+	std::vector<StopWatch> instancingTimers;
+	std::vector<StopWatch> instancingItemsTimers;
+
 	Scene() = default;
 	void initGL();
 	void init();
@@ -249,6 +278,13 @@ struct Scene {
 	void updateMouse();
 	void updateCamera();
 	void updateVisibleCells();
+	void updateEntitiesLoader(int i);
+	void updateEntitiesHover();
+	void updateEntitiesInstancer(int i);
+	void updateEntitiesItemInstancer(int i);
+	void updateEntitiesCabler();
+	void updateEntitiesGhoster();
+	void updateEntitiesFeeder();
 	void updateEntities();
 	void updateCurrent();
 	void updateTerrain();
