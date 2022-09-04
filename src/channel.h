@@ -41,10 +41,10 @@ private:
 	bool accepting = true;
 
 public:
-	channel<V,DEPTH>() {
+	channel() {
 	}
 
-	~channel<V,DEPTH>() {
+	~channel() {
 		close();
 	}
 

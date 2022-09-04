@@ -45,10 +45,10 @@ private:
 
 public:
 
-	slabmap<V,ID,slabSize>() {
+	slabmap() {
 	}
 
-	~slabmap<V,ID,slabSize>() {
+	~slabmap() {
 		clear();
 		shrink_to_fit();
 	}

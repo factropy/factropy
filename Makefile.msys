@@ -13,7 +13,7 @@ DEPS_CFLAGS=$(shell sdl2-config --cflags) $(shell pkg-config --cflags freetype2)
 DEPS_LFLAGS=$(shell sdl2-config --libs) $(shell pkg-config --libs freetype2)
 
 # mingw64 posix threads, gcc 10.x (msys2)
-windows: CFLAGS=-O3 -flto -std=c++17 -Wall -DNDEBUG $(DEPS_CFLAGS)
+windows: CFLAGS=-O3 -flto -std=c++20 -Wall -DNDEBUG $(DEPS_CFLAGS)
 windows: LFLAGS=-lm -lpthread -lopengl32 -lglu32 -lgdi32 -lwinmm $(DEPS_LFLAGS)
 windows: $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy $(OBJECTS) $(DEPS) $(LFLAGS)

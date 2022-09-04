@@ -107,10 +107,10 @@ public:
 			+ (queue.size() * sizeof(slabslot));
 	}
 
-	slabpool<V,slabSize>() {
+	slabpool() {
 	}
 
-	~slabpool<V,slabSize>() {
+	~slabpool() {
 		clear();
 		shrink_to_fit();
 	}

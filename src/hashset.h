@@ -50,10 +50,10 @@ class hashset {
 
 public:
 
-	hashset<K,H>() {
+	hashset() {
 	}
 
-	~hashset<K,H>() {
+	~hashset() {
 		clear();
 	}
 

@@ -18,20 +18,20 @@ public:
 	typedef typename minivec<V>::size_type size_type;
 	typedef typename minivec<V>::iterator iterator;
 
-	miniuset<V>() : minivec<V>() {
+	miniuset() : minivec<V>() {
 	}
 
-	miniuset<V>(const miniuset<V>& other) : minivec<V>(other) {
+	miniuset(const miniuset<V>& other) : minivec<V>(other) {
 	}
 
-	miniuset<V>(std::span<const V> other) {
+	miniuset(std::span<const V> other) {
 		operator=(other);
 	}
 
-	miniuset<V>(miniuset<V>&& other) : minivec<V>(other) {
+	miniuset(miniuset<V>&& other) : minivec<V>(other) {
 	}
 
-	miniuset<V>(std::initializer_list<V> l) {
+	miniuset(std::initializer_list<V> l) {
 		minivec<V>::clear();
 		for (auto& v: l) insert(v);
 	}
@@ -105,20 +105,20 @@ public:
 	typedef typename localvec<V>::size_type size_type;
 	typedef typename localvec<V>::iterator iterator;
 
-	localuset<V>() : localvec<V>() {
+	localuset() : localvec<V>() {
 	}
 
-	localuset<V>(const localuset<V>& other) : localvec<V>(other) {
+	localuset(const localuset<V>& other) : localvec<V>(other) {
 	}
 
-	localuset<V>(std::span<const V> other) {
+	localuset(std::span<const V> other) {
 		operator=(other);
 	}
 
-	localuset<V>(localuset<V>&& other) : localvec<V>(other) {
+	localuset(localuset<V>&& other) : localvec<V>(other) {
 	}
 
-	localuset<V>(std::initializer_list<V> l) {
+	localuset(std::initializer_list<V> l) {
 		localvec<V>::clear();
 		for (auto& v: l) insert(v);
 	}

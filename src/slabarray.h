@@ -71,10 +71,10 @@ public:
 
 	std::vector<slabpage*> slabs;
 
-	slabarray<V,slabSize>() {
+	slabarray() {
 	}
 
-	~slabarray<V,slabSize>() {
+	~slabarray() {
 		clear();
 	}
 

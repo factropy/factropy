@@ -25,22 +25,22 @@ DEPS_LFLAGS=$(shell sdl2-config --libs) $(shell pkg-config --libs freetype2)
 #DEPS_CFLAGS=-I$(HOME)/src/SDL/include -D_REENTRANT $(shell pkg-config --cflags freetype2)
 #DEPS_LFLAGS=-L$(HOME)/src/SDL/build/.libs -lSDL2 $(shell pkg-config --libs freetype2)
 
-dev2: CFLAGS=-Wall -std=c++17 -Og -g1 -gz -femit-struct-debug-reduced $(DEPS_CFLAGS) -rdynamic
+dev2: CFLAGS=-Wall -std=c++20 -Og -g1 -gz -femit-struct-debug-reduced $(DEPS_CFLAGS) -rdynamic
 dev2: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
 dev2: $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2: CFLAGS=-Wall -std=c++17 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
+linux2: CFLAGS=-Wall -std=c++20 -O3 -flto=jobserver -DNDEBUG $(DEPS_CFLAGS)
 linux2: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
 linux2: $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2PGOa: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-generate
+linux2PGOa: CFLAGS=-Wall -std=c++20 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-generate
 linux2PGOa: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread
 linux2PGOa: $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
 
-linux2PGOb: CFLAGS=-Wall -std=c++17 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-use -fprofile-correction
+linux2PGOb: CFLAGS=-Wall -std=c++20 -O3 -march=native -flto=jobserver -DNDEBUG $(DEPS_CFLAGS) -fprofile-use -fprofile-correction
 linux2PGOb: LFLAGS=-lGL $(DEPS_LFLAGS) -ldl -pthread -lgcov
 linux2PGOb: $(DEPS) $(OBJECTS)
 	$(CPP) $(CFLAGS) -o factropy $(DEPS) $(OBJECTS) $(LFLAGS)
@@ -83,7 +83,7 @@ SHELL:=/bin/bash
 GTEST=googletest/googletest
 GOBJECTS=$(shell ls -1 test/{flate,cat}*.cc | sed 's/cc$$/o/g')
 
-gtest: CFLAGS=-O0 -std=c++17 -g -Wall -Werror -I$(GTEST)/include
+gtest: CFLAGS=-O0 -std=c++20 -g -Wall -Werror -I$(GTEST)/include
 gtest: LFLAGS=-lm -lpthread -ldl -lrt
 gtest: $(GTEST)/src/gtest-all.o $(GTEST)/src/gtest_main.o $(GOBJECTS) test/glue.c src/sdeflinfl.o
 	$(CPP) -o factropy-test test/glue.c $(GOBJECTS) src/sdeflinfl.o $(GTEST)/src/gtest-all.o $(GTEST)/src/gtest_main.o $(LFLAGS)
@@ -98,4 +98,4 @@ $(GTEST)/src/gtest_main.o:
 	$(CPP) -std=c++11 -isystem $(GTEST)/include -I$(GTEST) -c $(GTEST)/src/gtest_main.cc -o $(GTEST)/src/gtest_main.o
 
 utils:
-	$(CPP) -std=c++17 -o build/flatecat util/flatecat.cc
+	$(CPP) -std=c++20 -o build/flatecat util/flatecat.cc

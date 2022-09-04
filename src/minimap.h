@@ -31,16 +31,16 @@ class minimap : public minivec<V> {
 	typedef typename std::remove_reference<decltype(std::declval<V>().*ID)>::type K;
 
 public:
-	minimap<V,ID>() : minivec<V>() {
+	minimap() : minivec<V>() {
 	}
 
-	minimap<V,ID>(const minimap<V,ID>& other) : minivec<V>(other) {
+	minimap(const minimap<V,ID>& other) : minivec<V>(other) {
 	}
 
-	minimap<V,ID>(minimap<V,ID>&& other) : minivec<V>(other) {
+	minimap(minimap<V,ID>&& other) : minivec<V>(other) {
 	}
 
-	minimap<V,ID>(std::initializer_list<V> l) : minivec<V>(l) {
+	minimap(std::initializer_list<V> l) : minivec<V>(l) {
 		minivec<V>::clear();
 		for (auto& v: l) insert(v);
 	}
@@ -126,16 +126,16 @@ class localmap : public localvec<V> {
 	typedef typename std::remove_reference<decltype(std::declval<V>().*ID)>::type K;
 
 public:
-	localmap<V,ID>() : localvec<V>() {
+	localmap() : localvec<V>() {
 	}
 
-	localmap<V,ID>(const localmap<V,ID>& other) : localvec<V>(other) {
+	localmap(const localmap<V,ID>& other) : localvec<V>(other) {
 	}
 
-	localmap<V,ID>(localmap<V,ID>&& other) : localvec<V>(other) {
+	localmap(localmap<V,ID>&& other) : localvec<V>(other) {
 	}
 
-	localmap<V,ID>(std::initializer_list<V> l) : localvec<V>(l) {
+	localmap(std::initializer_list<V> l) : localvec<V>(l) {
 		localvec<V>::clear();
 		for (auto& v: l) insert(v);
 	}

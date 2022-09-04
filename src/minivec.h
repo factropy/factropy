@@ -88,31 +88,31 @@ public:
 	typedef uint size_type;
 	typedef V value_type;
 
-	minivec<V>() {
+	minivec() {
 	}
 
-	minivec<V>(const minivec<V>& other) : minivec<V>() {
+	minivec(const minivec<V>& other) : minivec() {
 		operator=(other);
 	}
 
-	minivec<V>(minivec<V>&& other) : minivec<V>() {
+	minivec(minivec<V>&& other) : minivec() {
 		operator=(other);
 	}
 
-	minivec<V>(std::initializer_list<V> l) : minivec<V>() {
+	minivec(std::initializer_list<V> l) : minivec() {
 		clear();
 		for (auto v: l) {
 			push_back(v);
 		}
 	}
 
-	minivec<V>(size_type n) : minivec<V>() {
+	minivec(size_type n) : minivec() {
 		clear();
 		resize(n);
 	}
 
 	template <typename IT>
-	minivec<V>(IT a, IT b) {
+	minivec(IT a, IT b) {
 		clear();
 		while (a != b) {
 			push_back(*a++);
@@ -137,7 +137,7 @@ public:
 		return std::span<V>(data(), size());
 	}
 
-	virtual ~minivec<V>() {
+	virtual ~minivec() {
 		clear();
 		minialloc_def().free(head);
 		head = nullptr;
@@ -495,31 +495,31 @@ public:
 	typedef uint size_type;
 	typedef V value_type;
 
-	localvec<V>() {
+	localvec() {
 	}
 
-	localvec<V>(const localvec<V>& other) : localvec<V>() {
+	localvec(const localvec<V>& other) : localvec() {
 		operator=(other);
 	}
 
-	localvec<V>(localvec<V>&& other) : localvec<V>() {
+	localvec(localvec<V>&& other) : localvec() {
 		operator=(other);
 	}
 
-	localvec<V>(std::initializer_list<V> l) : localvec<V>() {
+	localvec(std::initializer_list<V> l) : localvec() {
 		clear();
 		for (auto v: l) {
 			push_back(v);
 		}
 	}
 
-	localvec<V>(size_type n) : localvec<V>() {
+	localvec(size_type n) : localvec() {
 		clear();
 		resize(n);
 	}
 
 	template <typename IT>
-	localvec<V>(IT a, IT b) {
+	localvec(IT a, IT b) {
 		clear();
 		while (a != b) {
 			push_back(*a++);
@@ -544,7 +544,7 @@ public:
 		return std::span<V>(data(), size());
 	}
 
-	virtual ~localvec<V>() {
+	virtual ~localvec() {
 		clear();
 		minialloc_local().free(head);
 		head = nullptr;
