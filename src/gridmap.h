@@ -6,12 +6,13 @@
 
 #include "common.h"
 #include "gridwalk.h"
+#include "miniuset.h"
 #include <map>
 
 template <auto CHUNK, typename V>
 struct gridmap {
 
-	std::map<gridwalk::xy,minivec<V>> cells;
+	std::map<gridwalk::xy,miniuset<V>> cells;
 
 	gridmap() {};
 
@@ -21,7 +22,7 @@ struct gridmap {
 
 	void insert(const Box& box, V id) {
 		for (auto cell: gridwalk(CHUNK, box)) {
-			cells[cell].push_back(id);
+			cells[cell].insert(id);
 		}
 	}
 
@@ -30,7 +31,7 @@ struct gridmap {
 			auto it = cells.find(cell);
 			if (it != cells.end()) {
 				auto& v = it->second;
-				v.erase(std::remove(v.begin(), v.end(), id), v.end());
+				v.erase(id);
 				if (!v.size()) cells.erase(it);
 			}
 		}
@@ -53,7 +54,6 @@ struct gridmap {
 			auto it = cells.find(cell);
 			if (it != cells.end()) {
 				auto& v = it->second;
-				// hits.insert(hits.end(), v.begin(), v.end());
 				hits.append(v.data(), v.size());
 			}
 		}
@@ -61,7 +61,7 @@ struct gridmap {
 	}
 
 	localvec<V> search(const Box& box) const {
-		localvec<V> hits = dump(box);
+		auto hits = dump(box);
 		deduplicate(hits);
 		return hits;
 	}

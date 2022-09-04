@@ -849,8 +849,6 @@ void Scene::updateEntitiesFeeder() {
 	}
 
 	// tube paths may be in view when their towers are out of sight
-	// this should check the longest range from specs
-	// this should be a bit more selective based on the frustum
 	for (auto et: Entity::gridRenderTubes.dump(region)) {
 		if (et->isMarked1()) continue;
 		et->setMarked1(true);
@@ -861,8 +859,6 @@ void Scene::updateEntitiesFeeder() {
 	}
 
 	// monorail paths may be in view when their towers are out of sight
-	// this should check the longest range from specs
-	// this should be a bit more selective based on the frustum
 	for (auto et: Entity::gridRenderMonorails.dump(region)) {
 		if (et->isMarked1()) continue;
 		et->setMarked1(true);
@@ -873,8 +869,6 @@ void Scene::updateEntitiesFeeder() {
 	}
 
 	// power cables may be in view when their poles are out of sight
-	// this should check the longest range from specs
-	// this should be a bit more selective based on the frustum
 	for (auto pole: PowerPole::gridCoverage.dump(region)) {
 		auto et = pole->en;
 		if (et->isMarked1()) continue;

@@ -183,37 +183,12 @@ public:
 		return (pair){true,v};
 	}
 
-	pair poll_pair() {
-		std::unique_lock<std::mutex> m(mutex);
-
-		if (!packets.size()) {
-			return (pair){false,V()};
-		}
-
-		// receivers can still drain a channel after it's closed
-		V v = packets.front();
-		packets.pop_front();
-		sendCond.notify_one();
-		return (pair){true,v};
-	}
-
 	std::vector<V> recv_all() {
 		std::unique_lock<std::mutex> m(mutex);
 		std::vector<V> batch = {packets.begin(), packets.end()};
 		packets.clear();
 		sendCond.notify_one();
 		return batch;
-	}
-
-	void transfer_all(channel<V,DEPTH>& from) {
-		std::unique_lock<std::mutex> m0(mutex);
-		if (!accepting) throw std::runtime_error("!accepting");
-		if (DEPTH >= 0) throw std::runtime_error("DEPTH >= 0");
-		std::unique_lock<std::mutex> m1(from.mutex);
-		packets.insert(packets.end(), from.packets.begin(), from.packets.end());
-		from.packets.clear();
-		from.sendCond.notify_one();
-		if (packets.size()) recvCond.notify_one();
 	}
 
 	// Forward iteration until closed and drained

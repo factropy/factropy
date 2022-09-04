@@ -79,10 +79,7 @@ public:
 
 	void insert(const key_type& k) {
 		// Unlike find() std::lower_bound is necessary here to avoid an
-		// extra std::sort step. Unclear whether miniset is better than a
-		// theoretical "miniunordered_set", but as minivec tries to be
-		// consistent with std::vector behaviour, so miniset aims to be
-		// consistent with std::set behaviour.
+		// extra std::sort step.
 		auto lower = std::lower_bound(begin(), end(), k);
 		if (lower == end()) {
 			minivec<V>::push_back(k);
@@ -177,10 +174,7 @@ public:
 
 	void insert(const key_type& k) {
 		// Unlike find() std::lower_bound is necessary here to avoid an
-		// extra std::sort step. Unclear whether localset is better than a
-		// theoretical "miniunordered_set", but as localvec tries to be
-		// consistent with std::vector behaviour, so localset aims to be
-		// consistent with std::set behaviour.
+		// extra std::sort step.
 		auto lower = std::lower_bound(begin(), end(), k);
 		if (lower == end()) {
 			localvec<V>::push_back(k);
