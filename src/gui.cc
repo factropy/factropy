@@ -521,7 +521,7 @@ void GUI::update() {
 		}
 	};
 
-	if (scene.hovering && (scene.hovering->spec->cartWaypoint || scene.hovering->spec->tube || scene.hovering->spec->monorail)) {
+	if (scene.hovering && (scene.hovering->spec->cartWaypoint || scene.hovering->spec->tube || scene.hovering->spec->monorail || scene.hovering->spec->powerpole)) {
 		controlHintsSpecific["L"] = "Link up";
 		actionsEnabled.insert(Config::Action::Link);
 	}
@@ -558,6 +558,12 @@ void GUI::update() {
 			plan->add(ge);
 			plan->config = false;
 			scene.planPush(plan);
+			return;
+		}
+
+		// link powerpole same as pipette
+		if (scene.hovering && scene.hovering->spec->powerpole) {
+			actionPipette();
 			return;
 		}
 	};
