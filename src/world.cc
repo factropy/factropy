@@ -291,9 +291,9 @@ void World::save(const char* name, channel<bool,3>* tickets) {
 	Fluid* oil = Fluid::names["oil"];
 	ensure(oil);
 
-	async.job([=]() {
+	async.job([=,size=scenario.size]() {
 		deflation def;
-		def.push(fmt("%u", (uint)tilesSave.size()));
+		def.push(fmt("%u %d", (uint)tilesSave.size(), size));
 
 		for (auto& tile: tilesSave) {
 			def.push(fmt("%f %d %d %s %u",

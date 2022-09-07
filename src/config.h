@@ -160,6 +160,7 @@ namespace Config {
 		bool load = false;
 		bool fresh = false;
 		uint freshSeed = 0;
+		uint freshSize = 4;
 
 		int autosave = 15;
 		int autosaveN = 0;
@@ -177,8 +178,6 @@ namespace Config {
 		bool overlayDebug = false;
 		bool skyBlocks = false;
 		bool particles = true;
-
-		int world = 0;
 	};
 
 	extern Mode mode;

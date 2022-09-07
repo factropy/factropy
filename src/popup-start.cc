@@ -189,6 +189,15 @@ void StartScreen::drawNew() {
 	Separator();
 	SpacingV();
 
+	Print("Map size (km)");
+	if (RadioButton("2x2", Config::mode.freshSize == 2)) Config::mode.freshSize = 2;
+	SameLine(); if (RadioButton("4x4", Config::mode.freshSize == 4)) Config::mode.freshSize = 4;
+	SameLine(); if (RadioButton("6x6", Config::mode.freshSize == 6)) Config::mode.freshSize = 6;
+	SameLine(); if (RadioButton("8x8", Config::mode.freshSize == 8)) Config::mode.freshSize = 8;
+
+	Separator();
+	SpacingV();
+
 	if (!ok) PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled));
 
 	if (Button(" Start Game ") && ok) {

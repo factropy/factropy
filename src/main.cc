@@ -228,7 +228,7 @@ void game() {
 		} else {
 			notef("Generating a new world...");
 			Sim::init(Config::mode.freshSeed);
-			world.scenario.size = std::max(Config::mode.world, 4096);
+			world.scenario.size = std::min(8192, std::max(1024, (int)Config::mode.freshSize*1024));
 			world.init();
 			sky.init();
 			scenario->create();

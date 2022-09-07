@@ -2214,7 +2214,6 @@ void ScenarioBase::generate() {
 }
 
 void ScenarioBase::init() {
-	world.scenario.size = std::max(Config::mode.world, 4096);
 }
 
 void ScenarioBase::run(const std::vector<int>& mset) {
